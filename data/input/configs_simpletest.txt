@@ -1,0 +1,33 @@
+#files
+KP_solver_source         = /home/2014/choppe1/Documents/EvoNet/work_space/lib/kp_solvers/DPsolver.c
+KP_solver_binary         = /home/2014/choppe1/Documents/EvoNet/work_space/lib/kp_solvers/minknap.so
+output_directory         = /home/2014/choppe1/Documents/EvoNet/work_space/data/output/debug_test
+output_file = /home/2014/choppe1/Documents/EvoNet/work_space/data/output/degree_output.csv 
+
+# evolve params
+sampling_rounds_max      = 100
+pressure                 = 100
+tolerance                = 10
+
+generations = 10
+population_size = 20
+percent_survive = 10
+mutation_frequency = 1
+crossover_percent = 0
+average_degree = 1   
+output_frequency = .5
+growth_frequency = 0
+number_of_workers = 1
+starting_size = 20
+
+
+# Do not worry about the following parameters
+network_file             = /home/2014/choppe1/Documents/EvoNet/work_space/data/input/Network.txt
+network_name             = Vinayagam
+version                  = v4
+reduction_mode           = reverse
+sampling_rounds          = 1X
+BD_criteria              = both
+advice_upon              = nodes
+biased                   = False
+alpha                    = 0.25
