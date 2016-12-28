@@ -1,17 +1,128 @@
 #!/usr/bin/python3
-import math, matplotlib, os
+import math, matplotlib, os, csv
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 matplotlib.use('Agg') # This must be done before importing matplotlib.pyplot
 import numpy as np
 
 
-#IMAGE GENERATION FNS()
-def features_over_time(dirr, num_workers,gens, num_indivs, output_freq):
-    #given dirr generates graphs
-    worker_info, titles = parse_worker_info(dirr, num_workers,gens,num_indivs, output_freq)
-    #later incld master
+#ORGANIZER
+def param_plots (dirr, num_workers, gens, output_freq, num_indivs):
+    #writes outro csv
+    #plots features_over_time, features_over_params, degree_distrib
+    worker_info, titles = parse_worker_info(dirr, num_workers, gens, num_indivs, output_freq)
+
+    mins, maxs, endpts = write_outro (dirr, num_workers, gens, num_indivs, output_freq, worker_info, titles)
+
     init_img(dirr, num_workers)
+
+    fitness_over_params(dirr, num_workers, endpts, titles)
+
+    features_over_time(dirr, num_workers, gens, num_indivs, output_freq, worker_info, titles, mins, maxs)
+
+    print("Generating degree distribution plots.")
+    degree_distrib(dirr, num_workers, gens, output_freq)
+
+
+def write_outro (dirr, num_workers, gens, num_indivs, output_freq, worker_info, titles):
+
+    num_features = len(titles)
+    mins = [100000 for i in range(num_features)]
+    maxs = [0 for i in range(num_features)]
+    endpts = [[0 for i in range(num_features)] for j in range(num_workers)]
+
+    with open(dirr + "/outro_info.csv", 'w') as outro_file:
+        output = csv.writer(outro_file)
+
+        header = ["Worker #"]
+        for i in range(num_features):
+            header += ["Min" + str(titles[i])]
+            header += ["Max" + str(titles[i])]
+            header += ["Endpoint" + str(titles[i])]
+
+        output.writerow(header)
+
+        for w in range(num_workers):
+            row = []
+            row.append(w)
+            for i in range(0,num_features):
+                vals = []
+                feature_endpts = []
+                for j in range(num_indivs):
+                    for g in range(int(gens*output_freq)):
+                        vals.append(worker_info[w,g,j,i]) #titles are one off since net size not included
+                    feature_endpts.append(worker_info[w,int(gens*output_freq)-1,j,i])
+                minn = min(vals)
+                maxx = max(vals)
+                endpt = max(feature_endpts)
+                endpts[w][i] = endpt
+                row.append(minn)
+                row.append(maxx)
+                row.append(endpt)
+                mins[i] = min(minn, mins[i])
+                maxs[i] = max(maxx, maxs[i])
+            output.writerow(row)
+
+    return mins, maxs, endpts
+
+
+#IMAGE GENERATION FNS()
+def degree_distrib(dirr, num_workers, gens, output_freq):
+    for w in range(num_workers):
+        deg_file_name = dirr + "/" + str(w) + "/degree_distrib.csv"
+        in_deg_distrib = [[None,None] for i in range(gens)]
+        out_deg_distrib = [[None,None] for i in range(gens)]
+        with open(deg_file_name,'r') as deg_file:
+            titles = deg_file.readline().split(",")
+            piece = titles[-1].split("\n")
+            titles[-1] = piece[0]
+            for i in range(int(gens * output_freq)):
+                line = str(deg_file.readline())
+                line = line.replace('[', '').replace(']','').replace("\n", '')
+                line = line.split(',')
+
+                in_deg = line[1].split(" ")
+                in_deg_freq = line[2].split(" ")
+                out_deg = line[3].split(" ")
+                out_deg_freq = line[4].split(" ")
+
+                in_deg = list(filter(None, in_deg))
+                in_deg_freq = list(filter(None, in_deg_freq))
+                out_deg = list(filter(None, out_deg))
+                out_deg_freq = list(filter(None, out_deg_freq))
+
+                # plot in degrees
+                #print(in_deg, in_deg_freq)
+                plt.loglog(in_deg, in_deg_freq, basex=10, basey=10, linestyle='', color='blue', alpha=0.7, markersize=7, marker='o', markeredgecolor='blue')
+
+                #plot out degrees on same figure
+                #print(out_deg, out_deg_freq)
+                plt.loglog(out_deg, out_deg_freq, basex=10, basey=10, linestyle='', color='green', alpha=0.7, markersize=7, marker='D', markeredgecolor='green')
+
+                #way to not do every time?
+                ax = matplotlib.pyplot.gca()
+                ax.spines["top"].set_visible(False)
+                ax.spines["right"].set_visible(False)
+
+                plt.tick_params(  # http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
+                    axis='both',  # changes apply to the x-axis
+                    which='both',  # both major and minor ticks are affected
+                    right='off',  # ticks along the right edge are off
+                    top='off',  # ticks along the top edge are off
+                )
+
+                in_patch = mpatches.Patch(color='blue', label='In-degree')
+                out_patch = mpatches.Patch(color='green', label='Out-degree')
+                plt.legend(loc='upper right', handles=[in_patch, out_patch], frameon=False)
+                plt.xlabel('Degree (log) ')
+                plt.ylabel('Number of nodes with that degree (log)')
+                plt.title('Degree Distribution (network size = ' + str(line[0]) + ' nodes) of Most Fit Net')
+                plt.savefig(dirr + "/" + str(w) + "/degree_distribution/" + str(i) + ".png", dpi=300)
+                plt.clf()
+
+
+def features_over_time(dirr, num_workers,gens, num_indivs, output_freq, worker_info, titles, mins, maxs):
 
     #master plots
     '''
@@ -29,19 +140,21 @@ def features_over_time(dirr, num_workers,gens, num_indivs, output_freq):
     #worker plots
     for w in range(num_workers):
         w_dirr = dirr +"/" + str(w) + "/images/"
-        for i in range(1,len(titles)):
+        for i in range(len(titles)):
             x_ticks = []
             buffer_ticks = []
             for j in range(num_indivs):
                 data = []
                 for g in range(int(gens*output_freq)):
-                    data.append(worker_info[w,g,j,i-1]) #titles are one off since net size not included
+                    data.append(worker_info[w,g,j,i]) #titles are one off since net size not included
                     if (j==0 and g%10 == 0): 
                         x_ticks.append(int(g/output_freq))
                         buffer_ticks.append(g)
                 #print(data)
                 plt.plot(data)
-            plt.ylabel(titles[i])
+            plt.ylabel(titles[i] + " of each Individual")
+            plt.title(titles[i])
+            plt.ylim(mins[i], maxs[i])
             plt.xlabel("Generation")
             plt.xticks(buffer_ticks, x_ticks)
             plt.savefig(w_dirr + str(titles[i]))
@@ -51,27 +164,25 @@ def features_over_time(dirr, num_workers,gens, num_indivs, output_freq):
     return
 
 
-def fitness_over_params(dirr, num_workers):
-    feature_info, titles = merge_paramtest(dirr, num_workers)
+def fitness_over_params(dirr, num_workers, feature_info, titles):
+
     num_features = len(titles)
-    init_img(dirr, num_workers)
     for i in range (num_features):
         x = []
         y = []
+        xticks = []
         for w in range(num_workers):
             x.append(w)
             y.append(feature_info[w][i])
+            xticks.append(w)
         plt.bar(x,y, align="center")
+        plt.xticks(xticks)
+        plt.title(titles[i])
+        plt.xlabel("Parameter Set")
+        plt.ylabel("Feature Value at Final Generation")
         plt.savefig(dirr + "/param_images/" + str(titles[i]) + ".png")
         plt.clf()
-    x=[]
-    y=[]
-    for w in range(num_workers):  #spc plot, may be off if output.outro_csv() changes
-        x.append(w)
-        y.append(feature_info[w][1] + feature_info[w][3])
-    plt.bar(x,y, align="center")
-    plt.savefig(dirr + "/param_images/AvgChangeOfFitness_summedAfter.png")
-    plt.clf()
+
 
 
 #HELPER FNS()
@@ -83,6 +194,8 @@ def init_img(dirr, num_workers):
     for w in range(num_workers):
         if not os.path.exists(dirr +"/" + str(w) + "/images/" ):
             os.makedirs(dirr +"/" + str(w) + "/images/")
+        if not os.path.exists(dirr + "/" + str(w) + "/degree_distribution/"):
+            os.makedirs(dirr +"/" + str(w) + "/degree_distribution/")
 
 
 def merge_paramtest(dirr, num_workers):
@@ -172,12 +285,11 @@ def parse_worker_info(dirr, num_workers, gens, num_indivs, output_freq):
             #print(worker_info[1][:][0])
 
 
-    return worker_info, titles
+    return worker_info, titles[1:] #trims net# from titles since already included in worker_info ordering
 
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/work_space/data/output/fullspectrum_mutnLong"
+    dirr = "/Users/Crbn/Desktop/McG Fall '16/EvoNets/evoNet/work_space/data/output/fitness_test2"
 
-    features_over_time(dirr,8,400,40,.5)
-    #(dirr, num_workers,gens, num_indivs, output_freq)
-    #fitness_over_params(dirr, 3)
+    param_plots(dirr, 8, 2000, .1, 40)
+    #(dirr, num_workers, gens, output_freq, num_indivs)

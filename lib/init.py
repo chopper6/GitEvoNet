@@ -4,7 +4,7 @@ import util
 #--------------------------------------------------------------------------------------------------
 def initialize_master (cl_args, num_workers):   
     
-    configs                        = load_simulation_configs (cl_args[1], 0)     #changed BACK cl_args[1] -> [2]
+    configs                        = load_simulation_configs (cl_args[1], 0)
     
     M                              = load_network    (configs) 
     configs['number_of_genes']     = len(M.nodes())   #WARNING: does not dynam adapt to net size, but curr unused

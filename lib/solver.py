@@ -45,3 +45,38 @@ def solve_knapsack (kp_instance, knapsack_solver):
         coresize  =  solver_returns[2] #if DP_solver.so is used,  coresize = len (grey_genes)      
         execution_time = solver_returns[3]
         return [TOTAL_Bin, TOTAL_Din, TOTAL_Bout, TOTAL_Dout, GENES_in, GENES_out, green_genes, red_genes, grey_genes, coresize, execution_time]
+
+
+# --------------------------------------------------------------------------------------------------
+def solve_knapsack_heuristic(kp_instance):
+    # kp_instance is a tuple: (  {"gene":benefit},  {"gene":damage},  knapsack_size(=tolerance)   )
+    B_dict, D_dict, T_edges, N = kp_instance[0][0], kp_instance[0][1], kp_instance[0][2], len(kp_instance[0][0].keys())
+
+    assert (N == len(B_dict) == len(D_dict))
+    if N == 0:
+        return []
+    else:
+        grey_genes = [key for key in B_dict.keys() if (B_dict[key] > 0 and D_dict[key] > 0)]
+        green_genes = [key for key in B_dict.keys() if (B_dict[key] > 0 and D_dict[key] == 0)]
+        red_genes = [key for key in B_dict.keys() if B_dict[key] == 0]
+        assert (len(grey_genes) + len(green_genes) + len(red_genes)) == len(B_dict.keys())
+
+        num_green = len(green_genes)
+        num_red = len(red_genes)
+        num_grey = len(grey_genes)
+
+        N = num_grey + num_red + num_green
+
+        G, B, D, i = ['' for x in range(0, N)], [None for j in range (N)], [None for j in range (N)], 0
+        for key in grey_genes:
+            G[i], B[i], D[i], i = key, B_dict[key], D_dict[key], i + 1
+        i=num_grey
+        for key in green_genes:
+            G[i], B[i], D[i], i = key, B_dict[key], D_dict[key], i + 1
+        i=num_grey+num_green
+        for key in red_genes:
+            G[i], B[i], D[i], i = key, B_dict[key], D_dict[key], i + 1
+
+
+
+        return G, B, D, num_green, num_red, num_grey

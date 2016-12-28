@@ -2,10 +2,10 @@
 import math, operator, os, random, sys
 from ctypes import cdll
 import multiprocessing as mp
-
 import networkx as nx
+import statistics as stats
 
-os.environ['lib'] = "/home/2014/choppe1/Documents/EvoNet/work_space/lib"
+os.environ['lib'] = "/Users/Crbn/Desktop/McG Fall '16/EvoNets/evoNet/work_space/lib"
 sys.path.insert(0, os.getenv('lib'))
 import util, init, solver, reducer
 import output, plot_nets
@@ -14,10 +14,11 @@ import output, plot_nets
 class Net:
     def __init__(self, net, id):
         self.fitness = 0    #aim to max
-        self.fitness_parts = [0]*2   #effective total benefits
+        self.fitness_parts = [0]*3   #RGGR, ETB, ETB-heuristic
         self.net = net.copy()
         self.rebirths = 0
         self.id = id
+        self.temp = 0  #curr only for generic_rank()
 
     def copy(self):
         copy = Net(self.net, self.id)
@@ -28,7 +29,7 @@ class Net:
 
 
 # GRAPH FN'S
-def add_edge(net):
+def add_edge(net):  #unused i think
     if (len(net.nodes()) < 2):
         print("ERROR add_edge(): cannot add edge to net with < 2 nodes")
         return -1
@@ -56,11 +57,11 @@ def connect_components(net):
         components = list(nx.weakly_connected_component_subgraphs(net))
 
 # EVO FN'S
-def breed(population, num_survive, pop_size, cross_fraction, mutation_freq):
+def breed(population, num_survive, pop_size, cross_fraction):
     #duplicate, cross, or random
-    population.sort(key=operator.attrgetter('fitness'))
-    population.reverse()
-    #aim to MAX fitness
+    #population.sort(key=operator.attrgetter('fitness'))
+    #population.reverse()
+    #aim to MIN fitness, ie dominated by less
 
     #reproduction, crossover
     for p in range(num_survive, pop_size):
@@ -79,43 +80,6 @@ def breed(population, num_survive, pop_size, cross_fraction, mutation_freq):
             rand = random.randint(0,num_survive-1)           #check that gives right range
             population[p].net = population[rand].net.copy()
 
-    #mutation
-    for p in range(pop_size):
-        for i in range(int(mutation_freq*len(population[p].net.nodes()))):
-            mutate(population[p].net)
-
-
-def cross(parent1, parent2):
-    #TEST
-    #later: change merge, diff sizes of two parents should be possible
-    if ((len(parent1.nodes())) != (len(parent2.nodes()))): print("ERROR: two crossing parents don't have same # nodes!" + str((len(parent1.nodes()))) + str(len(parent2.nodes())))
-    split = random.randint(0,len(parent1.nodes())-1)
-    rand_nodes1 = random.SystemRandom().sample(parent1.nodes(), split)
-    rand_subgraph1 = parent1.subgraph(rand_nodes1).copy()
-    rand_nodes2 = random.SystemRandom().sample(parent2.nodes(), len(parent2.nodes())-split)
-    rand_subgraph2 = parent2.subgraph(rand_nodes2).copy()
-
-    #rand_nodes1 = random.SystemRandom().sample(parent1.nodes(), int((len(parent1.nodes())+1)/2))
-    #rand_nodes2 = random.SystemRandom().sample(parent2.nodes(), int(len(parent2.nodes())/2))
-
-    #print("\n\nrand nodes 1: " + str(rand_subgraph1.nodes()))
-    #print("rand edges 1: " + str(rand_subgraph1.edges()))
-    #print("\nrand nodes 2: " + str(rand_subgraph2.nodes()))
-    #print("rand edges 2: " + str(rand_subgraph2.edges()))
-
-    child = nx.disjoint_union(rand_subgraph1, rand_subgraph2)
-
-    #print("\nchild nodes: " + str(child.nodes()))
-    #print("child edges: " + str(child.edges()))
-
-    components = list(nx.weakly_connected_component_subgraphs(child))
-    if (len(components) > 20): print("WARNING cross(): child from " + str(len(components)) + " components.")
-    #basically means nets aren't dense enough
-    #maybe nature of taking random subsamples instead of random connected components/subgraphs
-
-    connect_components(child)
-
-    return child
 
 def cross_bfs(parent1, parent2):
     #passes and returns nets
@@ -124,9 +88,8 @@ def cross_bfs(parent1, parent2):
     size1 = random.randint(0,len(parent1.nodes())-1)
     size2 = len(parent2.nodes())-size1
 
-    if (len(list(nx.weakly_connected_component_subgraphs(parent1))) != 1): print("unconnected parent!")
+    #if (len(list(nx.weakly_connected_component_subgraphs(parent1))) != 1): print("unconnected parent!")
 
-    #diff btwn these two rands?
     node1 = random.SystemRandom().sample(parent1.nodes(),1)
     node2 = random.SystemRandom().sample(parent2.nodes(),1)
 
@@ -144,7 +107,6 @@ def cross_bfs(parent1, parent2):
 
     while len(component1.nodes()) < size1:
         edge_undir = next(bfs1)
-        i+=1
         i = min(edge_undir[0], edge_undir[1])
         j = max(edge_undir[0], edge_undir[1])
         component1.add_edge(edges1[i][j][0], edges1[i][j][1], sign=edges1[i][j][2])
@@ -181,83 +143,30 @@ def cross_bfs(parent1, parent2):
     return child
 
 
+def cross_aln(parent1, parent2, cross_type):
+    #only ops on out edges of selected nodes
+    #laer: try bfs and dfs in addtn to rand
+    if (len(list(nx.weakly_connected_component_subgraphs(parent1))) != 1): print("unconnected parent!")
+
+    size1 = random.randint(0,len(parent1.nodes())-1)
+    swap_nodes = random.SystemRandom().sample(parent1.nodes(),size1)
+
+    for swap_node in swap_nodes:
+        for edge in parent2.out_edges(swap_node):
+            parent2.remove_edge(edge[0], edge[1])
+        for edge in parent1.out_edges(swap_node):
+            parent1.add_edge(edge[0], edge[1])
 
 
-def cross_alt(parent1, parent2):
-    #takes NET of both parents as inputs
-    # "frags" are broken pieces of parents
-    #parents = [parent1, parent2]
-    frag1 = parent1.copy()
-    frag2 = parent2.copy()
-    frags = [frag1, frag2]
-    child = frag1
-    brokenList = [[]for i in range(2)]
-    print("frag1 edges before: " + str(frag1.edges()))
-    for p in range(2):
-        node2 = node1 = random.choice(frags[p].nodes()) #btr node choice method, change else where too
-        while(node2 == node1):
-            node2 = random.choice(frags[p].nodes())
-        frags[p].add_node("BROKEN")
-        while (nx.has_path(frags[p], node1, node2)):
-            path = list(nx.shortest_path(frags[p], node1, node2))  #shortest path or random path?
-            print("PATH: " + str(path))
-            success = False
-            while (success == False):  #poss infinite loop
-                path_index = random.randint(0,len(path)-1)   #might rm whole path, instead of single edge
-                while (path[path_index] == "BROKEN" or path_index == len(path)-1): path_index = random.randint(0,len(path)-1)
-                path_node1 = path[path_index]
-                print("index1: " + str(path_index))
-                path_index += 1
-                success = True
-                while (path[path_index] == "BROKEN"):
-                    if (path_index+1 > len(path)):
-                        success = False
-                        break
-                    path_index += 1
-
-            path_node2 = path[path_index]
-            print("index2: " + str(path_index))
-            print("EDGE: " + str(path_node1) + ", " +  str(path_node2))
-            frags[p].remove_edge(path_node1, path_node2)    #instead should rm random edge in path
-            frags[p].add_edge(path_node1, "BROKEN")
-            brokenList[p].append(path_node2)
-
-    if (len(list(nx.weakly_connected_component_subgraphs(frag1))) != 2):
-        print("Wrong # of components, found " + str(len(list(nx.weakly_connected_component_subgraphs(frag1)))))
-
-    for p in range(2):
-        for b in brokenList[p]:
-            frags[p].add_edge("BROKEN", b)
-
-    c = list(nx.weakly_connected_component_subgraphs(frags[0])) #HERE doesnt actually split
-    frag1 = c[0]
-    c = list(nx.weakly_connected_component_subgraphs(frags[1]))
-    frag2 = c[0]
-    print("frag1 edges after: " + str(frag1.edges()))
-    fraggy = c[1]
-    print("fraggy edges after: " + str(fraggy.edges()))
-    print(frag1.edges("BROKEN"))
-
-    while (frag1.edges("BROKEN")):       #how to write if edge exists btwn BROKEN and any other?
-        if (frag2.edges("BROKEN")):
-            print("HERE")
-
-
-    return child
-    #later: pick 2 nodes in each parent and divide graph in half, combine for child
-    #normlz for graph size
-
-def evolve_worker(worker_ID, founder_pop, num_workers, gens, num_survive, crossover_fraction, mutation_freq, output_dir, pressure, tolerance, grow_freq, configs):
+def evolve_worker(worker_ID,  configs, founder_pop, num_workers, gens, num_survive, crossover_fraction, cross_freq, grow_freq, mut_freq, mut_bias, output_dir, pressure, tolerance, fitness_hist_freq, fitness_type, avg_degree):
     #have to pass a lot more params for: breed, pressurize
-    #diff recogz class Net list as Nets
+    #any params NOT param tested are just init inside of this function
 
     print("Worker " + str(worker_ID) + " starting.")
 
     knapsack_solver     = cdll.LoadLibrary(configs['KP_solver_binary'])
-    #survive_fraction = float(configs['percent_survive'])/100
-    #grow_freq = float(configs['growth_frequency'])
     output_freq = float(configs['output_frequency'])
-    avg_degree = int(configs['average_degree'])
+    start_size = int(configs['starting_size'])
 
     founder_size = len(founder_pop)
     output_dir += str(worker_ID)
@@ -266,7 +175,7 @@ def evolve_worker(worker_ID, founder_pop, num_workers, gens, num_survive, crosso
         print("WARNING in evolve_worker(): more than founder population used for initial breeding.")
         #doesn't entirely break algo, so allowed to continue
 
-    #build initial population by breeding founders
+    #build initial population by breeding founders (for parallel)
     '''
     pop_size = founder_size #redundant
     population = [Net(nx.DiGraph(),i) for i in range(pop_size)]
@@ -278,36 +187,50 @@ def evolve_worker(worker_ID, founder_pop, num_workers, gens, num_survive, crosso
     population = founder_pop
     pop_size = founder_size
 
+    max_feature1, max_feature2 = 0, 0
 
     for g in range(gens):
-        max_RGGR = max_ETB = 0
-        min_RGGR = min_ETB = 1000000
+
+        if (g == 0 or g % int(1 / output_freq) == 0):
+            #popn_info = [len(population[0].net.nodes()), max_feature1, max_feature2]
+            output.to_csv(population, output_dir)
 
         for p in range(pop_size):
-            if (grow_freq != 0 and g % int(1/grow_freq) == 0):
-                grow(population[p].net, 10, avg_degree)  #net, startsize, avgdegree
+
+            if (grow_freq !=0 and (g==0 or g % int(1/grow_freq) == 0)): #grow_freq != 0 and
+                grow(population[p].net, start_size, avg_degree)  #net, startsize, avgdegree
                 #choice of GROWTH FUNCTION, eventually dyn slows
-                if (p == 0): console_report(population[0])
+                #if (p == 0): console_report(population[0])
 
-            population[p].fitness_parts = pressurize(population[p].net, pressure, tolerance, knapsack_solver)
-            max_RGGR = max(max_RGGR, population[p].fitness_parts[0])
-            max_ETB = max(max_ETB, population[p].fitness_parts[1])
-            min_RGGR = min(min_RGGR, population[p].fitness_parts[0])
-            min_ETB = min(min_ETB, population[p].fitness_parts[1])
-            #print(population[p].fitness_parts)
+            # mutation
+            for node in population[p].net.nodes():
+                if (random.random() < mut_freq):
+                    mutate(population[p].net, node, mut_bias)
 
-        for p in range(pop_size):
-            population[p].fitness = .5*(population[p].fitness_parts[0]-min_RGGR)/(max_RGGR-min_RGGR) + .5*(population[p].fitness_parts[1]-min_ETB)/(max_ETB-min_ETB)
-            #might want to check that max_RGGR and max_ETB != 0 and throw warning if are (and divide by 1)
+            population[p].fitness_parts = pressurize(population[p].net, pressure, tolerance, knapsack_solver, fitness_type)
+            if ((fitness_type == 0) or (fitness_type == 2) or (fitness_type == 3)):
+                max_feature1 = max(max_feature1, population[p].fitness_parts[0])
+                max_feature2 = max(max_feature2, population[p].fitness_parts[1])
+            elif ((fitness_type == 1 ) or (fitness_type == 4) or (fitness_type == 5) or (fitness_type == 6)):
+                population[p].fitness = population[p].fitness_parts[0]
+            else: print("unknown fitness type")
 
-        breed(population, num_survive, pop_size, crossover_fraction, mutation_freq)
-        if (output_freq != 0 and g % int(1/output_freq) == 0):
-            popn_info = [len(population[0].net.nodes()),max_RGGR, min_RGGR, max_ETB, min_ETB]
-            output.to_csv(population, output_dir, popn_info)  # need to write output.worker_csv()
+        if ((fitness_type == 0) or (fitness_type == 3)): pareto_rank(population)
+        elif ((fitness_type == 1) or (fitness_type == 4) or (fitness_type == 5) or (fitness_type == 6)):
+            population.sort(key=operator.attrgetter('fitness'))
+            population.reverse()
+        elif (fitness_type == 2):
+            generic_rank(population, 2)
+            print("generic rank debug in evolve worker(): " + str(population[0].fitness) + " vs " + str(population[30].fitness))
+
+        #breed, ocassionally cross, otherwise just replicates
+        if (cross_freq != 0 and g % int(1 / cross_freq) == 0): cross_fraction = crossover_fraction
+        else:                                                  cross_fraction = 0
+        breed(population, num_survive, pop_size, cross_fraction)
 
     population.sort(key=operator.attrgetter('fitness'))
-    population.reverse()
-    #as in breed(), check that sorts with MAX fitness first
+    population.reverse()  #if MAX'D, ex fitness_type 1
+    #SHOULD BE UNNEC AS BREED ALREADY SUPPORTS, BUT CHECK
     #print("In worker " + str(worker_ID) + ": Most fit=" + str(population[0].fitness) + " vs least fit=" + str(population[len(population) - 1].fitness))
 
     #write top founder_size pops to file
@@ -317,7 +240,7 @@ def evolve_worker(worker_ID, founder_pop, num_workers, gens, num_survive, crosso
             nx.write_edgelist(population[p].net, net_out)   #make sure overwrites
         #also write info like population[p].fitness somewhere?
 
-    output.outro_csv(output_dir, gens, output_freq)
+    #output.outro_csv(output_dir, gens*output_freq, pop_size)
 
     print("Worker " + str(worker_ID) + " finished.")
 
@@ -368,6 +291,7 @@ def grow(net, startSize, avg_degree):
     net.add_node(node) #not rand assignment
 
     if (len(net.nodes()) > 3):
+
         for i in range(avg_degree):
             while (node2 == node):
                 node2 = random.randint(0, len(net.nodes()) - 1)
@@ -380,69 +304,145 @@ def grow(net, startSize, avg_degree):
             else:
                 net.add_edge(node, node2, sign=sign)
 
+        '''
+        rand = 0
+        while(rand < avg_degree):
+            #print("in loop" + str(rand) + ", " + str(avg_degree))
+            node2 = node
+            while (node2 == node):
+                node2 = random.randint(0, len(net.nodes()) - 1)
+            sign = random.randint(0, 1)
+            if (sign == 0):     sign = -1
+
+            direction = random.random()             #rand in or out
+            if (direction < .5):
+                net.add_edge(node2, node, sign=sign)
+            else:
+                net.add_edge(node, node2, sign=sign)
+
+            rand = random.random()
+        '''
+
+
 
     #keep growing if < 2 nodes
     while (len(net.nodes()) < startSize): grow(net, startSize, avg_degree)
-
 
     #ASSUMPTION: net should remain connected
     connect_components(net)
 
 
-def mutate(net):
-    #operates on edges
-        numEdges = len(net.edges())
-        #mutation options: rm edge, add edge, change edge sender or target, change edge sign
-        mut_type = random.random()
-        if (mut_type < .25):
-            # rm edge
-            edges = net.edges()
-            edge = edges[random.randint(0,numEdges-1)]
-            net.remove_edge(edge[0], edge[1])  #might have to be *edge
+def mutate(net, node, bias):
+    #operates on edges of given node
+    #bias is boolean and prefs adding edges to nodes with high degree and vice versa
+
+    # mutation options: rm edge, add edge, change edge sender or target, change edge sign, reverse edge direction
+
+    mut_type = random.random()
+    if (len(net.out_edges(node)) != 0):
+
+        if (mut_type < .4):  #add or rm
+            if (bias == True):
+                ngh_deg = nx.average_neighbor_degree(net,nodes=[node])
+                ngh_deg = ngh_deg[node]
+                if (ngh_deg != 0):
+                    add_prob = (net.degree(node))/(ngh_deg+net.degree(node))
+                else: add_prob = .5
+            else:   add_prob = .5
+
+            if (random.random() < add_prob):
+                # add edge
+                node2 = node
+                while (node2 == node):
+                    node2 = random.SystemRandom().sample(net.nodes(), 1)
+                    node2 = node2[0]
+                sign = random.randint(0, 1)
+                if (sign == 0):     sign = -1
+                net.add_edge(node, node2, sign=sign)
+
+            else:
+                # rm edge
+                edge = random.SystemRandom().sample(net.out_edges(node), 1)
+                edge = edge[0]
+                net.remove_edge(edge[0], edge[1])
+
+                # ASSUMPTION: net should remain connected
+                while (not nx.is_weakly_connected(net)): connect_components(net)
+
+        elif(mut_type < .6):
+            #rewire: change an edge node
+
+            edge = random.SystemRandom().sample(net.out_edges(node), 1)
+            edge = edge[0]
+            net.remove_edge(edge[0], edge[1])
+            node2 = node
+            while (node2 == node):  #find a new target node
+                node2 = random.SystemRandom().sample(net.nodes(), 1)
+                node2 = node2[0]
+            sign = random.randint(0, 1)
+            if (sign == 0):     sign = -1
+
+            net.add_edge(node, node2, sign=sign)
 
             # ASSUMPTION: net should remain connected
-            while (len(list(nx.weakly_connected_components(net))) > 1): add_edge(net)
-            #print("after mutn type 1 : " + str(len(net.nodes())))
+            while (not nx.is_weakly_connected(net)): connect_components(net)
 
-        elif(mut_type < .5):
-            #add edge
-            add_edge(net)
-            #print("after mutn type 2 : " + str(len(net.nodes())))
+        elif (mut_type < .8):
+            #change direction of edge
+            edge = random.SystemRandom().sample(net.out_edges(node), 1)
+            edge = edge[0]
+            sign = net[edge[0]][edge[1]]['sign']
+            net.remove_edge(edge[0], edge[1])
+            net.add_edge(edge[1], edge[0], sign=sign)
 
-        elif(mut_type < .75):
-            #rewire: change an edge node
-            edges = net.edges()
-            edge = edges[random.randint(0,numEdges-1)]
-            node = random.randint(0, len(net.nodes())-1)
-
-            if (random.random() < .5):
-                edge = [edge[0], node]
-            else:
-                edge = [node, edge[1]]
-
-            while (len(list(nx.weakly_connected_components(net))) > 1): add_edge(net)
-            #print("after mutn type 3 : " + str(len(net.nodes())))
 
         else:
             #change edge sign
-            edges = net.edges()
-            edge = edges[random.randint(0,numEdges-1)]
+            edge = random.SystemRandom().sample(net.out_edges(node), 1)
+            edge = edge[0]
             net[edge[0]][edge[1]]['sign'] = -1*net[edge[0]][edge[1]]['sign']
-            #print("after mutn type 4 : " + str(len(net.nodes())))
 
 
-def pressurize(net, pressure, tolerance, knapsack_solver):
+    else:   #NO OUT EDGES, same prob of adding as if have out edges, otherwise do nothing
+        if (random.random() < .2):
+            if (bias == True):
+                ngh_deg = nx.average_neighbor_degree(net, nodes=[node])
+                ngh_deg = ngh_deg[node]
+                if (ngh_deg != 0):
+                    add_prob = (net.degree(node)) / (ngh_deg + net.degree(node))
+                else:
+                    add_prob = .5
+            else:
+                add_prob = .5
+
+            if (random.random() < add_prob):
+                # add edge
+                node2 = node
+                while (node2 == node):
+                    node2 = random.SystemRandom().sample(net.nodes(), 1)
+                    node2 = node2[0]
+                sign = random.randint(0, 1)
+                if (sign == 0):     sign = -1
+                net.add_edge(node, node2, sign=sign)
+
+
+def pressurize(net, pressure, tolerance, knapsack_solver, fitness_type):
     #does all the reducing to kp and solving
     #calls calc_fitness()
 
     RGGR = ETB = QOS = ETR = 0
+    ETB_heur = 0
+    dist_score = 0
+    dist_squared = 0
+    dist_in_sack = 0
+    dist_sq_in_sack = 0
     # red-green/grey ratio, effective total benefits, quality of optimal solution, effective total ratio
 
     #dynam changes these to match net size
     #IF net sizes are all the same, move outside of pressurize() loop
     num_samples_relative = min(configs['sampling_rounds_max'], len(net.nodes()) * configs['sampling_rounds'])
     #curr min( config_max, #nodes+#edges)
-    pressure_relative = int(pressure * len(net.nodes()))
+    pressure_relative = int(pressure * len(net.nodes()))  #NUM EDGES IF EDGES SELECTED FOR
     kp_instances = reducer.reverse_reduction(net, pressure_relative, int(tolerance), num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
     # ignore these parameters: configs['advice_upon'], configs['biased'], configs['BD_criteria']
 
@@ -450,7 +450,13 @@ def pressurize(net, pressure, tolerance, knapsack_solver):
     for kp in kp_instances:
         # in each iteration, a new knapsack instances is 'yeilded' by reverse_reduction function
         a_result = solver.solve_knapsack(kp, knapsack_solver)
-        instance_RGGR = instance_ETB = instance_QOS = instance_ETR = 0
+        instance_RGGR = instance_ETB = instance_ETR = 0
+        instance_ETB_heur = 0
+
+        instance_dist_score = 0
+        inst_dist_squared = 0
+        inst_dist_in_sack = 0
+        inst_dist_sq_in_sack = 0
 
         i += 1
         # the solver returns the following as a list:
@@ -501,15 +507,19 @@ def pressurize(net, pressure, tolerance, knapsack_solver):
             soln_ratios = []
             for g in range(len(Bs)):
                 if (Xs[g] == 1):
+                    inst_dist_in_sack += abs((Bs[g] - Ds[g]))
+                    inst_dist_sq_in_sack += math.pow((Bs[g] - Ds[g]),2)
                     if (Ds[g] != 0):
                         soln_ratios.append(Bs[g] / Ds[g])
                     else:
                         soln_ratios.append(Bs[g])
                     soln_bens.append(Bs[g])
+                instance_dist_score += abs((Bs[g] - Ds[g]))
+                inst_dist_squared += math.pow((Bs[g] - Ds[g]),2)
 
+            instance_ETB_heur = sum(set(Bs))
             instance_ETB = sum(set(soln_bens))
             instance_ETR = sum(set(soln_ratios))
-            instance_QOS = sum(soln_bens)
 
             if (num_grey != 0):
                 instance_RGGR = (num_green + num_red) / num_grey
@@ -524,15 +534,130 @@ def pressurize(net, pressure, tolerance, knapsack_solver):
         ETB += instance_ETB
         ETR += instance_ETR
         RGGR += instance_RGGR
-        QOS += instance_QOS
+        ETB_heur += instance_ETB_heur
 
+        dist_score += instance_dist_score
+        dist_squared += inst_dist_squared
+        dist_in_sack += inst_dist_in_sack
+        dist_sq_in_sack += inst_dist_sq_in_sack
 
+    ETB_heur /= num_samples_relative
     ETB /= num_samples_relative
     ETR /= num_samples_relative
     RGGR /= num_samples_relative
     QOS /= num_samples_relative
 
-    return [RGGR, ETB]
+    #print("before " + str(partition_score))
+    dist_score /= num_samples_relative
+    dist_squared /= num_samples_relative
+    dist_in_sack /= num_samples_relative
+    dist_sq_in_sack /= num_samples_relative
+
+    #print("after " + str(partition_score))
+
+    if (fitness_type == 0):
+        return [RGGR, ETB, ETB_heur]
+    elif (fitness_type == 1):
+        return [ETB, RGGR, ETB]   #old: dist not in sack
+    elif (fitness_type == 2):
+        return [RGGR, ETB, ETB_heur]
+    elif (fitness_type == 3):
+        return [RGGR, dist_score]
+    elif (fitness_type == 4):
+        return [RGGR, RGGR, ETB]   #old: dist^2 not in sack
+    elif (fitness_type == 5):
+        return [dist_in_sack, RGGR, ETB]
+    elif (fitness_type == 6):
+        return [dist_sq_in_sack, RGGR, ETB]
+    else: print("ERROR in pressurize(): unknown fitness type.")
+
+
+def pressurize_heuristic(net, pressure, tolerance, knapsack_solver):
+    #does all the reducing to kp and solving
+    #calls calc_fitness()
+
+    RGGR =  0
+    ETB_heur = 0
+    # red-green/grey ratio, effective total benefits, quality of optimal solution, effective total ratio
+
+    #dynam changes these to match net size
+    #IF net sizes are all the same, move outside of pressurize() loop
+    num_samples_relative = min(configs['sampling_rounds_max'], len(net.nodes()) * configs['sampling_rounds'])
+    #curr min( config_max, #nodes+#edges)
+    pressure_relative = int(pressure * len(net.nodes()))
+    kp_instances = reducer.reverse_reduction(net, pressure_relative, int(tolerance), num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
+    # ignore these parameters: configs['advice_upon'], configs['biased'], configs['BD_criteria']
+
+    i = 1
+    for kp in kp_instances:
+        # in each iteration, a new knapsack instances is 'yeilded' by reverse_reduction function
+        soln = solver.solve_knapsack_heuristic(kp)
+        if (len(soln) < 6):
+            print("WARNING in pressurize_heuristic(): kp yields empty.")
+            break
+
+        G, B, D, num_green, num_red, num_grey = soln[0], soln[1], soln[2], soln[3], soln[4], soln[5]
+
+        # DOESN'T HANDLE IF SOLVER RETURNS NULL
+
+        # the solver returns: Gs, Bs, Ds, are, respectively,
+        # the genes
+        # their corresponding benefits
+        # their corresponding weights (damages)
+
+
+        instance_RGGR = instance_ETB = instance_QOS = instance_ETR = 0
+        instance_ETB_heur = 0
+
+        instance_ETB_heur = sum(set(B))
+
+
+        if (num_grey != 0):
+            instance_RGGR = (num_green + num_red) / num_grey
+        else:
+            instance_RGGR = (num_green + num_red)
+
+
+        RGGR += instance_RGGR
+        ETB_heur += instance_ETB_heur
+
+    ETB_heur /= num_samples_relative
+    RGGR /= num_samples_relative
+
+    return [RGGR, ETB_heur, 1]  #3 is useless filler atm
+
+
+
+def pareto_rank(population):
+    #MIN
+    n = len(population)
+    for i in range(n):
+        population[i].fitness = 0
+
+    for i in range(n):
+        for j in range(n):
+            if (i != j):
+                if ((population[i].fitness_parts[0] < population[j].fitness_parts[0] and population[i].fitness_parts[1] <= population[j].fitness_parts[1])
+                    or (population[i].fitness_parts[1] < population[j].fitness_parts[1] and population[i].fitness_parts[0] <= population[j].fitness_parts[0])):
+                    population[i].fitness += 1
+
+    population.sort(key=operator.attrgetter('fitness'))
+
+def generic_rank(population, num_features):
+    #assumes that each feature intends to be MAXED
+
+    for p in range(len(population)):
+        population[p].fitness = 0
+
+    for i in range(num_features):
+        for p in range(len(population)):
+            population[p].temp = population[p].fitness_parts[i]
+        population.sort(key=operator.attrgetter('temp'))
+        for p in range(len(population)):
+            population[p].fitness += p
+
+    population.sort(key=operator.attrgetter('fitness'))
+    population.reverse()
 
 
 def console_report(net):
@@ -542,6 +667,31 @@ def console_report(net):
 
 def unused():
     #storage for unused functions
+    '''
+    # mutation OLD in breed()
+    for p in range(pop_size):
+        if (mutn_def == 0):
+            for i in range(int(mutation_freq * len(population[p].net.nodes()))):
+                mutate(population[p].net)
+        elif (mutn_def == 1):
+            for i in range(int(mutation_freq * math.log(len(population[p].net.nodes()), 2))):
+                mutate(population[p].net)
+        elif (mutn_def == 2):
+            for i in range(int(mutation_freq)):
+                mutate(population[p].net)
+        elif (mutn_def == 3):
+            if (random.random() < mutation_freq):
+                indiv = random.randint(0, pop_size - 1)
+                mutate(population[indiv].net)
+        elif (mutn_def == 4):
+            if (random.random() < mutation_freq):
+                mutate(population[p].net)
+
+        else:
+            print("WARNING in breed(): unknown mutation definition.")
+    '''
+
+
     for g in range(gens):
         #UNPARALLIZED
 
@@ -599,61 +749,127 @@ def unused():
 
 
 #FULL ALGORITHM RUN FNS()
-def parallel_param_test(configs):
+def parallel_param_test(configs, testparam_names, testparam_vals):
+    #streamlined
+    #built for at most FIVE params: testparam_names any length, testparam_vals must be lng 5
+    #note that change of population size requires additional manipulation
+
+    if (len(testparam_vals) != 5): print("ERROR in parallel_param_test(): testparam_vals must be length 5, use [0] as a filler.")
+    if (len(testparam_names) != 5): print("ERROR in parallel_param_test(): testparam_names must be length 5, use None as a filler.")
+
     gens = int(configs['generations'])
     crossover_percent = float(configs['crossover_percent'])/100
+    mutation_freq = float(configs['mutation_frequency'])
     avg_degree = int(configs['average_degree'])
-    output_file = configs['output_file']
-    output_dir_orig = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')  #no idea where this is coming from
+    output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')  #no idea where this is coming from
     grow_freq = float(configs['growth_frequency'])
     output_freq = float(configs['output_frequency'])
     num_workers = int(configs['number_of_workers'])
-
-    pressure = math.ceil ((float(configs['PT_pairs_dict'][1][0])/100.0))  #why not just pressure? SHOULD CHANGE
+    pressure = math.ceil ((float(configs['PT_pairs_dict'][1][0])/100.0))
     tolerance = configs['PT_pairs_dict'][1][1]
     start_size = int(configs['starting_size'])
     survive_fraction = float(configs['percent_survive'])/100
+    pop_size = int(configs['population_size'])
+    num_survive = int(round(pop_size*survive_fraction))
+    population = [Net(M.copy(), i) for i in range(pop_size)]
+    fitness_hist_freq = 1 #ie no history
+    crossover_freq = float(configs['crossover_frequency'])
+    fitness_type = int(configs['fitness_type'])
 
-    pop_sizes = [40]
-    mutation_freqs = [0.01,.1]  
-    cross_percents = [0]
-    tolerances = [10]
-    pressures = [.5,1]
+    mutation_bias = str(configs['mutation_bias'])
+    if (mutation_bias == "True"):   mutation_bias = True
+    elif (mutation_bias == "False"): mutation_bias = False
+    else:   print("Error in configs: mutation_bias should be True or False.")
 
-    for k in range(len(pop_sizes)):
-        pop_size = pop_sizes[k]
-        #output_dir = output_dir_orig + "popn_size" + str(pop_sizes[k]) + "/"
-        output_dir = output_dir_orig
-        output.init_csv(pop_sizes, num_workers, output_dir, configs)
-        # configs produces are not so relevant here, although some params not tuned for will be shown
 
-        pool = mp.Pool(num_workers)
-        args = []
+    lng = []
+    num_workers = 1 #override configs to match # param sets
+    for i in range (len(testparam_vals)):
+        lng.append(len(testparam_vals[i]))
+        num_workers *= lng[-1]
 
-        for j in range(len(mutation_freqs)):
-            for c in range(len(cross_percents)):
-                for i in range(len(tolerances)):
-                    for l in range(len(pressures)):
-                            #might have to change indent
-                            ID = (c*2+l)
-                            num_survive = int(pop_size*survive_fraction)
-                            population = [Net(M.copy(), i) for i in range(pop_size)]
-                            #gens_to_grow = int(gens/grow_freq)
+    param_names = ["num_workers", "gens", "num_survive", "crossover_percent", "crossover_freq", "grow_freq", "mutation_freq",  "mutation_bias", "output_dir",  "pressure", "tolerance", "fitness_hist_freq", "fitness_type", "avg_degree"]
+    param_vals = [num_workers, gens, num_survive, crossover_percent, crossover_freq, grow_freq, mutation_freq, mutation_bias, output_dir, pressure, tolerance, fitness_hist_freq, fitness_type, avg_degree]
 
-                            for p in range(pop_sizes[k]):
-                                grow(population[p].net, start_size, avg_degree)
-                            population_copy = [population[p].copy() for p in range(pop_size)]
+    output.init_csv(pop_size, num_workers, output_dir, configs)
+    worker_configs_file = output_dir + "/worker_configs.csv"
+    with open(worker_configs_file, 'w') as outConfigs:
+        title = "Worker #"
+        for i in range(len(testparam_names)):
+            if (testparam_names[i] != None):
+                title += "," + str(testparam_names[i])
+        title += "\n"
+        outConfigs.write(title)
 
-                            output.parallel_configs(ID, output_dir, pressures[l], tolerances[i], pop_sizes[k], mutation_freqs[j], survive_fraction, start_size, grow_freq, cross_percents[c])
-                            worker_args = [ID, population_copy, num_workers, gens, num_survive,cross_percents[c], mutation_freqs[j], output_dir,  pressures[l], tolerances[i], grow_freq, configs]
-                            args.append(worker_args)
 
-        print("Starting parallel parameter search # " + str(k) + ".")
-        pool.starmap(evolve_worker, args)
+    pool = mp.Pool(num_workers)
+    args = []
+    for i in range(lng[0]):
+        if (testparam_names[0] != None):
+            indx = param_names.index(testparam_names[0])
+            param_vals[indx] = testparam_vals[0][i]
 
-        print("Done evolving set # " + str(k) + ", generating images.")
-        plot_nets.features_over_time(output_dir,num_workers,gens,pop_size, output_freq)
-        plot_nets.fitness_over_params(output_dir, num_workers)
+        for j in range(lng[1]):
+            if (testparam_names[1] != None):
+                indx = param_names.index(testparam_names[1])
+                param_vals[indx] = testparam_vals[1][j]
+
+            for k in range(lng[2]):
+                if (testparam_names[2] != None):
+                    indx = param_names.index(testparam_names[2])
+                    param_vals[indx] = testparam_vals[2][k]
+
+                for l in range(lng[3]):
+                    if (testparam_names[3] != None):
+                        indx = param_names.index(testparam_names[3])
+                        param_vals[indx] = testparam_vals[3][l]
+
+                    for m in range(lng[4]):
+                        if (testparam_names[4] != None):
+                            indx = param_vals.index(testparam_names[4])
+                            param_vals[indx] = testparam_vals[4][m]
+
+                        ID = (i*lng[1]*lng[2]*lng[3]*lng[4]+j*lng[2]**lng[3]*lng[4]+k*lng[3]*lng[4]+l*lng[4]+m)
+                        indices = [i,j,k,l,m]
+                        #just for file writing
+                        with open(worker_configs_file, 'a') as outConfigs:
+                            outConfigs.write(str(ID))
+                            for n in range(len(testparam_vals)):
+                                if (testparam_vals[n] != [0]):
+                                    outConfigs.write("," + str(testparam_vals[n][indices[n]]))
+                                    #worker_unq_params.append(testparam_vals[n][indices[i]])
+                            outConfigs.write("\n")
+
+                        # note that nets are first grown to start_size before passing to workers
+                        population_copy = [population[p].copy() for p in range(pop_size)]
+                        for p in range(pop_size):
+                            grow(population_copy[p].net, start_size, param_vals[11])
+
+                        worker_args = []
+                        for n in range(len(param_vals)+3):  #params in evolve_worker()
+                            if (n==0): worker_args.append(ID)
+                            elif (n==1): worker_args.append(configs)
+                            elif (n==2): worker_args.append(population_copy)
+                            else: worker_args.append(param_vals[n-3])
+
+
+                        output.parallel_configs(ID, output_dir, testparam_names, testparam_vals, indices)
+                        args.append(worker_args)
+
+
+    print("Starting parallel parameter search.")
+    pool.starmap(evolve_worker, args)
+
+    print("Done evolving parameter sets, generating images.")
+    plot_nets.param_plots(output_dir, num_workers, gens, output_freq, pop_size)
+
+    '''
+    plot_nets.features_over_time(output_dir,num_workers,gens,pop_size, output_freq)
+    plot_nets.fitness_over_params(output_dir, num_workers)
+
+    print("Drawing degree distribution images.")
+    plot_nets.degree_distrib(output_dir,num_workers,gens, output_freq)
+    '''
 
     print("Done.")
 
@@ -710,11 +926,15 @@ if __name__ == "__main__":
     M, configs          = init.initialize_master (config_file, 0)
     #print ("\nMain net begins with "+str(len(M.nodes())) +" nodes (genes) " + str(len(M.edges())) + " edges (interactions) ")
 
-    #can call parallel_param_test here i think
-    parallel_param_test(configs)
+    test_names = ["fitness_type", "mutation_freq", None, None, None]
+    #test_vals = [[0,.2,.5,1],[.5,1],[3],[0],[0]]
+    test_vals = [[5,1],[0,.0001,.0005,.002],[0],[0],[0]]
+    #    #test_vals = [[0,.0001],[.5,1],[10],[0,3],[0]]
+    #must match: ["num_workers, gens, num_survive, crossover_percent, mutation_freq, output_dir,  pressure, tolerance, grow_freq"]
+
+    parallel_param_test(configs, test_names, test_vals)
     #simple_evolve(configs)
 
-    print ("Done.")
 
 
 
