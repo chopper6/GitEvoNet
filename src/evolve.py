@@ -302,7 +302,8 @@ def evolve_master(configs):
         if (num_survive < 1): num_survive = 1
 
         #could CHANGE dynam gen definition
-        gens = int(math.pow(base_gens, math.floor(size-start_size)))
+        gens = int(base_gens + math.floor((size)/4))
+        # gens = int(math.pow(base_gens, math.floor((size-start_size)/2)))
         print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(nets_per_worker) + ",\tpopn size = " + str(pop_size) + ",\tprev popn size= " + str(len(population)) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens))
 
         #growth
@@ -337,7 +338,7 @@ def evolve_master(configs):
     output.to_csv(population, output_dir)
 
     print("Evolution finished, generating images.")
-    plot_nets.single_run_plots(output_dir, end_size-start_size, output_freq, 1)
+    plot_nets.single_run_plots(output_dir, end_size-start_size+1, output_freq, 1)
 
     print("Master finished.")
 

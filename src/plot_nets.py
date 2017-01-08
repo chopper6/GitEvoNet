@@ -204,8 +204,10 @@ def parse_info(dirr, gens, num_indivs, output_freq):
         titles[-1] = piece[0]
         num_features = len(titles)-1
         master_info = np.empty((int(gens*output_freq), num_indivs, num_features))
+        print("in parse_info() master_info shape: " + str(np.shape(master_info)))
 
         for i in range(num_indivs * int(gens*output_freq)):
+            print("in parse_info(): i " + str(i))
             row = info_csv.readline().split(",", num_features) #might be num_features -1 now
             piece = row[-1].split("\n")
             row[-1] = piece[0]
