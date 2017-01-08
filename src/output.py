@@ -3,7 +3,7 @@ import os, csv, powerlaw
 from scipy.stats import itemfreq
 
 
-def init_csv(pop_size, num_workers, out_dir, configs):
+def init_csv(out_dir, configs):
 
     csv_title = "Net ID#, Net Size, Fitness, Leaf Measure,  Hub Measure, Average Degree\n"
     #, In-Degree Powerlaw Fit (vs Exponential) LogLikelihood Ratio, In-Degree Powerlaw Fit (vs Exponential) P-Value, In-Degree Powerlaw xmin, Out-Degree Powerlaw Fit (vs Exponential) LogLikelihood Ratio, Out-Degree Powerlaw Fit (vs Exponential) P-Value, Out-Degree Powerlaw xmin
@@ -29,8 +29,8 @@ def to_csv(population, output_dir):
         with open(output_csv, 'a') as output_file:
             output = csv.writer(output_file)
 
-            #maybe change to just the most fit in popn?
-            for p in range(len(population)):
+            #now only most fit new
+            for p in range(1):
                 net_info = []
                 net_info.append(population[p].id)
                 net_info.append(len(population[p].net.nodes()))

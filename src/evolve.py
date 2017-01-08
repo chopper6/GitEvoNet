@@ -55,7 +55,7 @@ def connect_components(net):
 # EVO FN'S
 def breed(survivors, pop_size, cross_fraction):
     #duplicate or cross
-    population = [nx.DiGraph() for i in range(pop_size)]
+    population = [Net(nx.DiGraph(),i) for i in range(pop_size)]
     num_survive = len(survivors)
 
     for p in range(num_survive):
@@ -265,75 +265,97 @@ def evolve_master(configs):
     fitness_type = int(configs['fitness_type'])
     survive_percent = int(configs['percent_survive'])
     survive_fraction = float(survive_percent)/100
-    start_size = int(configs['starting_size'])
+    avg_degree = int(configs['average_degree'])
+    grow_freq = float(configs['growth_frequency'])
+    output_freq = float(configs['output_frequency'])
 
     #new configs
-    master_gens = int(configs['master_generations'])  #CHANGE to just gens?
+    base_gens = int(configs['base_generations'])
     init_type = int(configs['initial_net_type'])
     nodes_per_worker = int(configs['nodes_per_worker'])
+    start_size = int(configs['starting_size'])
+    end_size = int(configs['ending_size'])
 
     #CHANGE OUTPUT
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    #init_worker_dirs(num_workers, output_dir)
-    #output.init_csv(pop_size, num_workers, output_dir, configs)
+    init_worker_dirs(num_workers, output_dir)
+    output.init_csv(output_dir, configs)
 
     nets_per_worker = math.floor(nodes_per_worker/start_size)
     pop_size = nets_per_worker * num_workers
     population = gen_init_population(init_type, start_size, pop_size)
     eval_fitness(population, fitness_type)
 
-    for g in range(master_gens): #later change to increase worker_base_gen^curr_master_gen
+    for size in range(start_size, end_size): #later change to increase worker_base_gen^curr_master_gen
 
+        if (size-start_size == 0 or size % int(1 / output_freq) == 0):
+            output.to_csv(population, output_dir)
+
+        #for workers, only changes when nets grow
         if (len(population[0].net.nodes()) > nodes_per_worker):
             print("Nets are larger than prescribed nodes_per_worker, ending at size " + str(len(population[0].net.nodes())))
             break
         nets_per_worker = math.floor(nodes_per_worker/len(population[0].net.nodes()))
         pop_size = nets_per_worker*num_workers
         num_survive = int(round(pop_size * survive_fraction))
-        survivors = [population[p] for p in range(num_survive)]
+        if (num_survive < 1): num_survive = 1
         print("nets per worker = " + str(nets_per_worker) + ", popn size = " + str(pop_size) + ", num survive = " + str(num_survive))
 
-        # breed, ocassionally cross, otherwise just replicates
-        if (crossover_freq != 0 and g % int(1 / crossover_freq) == 0):
-            cross_fraction = crossover_fraction
-        else:
-            cross_fraction = 0
-        population = breed(survivors, pop_size, cross_fraction)
+        #could CHANGE dynam gen definition
+        gens = int(math.pow(base_gens, math.floor(size-start_size)))
+        print("dynam gens = " + str(gens))
 
-        pool = mp.Pool(num_workers)
-        args = []
+        #growth
+        for p in range(len(population)):
+            if (grow_freq != 0 and (size % int(1 / grow_freq) == 0)):
+                grow(population[p].net, start_size, avg_degree)
 
-        #DISTRIBUTE WORKERS
-        #curr pass as params, but could read from configs if faster
-        for w in range(num_workers):
-            sub_pop = [population[p] for p in range(w*nets_per_worker, (w+1)*nets_per_worker)]
-            worker_args = [w, sub_pop, g, configs]
-            args.append(worker_args)
+        for g in range(gens):
+            survivors = [population[p] for p in range(num_survive)]
 
-        pool.starmap(evolve_worker, args)
-        print("Workers should be finished, master continuing.")
-        pool.close()
+            # breed, ocassionally cross, otherwise just replicates
+            if (crossover_freq != 0 and g % int(1 / crossover_freq) == 0):
+                cross_fraction = crossover_fraction
+            else:
+                cross_fraction = 0
+            population = breed(survivors, pop_size, cross_fraction)
 
-        population = read_in_workers(num_workers, population, output_dir, pop_size)
+            pool = mp.Pool(num_workers)
+            args = []
 
-        population.sort(key=operator.attrgetter('fitness'))
-        population.reverse()  # MAX fitness function
+            #DISTRIBUTE WORKERS
+            #curr pass as params, but could read from configs if faster
+            for w in range(num_workers):
+                sub_pop = [population[p] for p in range(w*nets_per_worker, (w+1)*nets_per_worker)]
+                worker_args = [w, sub_pop, g, configs]
+                args.append(worker_args)
+
+            pool.starmap(evolve_minion, args)
+            print("Workers should be finished, master continuing.")
+            pool.close()
+
+            population = read_in_workers(num_workers, population, output_dir, int(pop_size/num_workers))
+
+            population.sort(key=operator.attrgetter('fitness'))
+            population.reverse()  # MAX fitness function
+
+    output.to_csv(population, output_dir)
+
+    print("Evolution finished, generating images.")
+    plot_nets.single_run_plots(output_dir, end_size-start_size, output_freq, 1)
 
     print("Master finished.")
 
 def evolve_minion(worker_ID, population, curr_gen, configs):
     #retrieve configs
     pop_size = len(population)
-    avg_degree = int(configs['average_degree'])
-    grow_freq = float(configs['growth_frequency'])
     pressure = math.ceil ((float(configs['PT_pairs_dict'][1][0])/100.0))
     tolerance = configs['PT_pairs_dict'][1][1]
     mutation_freq = float(configs['mutation_frequency'])
     sampling_rounds = int(configs['sampling_rounds'])
     max_sampling_rounds = int(configs['sampling_rounds_max'])
     knapsack_solver = cdll.LoadLibrary(configs['KP_solver_binary'])
-    start_size = int(configs['starting_size'])
     fitness_type = int(configs['fitness_type'])
 
     mutation_bias = str(configs['mutation_bias'])
@@ -342,14 +364,9 @@ def evolve_minion(worker_ID, population, curr_gen, configs):
     else:   print("Error in configs: mutation_bias should be True or False.")
 
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
-    output_dir += "/" + str(worker_ID)
-    print("in evo_minion(): worker_ID " + str(worker_ID) + " starting.")
+    output_dir += str(worker_ID)
 
     for p in range(pop_size):
-        # ocassional growth
-        if (grow_freq != 0 and (curr_gen % int(1 / grow_freq) == 0)):
-            grow(population[p].net, start_size, avg_degree)
-
         # mutation
         for node in population[p].net.nodes():
             if (random.random() < mutation_freq):
@@ -806,17 +823,17 @@ def pressurize(net, pressure_relative, tolerance, knapsack_solver, fitness_type,
     else: print("ERROR in pressurize(): unknown fitness type.")
 
 
-def read_in_workers(num_workers, population, output_dir, pop_size):
+def read_in_workers(num_workers, population, output_dir, sub_pop_size):
     for w in range(num_workers):
-        for p in range(pop_size):
+        for p in range(sub_pop_size):
             net_file = output_dir + str(w) + "/net/" + str(p) + ".txt"
-            population[w*pop_size+p].net = nx.read_edgelist(net_file, nodetype=int, create_using=nx.DiGraph())
+            population[w*sub_pop_size+p].net = nx.read_edgelist(net_file, nodetype=int, create_using=nx.DiGraph())
             char_file = output_dir + str(w) + "/net_chars/" + str(p) + ".csv"
             with open(char_file, 'r') as net_char_file:
                 chars = net_char_file.readline().split(",")
-                population[w * pop_size + p].fitness = float(chars[0])
-                population[w * pop_size + p].fitness_parts[0] = float(chars[1])
-                population[w * pop_size + p].fitness_parts[1] = float(chars[2])
+                population[w * sub_pop_size + p].fitness = float(chars[0])
+                population[w * sub_pop_size + p].fitness_parts[0] = float(chars[1])
+                population[w * sub_pop_size + p].fitness_parts[1] = float(chars[2])
 
     return population
 

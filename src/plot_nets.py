@@ -248,7 +248,7 @@ def parse_worker_info(dirr, num_workers, gens, num_indivs, output_freq):
 
 
 if __name__ == "__main__":
-    dirr = "/Users/Crbn/Desktop/McG Fall '16/EvoNets/evoNet/work_space/data/output/new_fit_crossandmutn"
+    dirr = "/Users/Crbn/Desktop/McG Fall '16/EvoNets/evoNet/work_space/data/output/parfitness3_mutn/"
 
-    param_plots(dirr, 8, 1800, .025, 40, False)
-    #(dirr, num_workers, gens, output_freq, num_indivs)
+    single_run_plots(dirr, 16, 1, 40)
+    #single_run_plots(dirr, gens, output_freq, num_indivs):
