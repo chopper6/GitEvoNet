@@ -300,11 +300,10 @@ def evolve_master(configs):
         pop_size = nets_per_worker*num_workers
         num_survive = int(round(pop_size * survive_fraction))
         if (num_survive < 1): num_survive = 1
-        print("nets per worker = " + str(nets_per_worker) + ", popn size = " + str(pop_size) + ", num survive = " + str(num_survive))
 
         #could CHANGE dynam gen definition
         gens = int(math.pow(base_gens, math.floor(size-start_size)))
-        print("dynam gens = " + str(gens))
+        print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(nets_per_worker) + ",\tpopn size = " + str(pop_size) + ",\tprev popn size= " + str(len(population)) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens))
 
         #growth
         for p in range(len(population)):
@@ -315,28 +314,23 @@ def evolve_master(configs):
             survivors = [population[p] for p in range(num_survive)]
 
             # breed, ocassionally cross, otherwise just replicates
-            if (crossover_freq != 0 and g % int(1 / crossover_freq) == 0):
-                cross_fraction = crossover_fraction
-            else:
-                cross_fraction = 0
+            if (crossover_freq != 0 and g % int(1 / crossover_freq) == 0):   cross_fraction = crossover_fraction
+            else:                                                            cross_fraction = 0
             population = breed(survivors, pop_size, cross_fraction)
 
             pool = mp.Pool(num_workers)
             args = []
 
             #DISTRIBUTE WORKERS
-            #curr pass as params, but could read from configs if faster
             for w in range(num_workers):
                 sub_pop = [population[p] for p in range(w*nets_per_worker, (w+1)*nets_per_worker)]
                 worker_args = [w, sub_pop, g, configs]
                 args.append(worker_args)
 
             pool.starmap(evolve_minion, args)
-            print("Workers should be finished, master continuing.")
             pool.close()
 
             population = read_in_workers(num_workers, population, output_dir, int(pop_size/num_workers))
-
             population.sort(key=operator.attrgetter('fitness'))
             population.reverse()  # MAX fitness function
 
@@ -380,8 +374,6 @@ def evolve_minion(worker_ID, population, curr_gen, configs):
 
     eval_fitness(population, fitness_type)
     write_out_worker(population, output_dir)
-
-    print("Worker " + str(worker_ID) + " finished.")
 
 
 def evolve_island_master(configs):
