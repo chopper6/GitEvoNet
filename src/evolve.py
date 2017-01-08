@@ -4,7 +4,7 @@ from ctypes import cdll
 import multiprocessing as mp
 import networkx as nx
 
-os.environ['lib'] = "/Users/Crbn/Desktop/McG Fall '16/EvoNets/evoNet/work_space/lib"
+os.environ['lib'] = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib"
 sys.path.insert(0, os.getenv('lib'))
 import util, init, solver, reducer
 import output, plot_nets
@@ -296,13 +296,16 @@ def evolve_master(configs):
         if (len(population[0].net.nodes()) > nodes_per_worker):
             print("Nets are larger than prescribed nodes_per_worker, ending at size " + str(len(population[0].net.nodes())))
             break
-        nets_per_worker = math.floor(nodes_per_worker/len(population[0].net.nodes()))
+
+        #TEMP always size 40
+        nets_per_worker = int(math.ceil(40/num_workers)) 
+        #nets_per_worker = math.ceil(nodes_per_worker/(len(population[0].net.nodes())*num_workers/10)) 
         pop_size = nets_per_worker*num_workers
         num_survive = int(round(pop_size * survive_fraction))
-        if (num_survive < 1): num_survive = 1
+        if (num_survive < 2): num_survive = 2
 
         #could CHANGE dynam gen definition
-        gens = int(base_gens + math.floor((size)/4))
+        gens = int(base_gens + math.floor(size/10))
         # gens = int(math.pow(base_gens, math.floor((size-start_size)/2)))
         print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(nets_per_worker) + ",\tpopn size = " + str(pop_size) + ",\tprev popn size= " + str(len(population)) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens))
 
@@ -318,6 +321,7 @@ def evolve_master(configs):
             if (crossover_freq != 0 and g % int(1 / crossover_freq) == 0):   cross_fraction = crossover_fraction
             else:                                                            cross_fraction = 0
             population = breed(survivors, pop_size, cross_fraction)
+            #print("size at pt2 : " + str(len(population[0].net.nodes())))
 
             pool = mp.Pool(num_workers)
             args = []
@@ -334,7 +338,7 @@ def evolve_master(configs):
             population = read_in_workers(num_workers, population, output_dir, int(pop_size/num_workers))
             population.sort(key=operator.attrgetter('fitness'))
             population.reverse()  # MAX fitness function
-
+            #print("size at pt3 : " + str(len(population[0].net.nodes())))
     output.to_csv(population, output_dir)
 
     print("Evolution finished, generating images.")
@@ -361,6 +365,7 @@ def evolve_minion(worker_ID, population, curr_gen, configs):
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
     output_dir += str(worker_ID)
 
+    #print("size in minion at pt1: " + str(len(population[0].net.nodes())))
     for p in range(pop_size):
         # mutation
         for node in population[p].net.nodes():
@@ -372,7 +377,7 @@ def evolve_minion(worker_ID, population, curr_gen, configs):
         num_samples_relative = min(max_sampling_rounds, len(population[0].net.nodes()) * sampling_rounds)
         pressure_relative = int(pressure * len(population[0].net.nodes()))
         population[p].fitness_parts = pressurize(population[p].net, pressure_relative, tolerance, knapsack_solver,fitness_type, num_samples_relative)
-
+    #print("size in minion at pt2: " + str(len(population[0].net.nodes())))
     eval_fitness(population, fitness_type)
     write_out_worker(population, output_dir)
 
