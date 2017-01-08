@@ -375,8 +375,6 @@ def evolve_minion(worker_ID, population, curr_gen, configs):
     eval_fitness(population, fitness_type)
     write_out_worker(population, output_dir)
 
-    print("Worker " + str(worker_ID) + " finished.")
-
 
 def evolve_island_master(configs):
     #get configs
