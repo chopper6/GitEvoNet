@@ -131,13 +131,14 @@ def degree_distrib(dirr, gens, output_freq):
                     right='off',  # ticks along the right edge are off
                     top='off',  # ticks along the top edge are off
                 )
-
                 in_patch = mpatches.Patch(color='blue', label='In-degree')
                 out_patch = mpatches.Patch(color='green', label='Out-degree')
                 plt.legend(loc='upper right', handles=[in_patch, out_patch], frameon=False)
                 plt.xlabel('Degree (log) ')
                 plt.ylabel('Number of nodes with that degree (log)')
                 plt.title('Degree Distribution (network size = ' + str(line[0]) + ' nodes) of Most Fit Net')
+                plt.xlim(1,1000)
+                plt.ylim(1,1000)
                 plt.savefig(dirr + "/degree_distribution/" + str(i) + ".png", dpi=300)
                 plt.clf()
 
@@ -204,14 +205,13 @@ def parse_info(dirr, gens, num_indivs, output_freq):
         titles[-1] = piece[0]
         num_features = len(titles)-1
         master_info = np.empty((int(gens*output_freq), num_indivs, num_features))
-        print("in parse_info() master_info shape: " + str(np.shape(master_info)))
 
         for i in range(num_indivs * int(gens*output_freq)):
-            print("in parse_info(): i " + str(i))
             row = info_csv.readline().split(",", num_features) #might be num_features -1 now
             piece = row[-1].split("\n")
             row[-1] = piece[0]
-            master_info[math.floor(i / num_indivs)][int(row[0])] = row[1:]  # not sure why need to index whole array
+            master_info[math.floor(i / num_indivs)][0] = row[1:]  # not sure why need to index whole array
+
 
     return master_info, titles[1:] #trims net# from titles since already included in worker_info ordering
 
