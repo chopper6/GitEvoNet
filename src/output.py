@@ -40,29 +40,6 @@ def to_csv(population, output_dir):
                 net_info.append(population[p].fitness_parts[1])
                 net_info.append(sum(population[p].net.degree().values())/len(population[p].net.nodes()))
 
-                '''
-                in_degrees, out_degrees = list(population[0].net.in_degree().values()), list(population[0].net.out_degree().values())
-                tmp = itemfreq(in_degrees)
-                indegs, indegs_freqs = tmp[:, 0], tmp[:, 1]  # 0 = unique values in data, 1 = frequencies
-                indeg_fit = powerlaw.Fit(indegs_freqs, discrete=True)
-                indeg_xmin = indeg_fit.power_law.xmin
-                indeg_loglikeli_ratio, indeg_pval = indeg_fit.distribution_compare('power_law', 'exponential')
-
-                tmp = itemfreq(out_degrees)
-                outdegs, outdegs_freqs = tmp[:, 0], tmp[:, 1]  # 0 = unique values in data, 1 = frequencies
-                outdeg_fit = powerlaw.Fit(outdegs_freqs)
-                outdeg_xmin = outdeg_fit.power_law.xmin
-                outdeg_loglikeli_ratio, outdeg_pval = outdeg_fit.distribution_compare('power_law', 'exponential')
-
-                net_info.append(indeg_loglikeli_ratio)
-                net_info.append(indeg_pval)
-                net_info.append(indeg_xmin)
-
-                net_info.append(outdeg_loglikeli_ratio)
-                net_info.append(outdeg_pval)
-                net_info.append(outdeg_xmin)
-                '''
-
                 output.writerow(net_info)
                 #write rows more concisely?
 

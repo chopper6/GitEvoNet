@@ -81,7 +81,7 @@ def evolve_master(configs):
         # gens = int(math.pow(base_gens, math.floor((size-start_size)/2)))
         print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(nets_per_worker) + ",\tpopn size = " + str(pop_size) + ",\tprev popn size= " + str(len(population)) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens))
 
-        #growth
+        #growth, growth freq is a little redundent with dynamic gens
         for p in range(len(population)):
             if (grow_freq != 0 and (size % int(1 / grow_freq) == 0)):
                 grow(population[p].net, avg_degree)
@@ -90,15 +90,19 @@ def evolve_master(configs):
             survivors = [population[p] for p in range(num_survive)]
 
             # breed, ocassionally cross, otherwise just replicates
+            '''
             if (crossover_freq != 0 and g % int(1 / crossover_freq) == 0):   cross_fraction = crossover_fraction
             else:                                                            cross_fraction = 0
             population = breed(survivors, pop_size, cross_fraction)
+            '''
 
             pool = mp.Pool(num_workers)
             args = []
 
             #DISTRIBUTE WORKERS
             for w in range(num_workers):
+                #distrib of popn not quite generalizable, nets_per_worker should relate to num_survive
+                #or at least should ensure that ONLY top nets are being passed
                 sub_pop = [population[p] for p in range(w*nets_per_worker, (w+1)*nets_per_worker)]
                 worker_args = [w, sub_pop, g, configs]
                 args.append(worker_args)
@@ -106,9 +110,8 @@ def evolve_master(configs):
             pool.starmap(evolve_minion, args)
             pool.close()
 
-            population = read_in_workers(num_workers, population, output_dir, nets_per_worker)
-            population.sort(key=operator.attrgetter('fitness'))
-            population.reverse()  # MAX fitness function
+            population = read_in_workers(num_workers, population, output_dir, nets_per_worker, num_survive)
+            #only replaces num_survive in population, returns sorted
 
     output.to_csv(population, output_dir)
 
@@ -149,7 +152,7 @@ def evolve_minion(worker_ID, population, curr_gen, configs):
         population[p].fitness_parts = pressurize(configs, population[p].net, pressure_relative, tolerance, knapsack_solver,fitness_type, num_samples_relative)
 
     eval_fitness(population, fitness_type)
-    write_out_worker(population, output_dir)
+    write_out_worker(worker_ID, population, output_dir, fitness_type)
 
 
 # GRAPH FN'S
@@ -543,21 +546,27 @@ def init_dirs(num_workers, output_dir):
         if not os.path.exists(chars_dirr):
             os.makedirs(chars_dirr)
 
-def read_in_workers(num_workers, population, output_dir, sub_pop_size):
+def read_in_workers(num_workers, population, output_dir, sub_pop_size, num_survive):
     for w in range(num_workers):
         for p in range(sub_pop_size):
-            net_file = output_dir + str(w) + "/net/" + str(p) + ".txt"
-            population[w*sub_pop_size+p].net = nx.read_edgelist(net_file, nodetype=int, create_using=nx.DiGraph())
             char_file = output_dir + str(w) + "/net_chars/" + str(p) + ".csv"
             with open(char_file, 'r') as net_char_file:
                 chars = net_char_file.readline().split(",")
                 population[w * sub_pop_size + p].fitness = float(chars[0])
                 population[w * sub_pop_size + p].fitness_parts[0] = float(chars[1])
                 population[w * sub_pop_size + p].fitness_parts[1] = float(chars[2])
+                population[w * sub_pop_size + p].id = float(chars[3])
+
+    population.sort(key=operator.attrgetter('fitness'))
+    population.reverse() #MAX fitness function
+
+    for p in range(num_survive):
+        net_file = output_dir + str(population[p].id)
+        population[p].net = nx.read_edgelist(net_file, nodetype=int, create_using=nx.DiGraph())
 
     return population
 
-def write_out_worker(population, output_dir):
+def write_out_worker(worker_ID, population, output_dir, fitness_type):
     # write top nets to file
     # then write fitness_parts to a csv in same order as net files
     for p in range(len(population)):
@@ -565,6 +574,7 @@ def write_out_worker(population, output_dir):
         with open(netfile, 'wb') as net_out:
             nx.write_edgelist(population[p].net, net_out)
         netfile = output_dir + "/net_chars/" + str(p) + ".csv"
+        population[p].id = str(str(worker_ID) + "/net/" + str(p) + ".txt")
         with open(netfile, 'w') as chars_out:
             #fitness, fitness_parts, id
             chars_out.write(str(population[p].fitness) + "," + str(population[p].fitness_parts[0]) + "," + str(population[p].fitness_parts[1]) + "," + str(population[p].id))
