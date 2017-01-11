@@ -90,33 +90,27 @@ def degree_distrib(dirr, gens, output_freq):
         if not os.path.exists(dirr + "/degree_distribution/"):
             os.makedirs(dirr + "/degree_distribution/")
 
-        with open(deg_file_name,'r') as deg_file:
-            titles = deg_file.readline().split(",")
-            piece = titles[-1].split("\n")
-            titles[-1] = piece[0]
-            for i in range(int(gens * output_freq)):
-                line = str(deg_file.readline())
-                line = line.split(',')
-                print(line[0],line[1])
+        #with open(deg_file_name,'r') as deg_file:
+        for i in range(1):
+            all_lines = [Line.strip() for Line in (open(deg_file_name,'r')).readlines()]
+            titles = all_lines[0]
+            for line in all_lines[1:]:
                 line = line.replace('[', '').replace(']','').replace("\n", '')
-
+                line = line.split(',')
                 in_deg = line[1].split(" ")
                 in_deg_freq = line[2].split(" ")
                 out_deg = line[3].split(" ")
                 out_deg_freq = line[4].split(" ")
-
+                
                 in_deg = list(filter(None, in_deg))
                 in_deg_freq = list(filter(None, in_deg_freq))
                 out_deg = list(filter(None, out_deg))
                 out_deg_freq = list(filter(None, out_deg_freq))
 
                 # plot in degrees
-                #print(in_deg, in_deg_freq)
-                print(in_deg, in_deg_freq, out_deg, out_deg_freq)
                 plt.loglog(in_deg, in_deg_freq, basex=10, basey=10, linestyle='', color='blue', alpha=0.7, markersize=7, marker='o', markeredgecolor='blue')
 
                 #plot out degrees on same figure
-                #print(out_deg, out_deg_freq)
                 plt.loglog(out_deg, out_deg_freq, basex=10, basey=10, linestyle='', color='green', alpha=0.7, markersize=7, marker='D', markeredgecolor='green')
 
                 #way to not do every time?
@@ -209,7 +203,6 @@ def parse_info(dirr, gens, num_indivs, output_freq):
             row = info_csv.readline().split(",", num_features) #might be num_features -1 now
             piece = row[-1].split("\n")
             row[-1] = piece[0]
-            print(row[1:])
             master_info[math.floor(i / num_indivs)][0] = row[1:]  # not sure why need to index whole array
 
 
