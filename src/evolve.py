@@ -3,6 +3,7 @@ import math, operator, os, random, sys, csv
 from ctypes import cdll
 import multiprocessing as mp
 import networkx as nx
+from time import process_time as ptime
 
 os.environ['lib'] = "/Users/Crbn/Desktop/McGWinter17/EvoNet/work_space/lib"
 sys.path.insert(0, os.getenv('lib'))
@@ -51,7 +52,6 @@ def evolve_master(configs):
     gen_slowdowns = int(configs['generation_slowdowns'])
 
     #output_pref
-    np.set_printoptions(formatter={'int_kind': lambda x: ' {0:d}'.format(x)})
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
 
@@ -62,6 +62,7 @@ def evolve_master(configs):
     eval_fitness(population, fitness_type)
 
     for size in range(start_size, end_size): #later change to increase worker_base_gen^curr_master_gen
+
 
         if (size-start_size == 0 or size % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
@@ -82,10 +83,13 @@ def evolve_master(configs):
         # gens = int(math.pow(base_gens, math.floor((size-start_size)/2)))
         print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(nets_per_worker) + ",\tpopn size = " + str(pop_size) + ",\tprev popn size= " + str(len(population)) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens))
 
+        t0 = ptime()
         #growth, growth freq is a little redundent with dynamic gens
         for p in range(len(population)):
             if (grow_freq != 0 and (size % int(1 / grow_freq) == 0)):
                 grow(population[p].net, avg_degree)
+        t1 = ptime()
+        print("growth took " + str(t1-t0) + " secs.")
 
         for g in range(gens):
             survivors = [population[p] for p in range(num_survive)]
@@ -101,20 +105,27 @@ def evolve_master(configs):
             args = []
 
             #DISTRIBUTE WORKERS
+            t0 = ptime()
+            sub_pop = [population[p] for p in range(num_survive)]
             for w in range(num_workers):
                 #distrib of popn not quite generalizable, nets_per_worker should relate to num_survive
                 #or at least should ensure that ONLY top nets are being passed
-                sub_pop = [population[p] for p in range(w*nets_per_worker, (w+1)*nets_per_worker)]
                 worker_args = [w, sub_pop, g, configs]
                 args.append(worker_args)
+            t1 = ptime()
+            print("distrib workers took " + str(t1 - t0) + " secs.")
 
+            t0 = ptime()
             pool.starmap(evolve_minion, args)
             pool.close()
-            pool.terminate()
-            pool.join()
+            t1 = ptime()
+            print("minions took " + str(t1 - t0) + " secs.")
 
+            t0 = ptime()
             population = read_in_workers(num_workers, population, output_dir, nets_per_worker, num_survive)
             #only replaces num_survive in population, returns sorted
+            t1 = ptime()
+            print("reading in workers took " + str(t1 - t0) + " secs.")
 
     output.to_csv(population, output_dir)
 
