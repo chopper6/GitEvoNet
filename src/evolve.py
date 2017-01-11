@@ -48,84 +48,73 @@ def evolve_master(configs):
     end_size = int(configs['ending_size'])
     pop_size = int(configs['population_size'])
     num_survive = int(round(pop_size * survive_fraction))
-    nets_per_worker = int(math.ceil(pop_size / num_workers))
+    #nets_per_worker = int(math.ceil(pop_size / num_workers))
     gen_slowdowns = int(configs['generation_slowdowns'])
 
     #output_pref
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
 
-    #curr implementation uses the same population size rather than nets per worker
-    #nets_per_worker = math.floor(nodes_per_worker/start_size)
-    #pop_size = nets_per_worker * num_workers
+    pop_size = 50 * num_workers #same eqn as DYNAM POPN SIZE, later add to configs
     population = gen_init_population(init_type, start_size, pop_size)
     eval_fitness(population, fitness_type)
 
-    for size in range(start_size, end_size): #later change to increase worker_base_gen^curr_master_gen
+    for size in range(start_size, end_size):
 
 
         if (size-start_size == 0 or size % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
 
-        ''' variable pop_size implmtn
-        if (len(population[0].net.nodes()) > nodes_per_worker):
-            print("Nets are larger than prescribed nodes_per_worker, ending at size " + str(len(population[0].net.nodes())))
-            break
+        percent_size = float(size-start_size)/float(end_size-start_size)
 
-        nets_per_worker = math.ceil(nodes_per_worker/(len(population[0].net.nodes())*num_workers/10))
-        pop_size = nets_per_worker*num_workers
+        #dynam popn size
+        pop_size = math.ceil(50*math.pow(math.e,-1*percent_size))*num_workers
         num_survive = int(round(pop_size * survive_fraction))
         if (num_survive < 2): num_survive = 2
-        '''
 
-        #could change dynam gen definition
-        gens = int(base_gens + math.floor(size*gen_slowdowns/end_size))
-        # gens = int(math.pow(base_gens, math.floor((size-start_size)/2)))
-        print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(nets_per_worker) + ",\tpopn size = " + str(pop_size) + ",\tprev popn size= " + str(len(population)) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens))
-
-        t0 = ptime()
-        #growth, growth freq is a little redundent with dynamic gens
-        for p in range(len(population)):
-            if (grow_freq != 0 and (size % int(1 / grow_freq) == 0)):
-                grow(population[p].net, avg_degree)
-        t1 = ptime()
-        print("growth took " + str(t1-t0) + " secs.")
+        #dynam gens
+        gens = math.ceil(2*math.pow(math.e, 3*percent_size))
+        #LINEAR: gens = int(base_gens + math.floor(size*gen_slowdowns/end_size))
+        print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(pop_size/num_workers) + ",\tpopn size = " + str(pop_size) + ",\tprev popn size= " + str(len(population)) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens))
+        distrib, minions, readd = 0,0,0
 
         for g in range(gens):
-            survivors = [population[p] for p in range(num_survive)]
-
-            # breed, ocassionally cross, otherwise just replicates
+            # curr no breed, just replicates
             '''
             if (crossover_freq != 0 and g % int(1 / crossover_freq) == 0):   cross_fraction = crossover_fraction
             else:                                                            cross_fraction = 0
             population = breed(survivors, pop_size, cross_fraction)
             '''
 
+            t0 = ptime()
             pool = mp.Pool(num_workers)
             args = []
 
             #DISTRIBUTE WORKERS
-            t0 = ptime()
             sub_pop = [population[p] for p in range(num_survive)]
             for w in range(num_workers):
                 #distrib of popn not quite generalizable, nets_per_worker should relate to num_survive
                 #or at least should ensure that ONLY top nets are being passed
-                worker_args = [w, sub_pop, g, configs]
+                worker_args = [w, sub_pop, g, pop_size, num_survive, configs]
                 args.append(worker_args)
             t1 = ptime()
-            print("distrib workers took " + str(t1 - t0) + " secs.")
+            distrib += t0-t1
 
             t0 = ptime()
             pool.starmap(evolve_minion, args)
             pool.close()
             t1 = ptime()
-            print("minions took " + str(t1 - t0) + " secs.")
+            minions += t0-t1
 
             t0 = ptime()
-            population = read_in_workers(num_workers, population, output_dir, nets_per_worker, num_survive)
+            population = read_in_workers(num_workers, population, output_dir, num_survive)
             #only replaces num_survive in population, returns sorted
             t1 = ptime()
-            print("reading in workers took " + str(t1 - t0) + " secs.")
+            readd += t0-t1
+
+        print("distrib workers took " + str(distrib) + " secs.")
+        print("minions took " + str(minions) + " secs.")
+        print("reading in workers took " + str(readd) + " secs.")
 
     output.to_csv(population, output_dir)
 
@@ -134,9 +123,8 @@ def evolve_master(configs):
 
     print("Master finished.")
 
-def evolve_minion(worker_ID, population, curr_gen, configs):
+def evolve_minion(worker_ID, population, curr_gen, pop_size, num_survive, configs):
     #retrieve configs
-    pop_size = len(population)
     pressure = math.ceil ((float(configs['PT_pairs_dict'][1][0])/100.0))
     tolerance = configs['PT_pairs_dict'][1][1]
     mutation_freq = float(configs['mutation_frequency'])
@@ -154,6 +142,8 @@ def evolve_minion(worker_ID, population, curr_gen, configs):
     output_dir += str(worker_ID)
 
     for p in range(pop_size):
+        if (curr_gen == 0): grow(population[p].net, 1)
+
         # mutation
         for node in population[p].net.nodes():
             if (random.random() < mutation_freq):
@@ -165,8 +155,11 @@ def evolve_minion(worker_ID, population, curr_gen, configs):
         pressure_relative = int(pressure * len(population[0].net.nodes()))
         population[p].fitness_parts = pressurize(configs, population[p].net, pressure_relative, tolerance, knapsack_solver,fitness_type, num_samples_relative)
 
+        if (len(population[p].nodes()) > len(population[p].edges()) or len(population[p].nodes()) < 2*len(population[p].edges())):
+            print("ERROR in minion: net node:edge ratio is OUT OF BOUNDS.")
+
     eval_fitness(population, fitness_type)
-    write_out_worker(worker_ID, population, output_dir, fitness_type)
+    write_out_worker(worker_ID, population, num_survive, output_dir)
 
 
 # GRAPH FN'S
@@ -293,7 +286,7 @@ def eval_fitness(population, fitness_type):
         if (fitness_type % 2 == 0):
             population[p].fitness = population[p].fitness_parts[0] + population[p].fitness_parts[1]
         else:
-            population[p].fitness = population[p].fitness_parts[0] * population[p].fitness_parts[1]
+            population[p].fitness = math.pow(population[p].fitness_parts[1],population[p].fitness_parts[0])
     population.sort(key=operator.attrgetter('fitness'))
     population.reverse() #MAX fitness function
 
@@ -350,19 +343,25 @@ def mutate(net, node, bias):
     # mutation options: rm edge, add edge, change edge target, change edge sign, reverse edge direction
 
     mut_type = random.random()
-    if (len(net.out_edges(node)) != 0):
+    num_nodes = len(net.nodes())
+    num_edges = len(net.edges())
+    if (num_nodes == num_edges or len(net.out_edges(node)) == 0): rm_allowed = False
+    else: rm_allowed = True
+    if (num_nodes == 2*num_edges): add_allowed = False
+    else: add_allowed = True
 
-        if (mut_type < .4):  #add or rm
-            if (bias == True):
-                ngh_deg = nx.average_neighbor_degree(net,nodes=[node])
-                ngh_deg = ngh_deg[node]
-                if (ngh_deg != 0):
-                    add_prob = (net.degree(node))/(ngh_deg+net.degree(node))
-                else: add_prob = .5
-            else:   add_prob = .5
+    if (mut_type < .4):  #add or rm
+        if (bias == True):
+            ngh_deg = nx.average_neighbor_degree(net,nodes=[node])
+            ngh_deg = ngh_deg[node]
+            if (ngh_deg != 0):
+                add_prob = (net.degree(node))/(ngh_deg+net.degree(node))
+            else: add_prob = .5
+        else:   add_prob = .5
 
-            if (random.random() < add_prob):
-                # add edge
+        if (random.random() < add_prob):
+            # add edge
+            if (add_allowed == True):
                 node2 = node
                 while (node2 == node):
                     node2 = random.SystemRandom().sample(net.nodes(), 1)
@@ -371,8 +370,9 @@ def mutate(net, node, bias):
                 if (sign == 0):     sign = -1
                 net.add_edge(node, node2, sign=sign)
 
-            else:
-                # rm edge
+        else:
+            # rm edge
+            if (rm_allowed == True):
                 edge = random.SystemRandom().sample(net.out_edges(node), 1)
                 edge = edge[0]
                 net.remove_edge(edge[0], edge[1])
@@ -380,61 +380,38 @@ def mutate(net, node, bias):
                 # ASSUMPTION: net should remain connected
                 while (not nx.is_weakly_connected(net)): connect_components(net)
 
-        elif(mut_type < .6):
-            #rewire: change an edge node
+    elif(mut_type < .6):
+        #rewire: change an edge node
 
-            edge = random.SystemRandom().sample(net.out_edges(node), 1)
-            edge = edge[0]
-            net.remove_edge(edge[0], edge[1])
-            node2 = node
-            while (node2 == node):  #find a new target node
-                node2 = random.SystemRandom().sample(net.nodes(), 1)
-                node2 = node2[0]
-            sign = random.randint(0, 1)
-            if (sign == 0):     sign = -1
+        edge = random.SystemRandom().sample(net.out_edges(node), 1)
+        edge = edge[0]
+        net.remove_edge(edge[0], edge[1])
+        node2 = node
+        while (node2 == node):  #find a new target node
+            node2 = random.SystemRandom().sample(net.nodes(), 1)
+            node2 = node2[0]
+        sign = random.randint(0, 1)
+        if (sign == 0):     sign = -1
 
-            net.add_edge(node, node2, sign=sign)
+        net.add_edge(node, node2, sign=sign)
 
-            # ASSUMPTION: net should remain connected
-            while (not nx.is_weakly_connected(net)): connect_components(net)
+        # ASSUMPTION: net should remain connected
+        while (not nx.is_weakly_connected(net)): connect_components(net)
 
-        elif (mut_type < .8):
-            #change direction of edge
-            edge = random.SystemRandom().sample(net.out_edges(node), 1)
-            edge = edge[0]
-            sign = net[edge[0]][edge[1]]['sign']
-            net.remove_edge(edge[0], edge[1])
-            net.add_edge(edge[1], edge[0], sign=sign)
-
-
-        else:
-            #change edge sign
-            edge = random.SystemRandom().sample(net.out_edges(node), 1)
-            edge = edge[0]
-            net[edge[0]][edge[1]]['sign'] = -1*net[edge[0]][edge[1]]['sign']
+    elif (mut_type < .8):
+        #change direction of edge
+        edge = random.SystemRandom().sample(net.out_edges(node), 1)
+        edge = edge[0]
+        sign = net[edge[0]][edge[1]]['sign']
+        net.remove_edge(edge[0], edge[1])
+        net.add_edge(edge[1], edge[0], sign=sign)
 
 
-    else:   #NO OUT EDGES, same prob of adding as if have out edges, otherwise do nothing
-        if (random.random() < .2):
-            if (bias == True):
-                ngh_deg = nx.average_neighbor_degree(net, nodes=[node])
-                ngh_deg = ngh_deg[node]
-                if (ngh_deg != 0):
-                    add_prob = (net.degree(node)) / (ngh_deg + net.degree(node))
-                else:
-                    add_prob = .5
-            else:
-                add_prob = .5
-
-            if (random.random() < add_prob):
-                # add edge
-                node2 = node
-                while (node2 == node):
-                    node2 = random.SystemRandom().sample(net.nodes(), 1)
-                    node2 = node2[0]
-                sign = random.randint(0, 1)
-                if (sign == 0):     sign = -1
-                net.add_edge(node, node2, sign=sign)
+    else:
+        #change edge sign
+        edge = random.SystemRandom().sample(net.out_edges(node), 1)
+        edge = edge[0]
+        net[edge[0]][edge[1]]['sign'] = -1*net[edge[0]][edge[1]]['sign']
 
 
 def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitness_type, num_samples_relative):
@@ -560,30 +537,34 @@ def init_dirs(num_workers, output_dir):
         if not os.path.exists(chars_dirr):
             os.makedirs(chars_dirr)
 
-def read_in_workers(num_workers, population, output_dir, sub_pop_size, num_survive):
+def read_in_workers(num_workers, population, output_dir, num_survive):
+    sub_pop_size = num_survive #for current implementation
     for w in range(num_workers):
         for p in range(sub_pop_size):
             char_file = output_dir + str(w) + "/net_chars/" + str(p) + ".csv"
             with open(char_file, 'r') as net_char_file:
                 chars = net_char_file.readline().split(",")
+                print("read_in_workers(): reading in net# " + str(w * sub_pop_size + p))
                 population[w * sub_pop_size + p].fitness = float(chars[0])
                 population[w * sub_pop_size + p].fitness_parts[0] = float(chars[1])
                 population[w * sub_pop_size + p].fitness_parts[1] = float(chars[2])
-                population[w * sub_pop_size + p].id = float(chars[3])
+                population[w * sub_pop_size + p].id = str(chars[3])
 
     population.sort(key=operator.attrgetter('fitness'))
     population.reverse() #MAX fitness function
+    print("read_in_workers(): leader: " + str(population[0].fitness) + " beats this guy: " + str(population[5].fitness))
 
     for p in range(num_survive):
         net_file = output_dir + str(population[p].id)
+        print("read_in_workers(): net_file = " + str(net_file))
         population[p].net = nx.read_edgelist(net_file, nodetype=int, create_using=nx.DiGraph())
 
-    return population
+    return population[:num_survive]
 
-def write_out_worker(worker_ID, population, output_dir, fitness_type):
+def write_out_worker(worker_ID, population, num_survive, output_dir):
     # write top nets to file
     # then write fitness_parts to a csv in same order as net files
-    for p in range(len(population)):
+    for p in range(num_survive):
         netfile = output_dir + "/net/" + str(p) + ".txt"
         with open(netfile, 'wb') as net_out:
             nx.write_edgelist(population[p].net, net_out)
