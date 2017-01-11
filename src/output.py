@@ -1,6 +1,8 @@
 #!/usr/local/bin/python3
-import os, csv, powerlaw
+import os, csv
 from scipy.stats import itemfreq
+import numpy as np
+np.set_printoptions(formatter={'int_kind': lambda x:' {0:d}'.format(x)})
 
 
 def init_csv(out_dir, configs):
@@ -52,13 +54,15 @@ def to_csv(population, output_dir):
 
                 in_degrees, out_degrees = list(population[0].net.in_degree().values()), list(population[0].net.out_degree().values())
 
-                tmp = itemfreq(in_degrees)
-                indegs, indegs_freqs = tmp[:, 0], tmp[:, 1]  # 0 = unique values in data, 1 = frequencies
+                indegs, indegs_freqs = np.unique(in_degrees, return_counts=True)
+                #tmp = itemfreq(in_degrees)
+                #indegs, indegs_freqs = tmp[:, 0], tmp[:, 1]  # 0 = unique values in data, 1 = frequencies
                 distrib_info.append(indegs)
                 distrib_info.append(indegs_freqs)
 
-                tmp = itemfreq(out_degrees)
-                outdegs, outdegs_freqs = tmp[:, 0], tmp[:, 1]
+                outdegs, outdegs_freqs = np.unique(out_degrees, return_counts=True)
+                #tmp = itemfreq(out_degrees)
+                #outdegs, outdegs_freqs = tmp[:, 0], tmp[:, 1]
                 distrib_info.append(outdegs)
                 distrib_info.append(outdegs_freqs)
 
