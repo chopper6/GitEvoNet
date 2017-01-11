@@ -105,6 +105,8 @@ def evolve_master(configs):
 
             pool.starmap(evolve_minion, args)
             pool.close()
+            pool.terminate()
+            pool.join()
 
             population = read_in_workers(num_workers, population, output_dir, nets_per_worker)
             population.sort(key=operator.attrgetter('fitness'))

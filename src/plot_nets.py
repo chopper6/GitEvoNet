@@ -114,6 +114,7 @@ def degree_distrib(dirr, gens, output_freq):
 
                 # plot in degrees
                 #print(in_deg, in_deg_freq)
+                print(in_deg, in_deg_freq, out_deg, out_deg_freq)
                 plt.loglog(in_deg, in_deg_freq, basex=10, basey=10, linestyle='', color='blue', alpha=0.7, markersize=7, marker='o', markeredgecolor='blue')
 
                 #plot out degrees on same figure
@@ -210,6 +211,7 @@ def parse_info(dirr, gens, num_indivs, output_freq):
             row = info_csv.readline().split(",", num_features) #might be num_features -1 now
             piece = row[-1].split("\n")
             row[-1] = piece[0]
+            print(row[1:])
             master_info[math.floor(i / num_indivs)][0] = row[1:]  # not sure why need to index whole array
 
 
@@ -250,7 +252,7 @@ def parse_worker_info(dirr, num_workers, gens, num_indivs, output_freq):
 
 
 if __name__ == "__main__":
-    dirr = "/Users/Crbn/Desktop/McG Fall '16/EvoNets/evoNet/work_space/data/output/parfitness3_mutn/"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/parv2_5/"
 
-    single_run_plots(dirr, 16, 1, 40)
+    single_run_plots(dirr, 800, .05, 1)
     #single_run_plots(dirr, gens, output_freq, num_indivs):
