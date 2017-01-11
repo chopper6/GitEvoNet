@@ -4,7 +4,7 @@ from ctypes import cdll
 import multiprocessing as mp
 import networkx as nx
 
-os.environ['lib'] = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib"
+os.environ['lib'] = "/Users/Crbn/Desktop/McGWinter17/EvoNet/work_space/lib"
 sys.path.insert(0, os.getenv('lib'))
 import util, init, solver, reducer
 import output, plot_nets
@@ -51,6 +51,7 @@ def evolve_master(configs):
     gen_slowdowns = int(configs['generation_slowdowns'])
 
     #output_pref
+    np.set_printoptions(formatter={'int_kind': lambda x: ' {0:d}'.format(x)})
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
 

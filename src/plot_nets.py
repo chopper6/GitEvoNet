@@ -90,17 +90,15 @@ def degree_distrib(dirr, gens, output_freq):
         if not os.path.exists(dirr + "/degree_distribution/"):
             os.makedirs(dirr + "/degree_distribution/")
 
-
-        in_deg_distrib = [[None,None] for i in range(gens)]
-        out_deg_distrib = [[None,None] for i in range(gens)]
         with open(deg_file_name,'r') as deg_file:
             titles = deg_file.readline().split(",")
             piece = titles[-1].split("\n")
             titles[-1] = piece[0]
             for i in range(int(gens * output_freq)):
                 line = str(deg_file.readline())
-                line = line.replace('[', '').replace(']','').replace("\n", '')
                 line = line.split(',')
+                print(line[0],line[1])
+                line = line.replace('[', '').replace(']','').replace("\n", '')
 
                 in_deg = line[1].split(" ")
                 in_deg_freq = line[2].split(" ")
