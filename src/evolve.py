@@ -56,7 +56,7 @@ def evolve_master(configs):
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
 
-    pop_size = 10 * num_workers #same eqn as DYNAM POPN SIZE, later add to configs
+    pop_size = 40 * num_workers #same eqn as DYNAM POPN SIZE, later add to configs
     population = gen_init_population(init_type, start_size, pop_size)
     eval_fitness(population, fitness_type)
 
@@ -70,22 +70,25 @@ def evolve_master(configs):
 
         #dynam popn size
         #pop_size = num_workers
-        pop_size = math.ceil(10*math.pow(math.e,-6*percent_size))*num_workers
+        worker_pop_size = math.ceil(40*math.pow(math.e,-4*percent_size))
+        pop_size = worker_pop_size*num_workers
         num_survive = int(pop_size / num_workers)
         if (num_survive < 1): 
             num_survive = 1
             print("WARNING evo_master(): num_survive goes below 1, set to 1 instead")
         
         #dynam gens
-        gens = math.ceil(2*math.pow(math.e, 4*percent_size))
-        #LINEAR: gens = int(base_gens + math.floor(size*gen_slowdowns/end_size))
-        print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(pop_size/num_workers) + ",\tpopn size = " + str(pop_size) + ",\tprev popn size= " + str(len(population)) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens))
+        gens_per_growth = math.ceil(math.pow(math.e, 4*percent_size))
+        worker_gens = worker_pop_size
+        master_gens = math.ceil(gens_per_growth/worker_gens)
+
+        print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(worker_pop_size) + ",\tpopn size = " + str(pop_size) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens_per_growth) + ",\tworker gens = " + str(worker_gens) + ",\tmaster gens = " + str(master_gens))
         t1 = ptime()
         init_time = t1-t0
         distrib, minions, readd = 0,0,0
 
-        for g in range(gens):
-            # curr no breed, just replicates
+        for g in range(master_gens):
+            # curr no breeding, just replicates
             '''
             if (crossover_freq != 0 and g % int(1 / crossover_freq) == 0):   cross_fraction = crossover_fraction
             else:                                                            cross_fraction = 0
@@ -101,7 +104,7 @@ def evolve_master(configs):
                 #distrib of popn not quite generalizable, nets_per_worker should relate to num_survive
                 #or at least should ensure that ONLY top nets are being passed
                 sub_pop = [population[p] for p in range(num_survive)]  #population[p] should NOT be shared, ie each worker should be working on its own COPY
-                worker_args = [w, sub_pop, g, num_survive, configs]
+                worker_args = [w, sub_pop, worker_gens, g, gens_per_growth, num_survive, configs]
                 args.append(worker_args)
             t1 = ptime()
             distrib += t1-t0
@@ -122,6 +125,7 @@ def evolve_master(configs):
             t1 = ptime()
             readd += t1-t0
 
+        size = len(population[0].net.nodes()) #should effect outer loop
         print("init took " + str(init_time) + " secs.")
         print("distrib workers took " + str(distrib) + " secs.")
         print("minions took " + str(minions) + " secs.")
@@ -134,8 +138,9 @@ def evolve_master(configs):
 
     print("Master finished.")
 
-def evolve_minion(worker_ID, population, curr_gen, num_survive, configs):
+def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_growth, num_survive, configs):
     #retrieve configs
+    t0 = ptime()
     pressure = math.ceil ((float(configs['PT_pairs_dict'][1][0])/100.0))
     tolerance = configs['PT_pairs_dict'][1][1]
     mutation_freq = float(configs['mutation_frequency'])
@@ -153,28 +158,55 @@ def evolve_minion(worker_ID, population, curr_gen, num_survive, configs):
     output_dir += str(worker_ID)
 
     pop_size = num_survive #for current build
+    t1 = ptime()
+    init_t = t1-t0
+    growth_t, mutate_t, pressure_t, eval_t = 0,0,0,0
 
-    for p in range(pop_size):
-        if (curr_gen == 0): grow(population[p].net, 1)
+    for g in range(worker_gens):
+        for p in range(pop_size):
+            t0 = ptime()
+            if ((curr_master_gen+g) % gens_per_growth  == 0): grow(population[p].net, 1)
+            if (p==0): print("in minion growth check: curr_master_gen = " + str(curr_master_gen) + "\tcurr_worker_gen = " + str(g) + "\tgens_per_growth = " + str(gens_per_growth) + "\tresults in: " + str((curr_master_gen+g) % gens_per_growth))
+            t1 = ptime()
+            growth_t += t1-t0
 
-        # mutation
-        for node in population[p].net.nodes():
-            if (random.random() < mutation_freq):
-                mutate(population[p].net, node, mutation_bias)
+            # mutation
+            t0=ptime()
+            for node in population[p].net.nodes():
+                if (random.random() < mutation_freq):
+                    mutate(population[p].net, node, mutation_bias)
+            t1=ptime()
+            mutate_t += t1-t0
 
-        # apply pressure
-        # assumes all nets are the same size
-        num_samples_relative = min(max_sampling_rounds, len(population[0].net.nodes()) * sampling_rounds)
-        pressure_relative = int(pressure * len(population[0].net.nodes()))
-        population[p].fitness_parts = pressurize(configs, population[p].net, pressure_relative, tolerance, knapsack_solver,fitness_type, num_samples_relative)
-        
-        if (len(population[p].net.nodes()) > len(population[p].net.edges())):
-            print("ERROR in minion: too many nodes")
-        elif (2*len(population[p].net.nodes()) < len(population[p].net.edges())):
-            print("ERROR in minion: too many edges")
-        
-    eval_fitness(population, fitness_type)
+            # apply pressure
+            # assumes all nets are the same size
+            t0 = ptime()
+            num_samples_relative = min(max_sampling_rounds, len(population[0].net.nodes()) * sampling_rounds)
+            pressure_relative = int(pressure * len(population[0].net.nodes()))
+            population[p].fitness_parts = pressurize(configs, population[p].net, pressure_relative, tolerance, knapsack_solver,fitness_type, num_samples_relative)
+            t1 = ptime()
+            pressure_t += t1-t0
+
+            if (len(population[p].net.nodes()) > len(population[p].net.edges())):
+                print("ERROR in minion: too many nodes")
+            elif (2*len(population[p].net.nodes()) < len(population[p].net.edges())):
+                print("ERROR in minion: too many edges")
+
+        t0=ptime()
+        eval_fitness(population, fitness_type)
+        t1=ptime()
+        eval_t+=t1-t0
+    t0=ptime()
     write_out_worker(worker_ID, population, num_survive, output_dir)
+    t1=ptime()
+    write_t = t1-t0
+
+    print("\nminion init took " + str(init_t) + " sec.")
+    print("minion growth took " + str(growth_t) + " sec.")
+    print("minion mutate took " + str(mutate_t) + " sec.")
+    print("minion pressurize took " + str(pressure_t) + " sec.")
+    print("minion eval fitness took " + str(eval_t) + " sec.")
+    print("minion write took " + str(write_t) + " sec.\n")
 
     return population
 
