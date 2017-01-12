@@ -157,6 +157,11 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
     elif (mutation_bias == "False"): mutation_bias = False
     else:   print("Error in configs: mutation_bias should be True or False.")
 
+    survive_percent = int(configs['percent_survive'])
+    survive_fraction = float(survive_percent)/100
+    worker_num_survive = math.ceil(len(population)*survive_fraction)
+    if (worker_ID==1): print(str(worker_num_survive) + " of " + str(len(population)) + " will survive in minions.")
+
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
     output_dir += str(worker_ID)
 
@@ -166,6 +171,12 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
     growth_t, mutate_t, pressure_t, eval_t = 0,0,0,0
 
     for g in range(worker_gens):
+
+        #worker replication
+        if (g != 0):
+            for p in range(worker_num_survive,pop_size):
+                population[p] = population[p%worker_num_survive]
+
         for p in range(pop_size):
             t0 = ptime()
             if ((curr_master_gen+g) % gens_per_growth  == 0): grow(population[p].net, 1)
