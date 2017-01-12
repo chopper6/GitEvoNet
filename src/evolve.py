@@ -56,7 +56,7 @@ def evolve_master(configs):
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
 
-    pop_size = 50 * num_workers #same eqn as DYNAM POPN SIZE, later add to configs
+    pop_size = 10 * num_workers #same eqn as DYNAM POPN SIZE, later add to configs
     population = gen_init_population(init_type, start_size, pop_size)
     eval_fitness(population, fitness_type)
 
@@ -100,7 +100,7 @@ def evolve_master(configs):
             for w in range(num_workers):
                 #distrib of popn not quite generalizable, nets_per_worker should relate to num_survive
                 #or at least should ensure that ONLY top nets are being passed
-                sub_pop = [population[p].copy() for p in range(num_survive)]
+                sub_pop = [population[p] for p in range(num_survive)]  #population[p] should NOT be shared, ie each worker should be working on its own COPY
                 worker_args = [w, sub_pop, g, num_survive, configs]
                 args.append(worker_args)
             t1 = ptime()
@@ -116,8 +116,8 @@ def evolve_master(configs):
 
             t0 = ptime()
             #params instead of files seem marginally faster
-            #population = parse_worker_popn(worker_population, num_survive)
-            population = read_in_workers(num_workers, output_dir, num_survive)
+            population = parse_worker_popn(worker_population, num_survive)
+            #population = read_in_workers(num_workers, output_dir, num_survive)
             #only replaces num_survive in population, returns sorted
             t1 = ptime()
             readd += t1-t0
@@ -392,8 +392,8 @@ def mutate(net, node, bias):
             if (sign == 0):     sign = -1
             net.add_edge(node, node2, sign=sign)
     
-    else:
-    
+    elif (len(net.out_edges(node)) != 0):
+ 
         if (mut_type < .4):  #add or rm
             if (bias == True):
                 ngh_deg = nx.average_neighbor_degree(net,nodes=[node])
@@ -460,8 +460,6 @@ def mutate(net, node, bias):
         elif (mut_type < .8):
             #change direction of edge
             pre_edges = post_edges = len(net.edges())
-            edge = random.SystemRandom().sample(net.out_edges(node), 1)
-            edge = edge[0]
             edge = random.SystemRandom().sample(net.out_edges(node), 1)
             edge = edge[0]
             sign = net[edge[0]][edge[1]]['sign']
