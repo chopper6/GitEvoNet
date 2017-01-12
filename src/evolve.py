@@ -4,6 +4,7 @@ from ctypes import cdll
 import multiprocessing as mp
 import networkx as nx
 from time import process_time as ptime
+import time
 
 os.environ['lib'] = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib"
 sys.path.insert(0, os.getenv('lib'))
@@ -68,7 +69,8 @@ def evolve_master(configs):
         percent_size = float(size-start_size)/float(end_size-start_size)
 
         #dynam popn size
-        pop_size = math.ceil(20*math.pow(math.e,-10*percent_size))*num_workers
+        #pop_size = num_workers
+        pop_size = math.ceil(10*math.pow(math.e,-6*percent_size))*num_workers
         num_survive = int(pop_size / num_workers)
         if (num_survive < 1): 
             num_survive = 1
@@ -95,10 +97,10 @@ def evolve_master(configs):
             args = []
 
             #DISTRIBUTE WORKERS
-            sub_pop = [population[p] for p in range(num_survive)]
             for w in range(num_workers):
                 #distrib of popn not quite generalizable, nets_per_worker should relate to num_survive
                 #or at least should ensure that ONLY top nets are being passed
+                sub_pop = [population[p].copy() for p in range(num_survive)]
                 worker_args = [w, sub_pop, g, num_survive, configs]
                 args.append(worker_args)
             t1 = ptime()
@@ -107,13 +109,15 @@ def evolve_master(configs):
             t0 = ptime()
             worker_population = pool.starmap(evolve_minion, args)
             pool.close()
+            pool.join()
+            #pool.terminate()
             t1 = ptime()
             minions += t1-t0
 
             t0 = ptime()
             #params instead of files seem marginally faster
-            population = parse_worker_popn(worker_population, num_survive)
-            #population = read_in_workers(num_workers, output_dir, num_survive)
+            #population = parse_worker_popn(worker_population, num_survive)
+            population = read_in_workers(num_workers, output_dir, num_survive)
             #only replaces num_survive in population, returns sorted
             t1 = ptime()
             readd += t1-t0
@@ -296,7 +300,7 @@ def eval_fitness(population, fitness_type):
 
     for p in range(len(population)):
         if (fitness_type % 2 == 0):
-            population[p].fitness = population[p].fitness_parts[0] + population[p].fitness_parts[1]
+            population[p].fitness = population[p].fitness_parts[0] * population[p].fitness_parts[1]
         else:
             population[p].fitness = math.pow(population[p].fitness_parts[1],population[p].fitness_parts[0])
     population.sort(key=operator.attrgetter('fitness'))
