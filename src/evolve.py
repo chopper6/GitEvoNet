@@ -60,7 +60,8 @@ def evolve_master(configs):
     population = gen_init_population(init_type, start_size, pop_size)
     eval_fitness(population, fitness_type)
 
-    for size in range(start_size, end_size):
+    size = start_size
+    while (size < end_size):
 
         t0 = ptime()
         if (size-start_size == 0 or size % int(1 / output_freq) == 0):
@@ -134,7 +135,7 @@ def evolve_master(configs):
     output.to_csv(population, output_dir)
 
     print("Evolution finished, generating images.")
-    plot_nets.single_run_plots(output_dir, end_size-start_size+1, output_freq, 1)
+    #plot_nets.single_run_plots(output_dir, end_size-start_size+1, output_freq, 1)
 
     print("Master finished.")
 
@@ -166,7 +167,6 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
         for p in range(pop_size):
             t0 = ptime()
             if ((curr_master_gen+g) % gens_per_growth  == 0): grow(population[p].net, 1)
-            if (p==0): print("in minion growth check: curr_master_gen = " + str(curr_master_gen) + "\tcurr_worker_gen = " + str(g) + "\tgens_per_growth = " + str(gens_per_growth) + "\tresults in: " + str((curr_master_gen+g) % gens_per_growth))
             t1 = ptime()
             growth_t += t1-t0
 
@@ -201,12 +201,13 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
     t1=ptime()
     write_t = t1-t0
 
-    print("\nminion init took " + str(init_t) + " sec.")
-    print("minion growth took " + str(growth_t) + " sec.")
-    print("minion mutate took " + str(mutate_t) + " sec.")
-    print("minion pressurize took " + str(pressure_t) + " sec.")
-    print("minion eval fitness took " + str(eval_t) + " sec.")
-    print("minion write took " + str(write_t) + " sec.\n")
+    if (worker_ID == 0):
+        print("\nminion init took " + str(init_t) + " sec.")
+        print("minion growth took " + str(growth_t) + " sec.")
+        print("minion mutate took " + str(mutate_t) + " sec.")
+        print("minion pressurize took " + str(pressure_t) + " sec.")
+        print("minion eval fitness took " + str(eval_t) + " sec.")
+        print("minion write took " + str(write_t) + " sec.\n")
 
     return population
 
