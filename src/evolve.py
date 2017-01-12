@@ -61,10 +61,11 @@ def evolve_master(configs):
     eval_fitness(population, fitness_type)
 
     size = start_size
+    i=0
     while (size < end_size):
 
         t0 = ptime()
-        if (size-start_size == 0 or size % int(1 / output_freq) == 0):
+        if (i % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
 
         percent_size = float(size-start_size)/float(end_size-start_size)
@@ -126,7 +127,8 @@ def evolve_master(configs):
             t1 = ptime()
             readd += t1-t0
 
-        size = len(population[0].net.nodes()) #should effect outer loop
+        size = len(population[0].net.nodes())
+        i+=1
         print("init took " + str(init_time) + " secs.")
         print("distrib workers took " + str(distrib) + " secs.")
         print("minions took " + str(minions) + " secs.")
