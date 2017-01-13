@@ -26,7 +26,7 @@ def single_run_plots (dirr):
 
 #IMAGE GENERATION FNS()
 def degree_distrib(dirr):
-        deg_file_name = dirr + "degree_distrib.csv"
+        deg_file_name = dirr + "/degree_distrib.csv"
 
         if not os.path.exists(dirr + "/degree_distribution/"):
             os.makedirs(dirr + "/degree_distribution/")
@@ -78,11 +78,10 @@ def degree_distrib(dirr):
 def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
 
         img_dirr = dirr + "/images/"
-        for i in range(1,len(titles)):
+        for i in range(len(titles)):
             x_ticks = []
             buffer_ticks = []
             num_outputs = len(net_info)
-            print("plot_nets.features_over_time(): num_features = " + str(len(titles)) + "\tnum_outputs = " + str(num_outputs))
             ydata = []
             xdata = []
             for j in range(num_outputs):
@@ -90,13 +89,20 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
                 xdata.append(net_info[j,0])
                 #change x_ticks?
                 #x_ticks.append(int(g/output_freq))
-                #buffer_ticks.append(g)
+                #buffer_ticks.append(gi)
+            x_ticks = []
+            buffer_ticks = []
+            max_net_size = net_info[num_outputs-1,0]
+            buffer_ticks.append(0)
+            for j in range(0,11):
+                x_ticks.append((max_net_size/10)*j)
+                buffer_ticks.append(j)
             plt.plot(xdata, ydata)
             plt.ylabel(titles[i] + " of most fit Individual")
             plt.title(titles[i])
             if (use_lims==True): plt.ylim(mins[i], maxs[i])
             plt.xlabel("Net Size")
-            #plt.xticks(buffer_ticks, x_ticks)
+            plt.xticks(x_ticks, x_ticks)
             plt.savefig(img_dirr + str(titles[i]))
             plt.clf()
 
@@ -114,17 +120,17 @@ def parse_info(dirr):
         titles = lines[0].split(",")
         piece = titles[-1].split("\n")
         titles[-1] = piece[0]
-        num_features = len(titles)-1
+        num_features = len(titles)
         num_output = len(lines)-1
-        master_info = np.empty(num_output, num_features)
+        master_info = np.empty((num_output, num_features))
 
         for i in range(0,num_output):
-            row = lines[i+1].split(",", num_features) #might be num_features -1 now
+            row = lines[i+1].split(",", num_features) 
             piece = row[-1].split("\n")
             row[-1] = piece[0]
             master_info[i] = row
 
-    return master_info, titles #trims net# from titles since already included in worker_info ordering
+    return master_info, titles 
 
 
 #RETIRED FNS(), may be of use as reference
@@ -190,7 +196,6 @@ def write_outro (dirr, num_workers, gens, num_indivs, output_freq, worker_info, 
     return mins, maxs, endpts
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/parv2_5/"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/test2"
 
-    single_run_plots(dirr, 800, .05, 1)
-    #single_run_plots(dirr, gens, output_freq, num_indivs):
+    single_run_plots(dirr)

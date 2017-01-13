@@ -137,7 +137,7 @@ def evolve_master(configs):
     output.to_csv(population, output_dir)
 
     print("Evolution finished, generating images.")
-    #plot_nets.single_run_plots(output_dir, end_size-start_size+1, output_freq, 1)
+    plot_nets.single_run_plots(output_dir)
 
     print("Master finished.")
 
@@ -160,7 +160,6 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
     survive_percent = int(configs['percent_survive'])
     survive_fraction = float(survive_percent)/100
     worker_num_survive = math.ceil(len(population)*survive_fraction)
-    if (worker_ID==1): print(str(worker_num_survive) + " of " + str(len(population)) + " will survive in minions.")
 
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
     output_dir += str(worker_ID)
@@ -168,14 +167,16 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
     pop_size = num_survive #for current build
     t1 = ptime()
     init_t = t1-t0
-    growth_t, mutate_t, pressure_t, eval_t = 0,0,0,0
+    growth_t, mutate_t, pressure_t, eval_t, replic_t = 0,0,0,0,0
 
     for g in range(worker_gens):
-
         #worker replication
+        t0=ptime()
         if (g != 0):
             for p in range(worker_num_survive,pop_size):
-                population[p] = population[p%worker_num_survive]
+                population[p] = population[p%worker_num_survive].copy()
+        t1=ptime()
+        replic_t += t1-t0
 
         for p in range(pop_size):
             t0 = ptime()
@@ -190,7 +191,6 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
                     mutate(population[p].net, node, mutation_bias)
             t1=ptime()
             mutate_t += t1-t0
-
             # apply pressure
             # assumes all nets are the same size
             t0 = ptime()
@@ -199,7 +199,6 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
             population[p].fitness_parts = pressurize(configs, population[p].net, pressure_relative, tolerance, knapsack_solver,fitness_type, num_samples_relative)
             t1 = ptime()
             pressure_t += t1-t0
-
             if (len(population[p].net.nodes()) > len(population[p].net.edges())):
                 print("ERROR in minion: too many nodes")
             elif (2*len(population[p].net.nodes()) < len(population[p].net.edges())):
@@ -209,13 +208,15 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
         eval_fitness(population, fitness_type)
         t1=ptime()
         eval_t+=t1-t0
+
     t0=ptime()
     write_out_worker(worker_ID, population, num_survive, output_dir)
     t1=ptime()
     write_t = t1-t0
 
-    if (worker_ID == 0):
+    if (worker_ID == 0 and curr_master_gen==0):
         print("\nminion init took " + str(init_t) + " sec.")
+        print("minion replication took " + str(replic_t) + " sec.")
         print("minion growth took " + str(growth_t) + " sec.")
         print("minion mutate took " + str(mutate_t) + " sec.")
         print("minion pressurize took " + str(pressure_t) + " sec.")
@@ -235,6 +236,14 @@ def connect_components(net):
             sign = random.randint(0, 1)
             if (sign == 0):     sign = -1
             net.add_edge(node1[0], node2[0], sign=sign)
+
+        #since add edge, could over step boundary condition
+        if (2*len(net.nodes()) < len(net.edges())):
+            #if so, rm an edge
+            edge = random.SystemRandom().sample(net.out_edges(), 1)
+            edge = edge[0]
+            net.remove_edge(edge[0], edge[1])
+
         components = list(nx.weakly_connected_component_subgraphs(net))
 
 # EVO OPERATION FN'S
@@ -524,10 +533,12 @@ def mutate(net, node, bias):
                 post_edges = len(net.edges()) 
         else:
             #change edge sign
+            pre_edges = len(net.edges())
             edge = random.SystemRandom().sample(net.out_edges(node), 1)
             edge = edge[0]
             net[edge[0]][edge[1]]['sign'] = -1*net[edge[0]][edge[1]]['sign']
-
+            post_edges = len(net.edges())
+            if (pre_edges != post_edges): print("ERROR: mutn sign change has changed the number of edges!")
 
 def parse_worker_popn (worker_population, num_survive):
     population = []
