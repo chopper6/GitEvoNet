@@ -19,6 +19,8 @@ def single_run_plots (dirr):
     mins, maxs = 0,0
     features_over_time(dirr, net_info, titles, mins, maxs, False)
 
+    pressurize_time(dirr)
+
     print("Generating degree distribution plots.")
     degree_distrib(dirr)
 
@@ -109,6 +111,28 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
 
         return
 
+def pressurize_time(dirr):
+    img_dirr = dirr + "/images/"
+    with open(dirr + "/timing.csv", 'r') as timing_csv:
+        lines = timing_csv.readlines()
+        title = lines[0]
+        net_size=[]
+        time=[]
+        for line in lines[1:]:
+            net_size.append(line[0])
+            time.append(line[1])
+        max_net_size = int(lines[-1][0])
+        x_ticks = []
+        for j in range(0, 11):
+            x_ticks.append((max_net_size / 10) * j)
+
+        plt.plot(net_size,time)
+        plt.xlabel("Net Size")
+        plt.ylabel("Pressurize Time per Growth Step")
+        plt.title("Pressurize Time as Networks Grow")
+        plt.xticks(x_ticks, x_ticks)
+        plt.savefig(img_dirr + "pressurize_time")
+        plt.clf()
 
 #HELPER FNS()
 def parse_info(dirr):

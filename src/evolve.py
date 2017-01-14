@@ -106,7 +106,7 @@ def evolve_master(configs):
                 #distrib of popn not quite generalizable, nets_per_worker should relate to num_survive
                 #or at least should ensure that ONLY top nets are being passed
                 sub_pop = [population[p] for p in range(num_survive)]  #population[p] should NOT be shared, ie each worker should be working on its own COPY
-                worker_args = [w, sub_pop, worker_gens, g, gens_per_growth, num_survive, configs]
+                worker_args = [w, sub_pop, worker_gens, g, gens_per_growth, num_survive, master_gens, configs]
                 args.append(worker_args)
             t1 = ptime()
             distrib += t1-t0
@@ -141,7 +141,7 @@ def evolve_master(configs):
 
     print("Master finished.")
 
-def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_growth, num_survive, configs):
+def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_growth, num_survive, master_gens, configs):
     #retrieve configs
     t0 = ptime()
     pressure = math.ceil ((float(configs['PT_pairs_dict'][1][0])/100.0))
@@ -168,6 +168,7 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
     t1 = ptime()
     init_t = t1-t0
     growth_t, mutate_t, pressure_t, eval_t, replic_t = 0,0,0,0,0
+    num_growth = 0
 
     for g in range(worker_gens):
         #worker replication
@@ -180,7 +181,9 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
 
         for p in range(pop_size):
             t0 = ptime()
-            if ((curr_master_gen+g) % gens_per_growth  == 0): grow(population[p].net, 1)
+            if ((curr_master_gen+g) % gens_per_growth  == 0):
+                grow(population[p].net, 1)
+                num_growth += 1
             t1 = ptime()
             growth_t += t1-t0
 
@@ -222,6 +225,10 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
         print("minion pressurize took " + str(pressure_t) + " sec.")
         print("minion eval fitness took " + str(eval_t) + " sec.")
         print("minion write took " + str(write_t) + " sec.\n")
+
+        orig_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
+        end_size = len(population[0].net.nodes())
+        output.minion_csv(orig_dir, pressure_t, master_gens, num_growth, end_size)
 
     return population
 
@@ -353,11 +360,17 @@ def cross_aln(parent1, parent2, cross_type):
 def eval_fitness(population, fitness_type):
     #determines fitness of each individual and orders the population by fitness
 
-    for p in range(len(population)):
-        if (fitness_type % 2 == 0):
-            population[p].fitness = population[p].fitness_parts[0] * population[p].fitness_parts[1]
-        else:
-            population[p].fitness = math.pow(population[p].fitness_parts[1],population[p].fitness_parts[0])
+    if (fitness_type % 3 == 0):
+        generic_rank(population)
+
+    else:
+        for p in range(len(population)):
+            if (fitness_type % 3 == 1):
+                population[p].fitness = population[p].fitness_parts[0] * population[p].fitness_parts[1]
+            else:
+                population[p].fitness = math.pow(population[p].fitness_parts[1],population[p].fitness_parts[0])
+
+
     population.sort(key=operator.attrgetter('fitness'))
     population.reverse() #MAX fitness function
 
@@ -389,6 +402,20 @@ def gen_init_population(init_type, start_size, pop_size):
             net.add_edge(node, node2, sign=sign)
 
     return population
+
+def generic_rank(population):
+
+    for p in range(len(population)):
+        population[p].fitness = 0
+
+    for i in range(2): #leaf and hub features
+        for p in range(len(population)):
+            population[p].id = population[p].fitness_parts[i]
+        population.sort(key=operator.attrgetter('id'))
+        #no reverse, ie MIN features, to MAX fitness consistent with other definitions
+        for p in range(len(population)):
+            population[p].fitness += p
+
 
 
 def grow(net, avg_degree):
@@ -571,6 +598,12 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
         instance_RGGR, instance_ETB,inst_dist_in_sack, inst_dist_sq_in_sack, inst_ETB_ratio, inst_RGAllR  = 0,0,0,0,0,0
 
         # the solver returns the following as a list:
+        # 0		GENES_in: 		a list, each element in the list is a tuple of three elements: node(gene) ID, its value(benefit), its weight(damage)
+        # 1     number_green_genes
+        # 2     number_red_genes
+        # 3     number_grey genes
+
+        # before the solver would return
         # 0		TOTAL_Bin:		total value of objects inside the knapsack,
         # 1		TOTAL_Din:		total weight of objects inside the knapsack
         # 2		TOTAL_Bout:		total value of objects outside knapsack
@@ -586,25 +619,22 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
         if len(a_result) > 0:
             Gs, Bs, Ds, Xs = [], [], [], []
             # -------------------------------------------------------------------------------------------------
-            GENES_in, GENES_out, coresize, execution_time = a_result[4], a_result[5], a_result[9], a_result[10]
-            total_benefit = a_result[0]
-            total_dmg = a_result[1]
-            num_green = len(a_result[6])
-            num_red = len(a_result[7])
-            num_grey = len(a_result[8])
+            #GENES_in, GENES_out, coresize, execution_time = a_result[4], a_result[5], a_result[9], a_result[10]
+
+            GENES_in, num_green, num_red, num_grey = a_result[0], a_result[1], a_result[2], a_result[3]
             # -------------------------------------------------------------------------------------------------
+            soln_bens = []
             for g in GENES_in:  # notice that green_genes is a subset of GENES_in
                 Gs.append(
                     str(g[0]) + '$' + str(net.in_degree(g[0])) + '$' + str(net.out_degree(g[0])))
                 Bs.append(g[1])
                 Ds.append(g[2])
                 Xs.append(1)
-            for g in GENES_out:  # notice that red_genes is a subset of GENES_out
-                Gs.append(
-                    str(g[0]) + '$' + str(net.in_degree(g[0])) + '$' + str(net.out_degree(g[0])))
-                Bs.append(g[1])
-                Ds.append(g[2])
-                Xs.append(0)
+
+                #hub score eval pt1
+                inst_dist_in_sack += abs((Bs[g] - Ds[g]))
+                inst_dist_sq_in_sack += math.pow((Bs[g] - Ds[g]), 2)
+                soln_bens.append(Bs[g])
 
             # Gs, Bs, Ds, Xs are, respectively,
             # the genes
@@ -612,13 +642,7 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
             # their corresponding weights (damages)
             # the solution vector (a binary 0/1 sequence, 0 = outside knapsack, 1=inside knapsack)
 
-            #hub score eval
-            soln_bens = []
-            for g in range(len(Bs)):
-                if (Xs[g] == 1):
-                    inst_dist_in_sack += abs((Bs[g] - Ds[g]))
-                    inst_dist_sq_in_sack += math.pow((Bs[g] - Ds[g]),2)
-                    soln_bens.append(Bs[g])
+            #hub score eval pt2
             instance_ETB = sum(set(soln_bens))
             if (sum(soln_bens) != 0): inst_ETB_ratio = sum(set(soln_bens))/sum(soln_bens)
             else: inst_ETB_ratio = sum(set(soln_bens))
@@ -639,8 +663,6 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
         dist_sq_in_sack += inst_dist_sq_in_sack
         ETB_ratio += inst_ETB_ratio
         RGAllR += inst_RGAllR
-
-        #normalize by net size?
 
     ETB /= num_samples_relative
     RGGR /= num_samples_relative
@@ -870,22 +892,6 @@ def pareto_rank(population):
                     population[i].fitness += 1
 
     population.sort(key=operator.attrgetter('fitness'))
-
-def generic_rank(population, num_features):
-    #assumes that each feature intends to be MAXED
-
-    for p in range(len(population)):
-        population[p].fitness = 0
-
-    for i in range(num_features):
-        for p in range(len(population)):
-            population[p].temp = population[p].fitness_parts[i]
-        population.sort(key=operator.attrgetter('temp'))
-        for p in range(len(population)):
-            population[p].fitness += p
-
-    population.sort(key=operator.attrgetter('fitness'))
-    population.reverse()
 
 def parallel_param_test(configs, testparam_names, testparam_vals):
     #streamlined

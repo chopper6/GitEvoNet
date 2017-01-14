@@ -22,6 +22,10 @@ def init_csv(out_dir, configs):
         for config in configs:
             outConfigs.write(config + "," + str(configs[config]) + "\n")
 
+    out_time = out_dir + "/timing.csv"
+    with open(out_time, 'w') as out_timing:
+        out_timing.write("Net Size, Presssurize Time\n")
+
 
 def to_csv(population, output_dir):
 
@@ -68,3 +72,13 @@ def to_csv(population, output_dir):
                 distrib_info.append(outdegs_freqs)
 
                 output.writerow(distrib_info)
+
+
+def minion_csv(output_dir, worker_pressurize_time, master_gens, num_growth, end_size):
+    with open(output_dir + "/timing.csv", 'a') as time_file:
+        output=csv.writer(time_file)
+        info = []
+        info.append(end_size)
+        pressurize_time = worker_pressurize_time*master_gens/num_growth
+        info.append(pressurize_time)
+        output.writerow(info)
