@@ -72,7 +72,7 @@ def evolve_master(configs):
 
         #dynam popn size
         #pop_size = num_workers
-        worker_pop_size = math.ceil(10*math.pow(math.e,-3*percent_size))
+        worker_pop_size = math.ceil(10*math.pow(math.e,-4*percent_size))
         pop_size = worker_pop_size*num_workers
         num_survive = int(pop_size / num_workers)
         if (num_survive < 1): 
@@ -80,7 +80,7 @@ def evolve_master(configs):
             print("WARNING evo_master(): num_survive goes below 1, set to 1 instead")
         
         #dynam gens
-        gens_per_growth = 1 #math.ceil(math.pow(math.e, 3*percent_size))
+        gens_per_growth = math.ceil(math.pow(math.e, 4*percent_size))
         worker_gens = worker_pop_size
         master_gens = math.ceil(gens_per_growth/worker_gens)
 
@@ -203,11 +203,12 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
             population[p].fitness_parts = pressurize(configs, population[p].net, pressure_relative, tolerance, knapsack_solver,fitness_type, num_samples_relative)
             t1 = ptime()
             pressure_t += t1-t0
+            '''
             if (len(population[p].net.nodes()) > len(population[p].net.edges())):
                 print("ERROR in minion: too many nodes")
             elif (2*len(population[p].net.nodes()) < len(population[p].net.edges())):
                 print("ERROR in minion: too many edges")
-
+            '''
         t0=ptime()
         eval_fitness(population, fitness_type)
         t1=ptime()
@@ -385,12 +386,24 @@ def gen_init_population(init_type, start_size, pop_size):
         for p in range(pop_size):
             while (len(population[p].net.nodes()) < start_size): grow(population[p].net, 1)
 
+    elif (init_type == 1):
+        population = [Net(nx.erdos_renyi_graph(200,.01, directed=True, seed=None), i) for i in range(pop_size)]
+        for p in range(pop_size):
+            edge_list = population[p].net.edges()
+            for edge in edge_list:
+                sign = random.randint(0, 1)
+                if (sign == 0):     sign = -1
+                population[p].net[edge[0]][edge[1]]['sign'] = sign
+
     else:
         print("ERROR in gen_init_population(): unknown init_type.")
         return
 
+    '''
     for p in range(pop_size):
         while (len(population[p].net.nodes()) > len(population[p].net.edges())):
+            if (init_type == 1):
+                print("WARNING in gen_init_popn: eR graph should not need further initialization.")
             net = population[p].net
             #add edge
             node = random.SystemRandom().sample(net.nodes(), 1)
@@ -402,7 +415,7 @@ def gen_init_population(init_type, start_size, pop_size):
             sign = random.randint(0, 1)
             if (sign == 0):     sign = -1
             net.add_edge(node, node2, sign=sign)
-
+    '''
     return population
 
 def generic_rank(population):
@@ -449,7 +462,7 @@ def grow(net, avg_degree):
     #connect_components
     #shouldn't disconnect, remove if doesn't appear as issue
     components = list(nx.weakly_connected_component_subgraphs(net))
-    if (len(components) != 1): print("ERROR in grow(): graph is not connected.")
+    #if (len(components) != 1): print("ERROR in grow(): graph is not connected.")
 
 def mutate(net, node, bias):
     #operates on edges of given node
@@ -460,11 +473,16 @@ def mutate(net, node, bias):
     mut_type = random.random()
     num_nodes = len(net.nodes())
     num_edges = len(net.edges())
+
+    #temp rm boundary
+    rm_allowed = True
+    add_allowed = True
+    '''
     if (num_nodes == num_edges): rm_allowed = False
     else: rm_allowed = True
     if (2*num_nodes == num_edges): add_allowed = False
     else: add_allowed = True
-    
+    '''
     #handle no out edges case, only chance of adding
     if (len(net.out_edges(node)) == 0 and add_allowed == True):
         if (mut_type < .4):
@@ -509,7 +527,7 @@ def mutate(net, node, bias):
                     net.remove_edge(edge[0], edge[1])
     
                     # ASSUMPTION: net should remain connected
-                    while (not nx.is_weakly_connected(net)): connect_components(net)
+                    #while (not nx.is_weakly_connected(net)): connect_components(net)
     
         elif(mut_type < .6):
             #rewire: change an edge node
@@ -537,9 +555,9 @@ def mutate(net, node, bias):
                 post_edges = len(net.edges())
 
             # ASSUMPTION: net should remain connected
-            while (not nx.is_weakly_connected(net)): connect_components(net)
-            if (len(net.nodes()) > len(net.edges())):
-                print("ERROR post mutn() rewire: too many nodes")
+            #while (not nx.is_weakly_connected(net)): connect_components(net)
+            #if (len(net.nodes()) > len(net.edges())):
+                #print("ERROR post mutn() rewire: too many nodes")
         
         elif (mut_type < .8):
             #change direction of edge
@@ -679,8 +697,11 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
         return [RGAllR, ETB]
     elif (fitness_type == 6 or fitness_type == 7 or fitness_type == 8):
         return [RGGR, dist_in_sack]
-    elif (fitness_type == 6 or fitness_type == 7):
+    elif (fitness_type == 9 or fitness_type == 10 or fitness_type == 11):
         return [RGAllR, dist_in_sack]
+    elif (fitness_type == 12 or fitness_type == 13 or fitness_type == 14): #doesn't work at all
+        node_to_edge_ratio = len(net.nodes())/len(net.edges())
+        return [node_to_edge_ratio, dist_in_sack]
     else: print("ERROR in pressurize(): unknown fitness type.")
 
 #INTERNAL IO FUNCTIONS

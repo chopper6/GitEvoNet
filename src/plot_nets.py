@@ -48,6 +48,9 @@ def degree_distrib(dirr):
             out_deg = list(filter(None, out_deg))
             out_deg_freq = list(filter(None, out_deg_freq))
 
+            for ele in out_deg_freq:
+                if (ele == '"'):
+                    out_deg_freq.remove(ele)
             # plot in degrees
             plt.loglog(in_deg, in_deg_freq, basex=10, basey=10, linestyle='', color='blue', alpha=0.7, markersize=7, marker='o', markeredgecolor='blue')
 
@@ -218,6 +221,6 @@ def write_outro (dirr, num_workers, gens, num_indivs, output_freq, worker_info, 
     return mins, maxs, endpts
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/parv5_2"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/parv5_5eR"
 
     single_run_plots(dirr)
