@@ -72,7 +72,7 @@ def evolve_master(configs):
 
         #dynam popn size
         #pop_size = num_workers
-        worker_pop_size = math.ceil(40*math.pow(math.e,-4*percent_size))
+        worker_pop_size = math.ceil(10*math.pow(math.e,-3*percent_size))
         pop_size = worker_pop_size*num_workers
         num_survive = int(pop_size / num_workers)
         if (num_survive < 1): 
@@ -80,7 +80,7 @@ def evolve_master(configs):
             print("WARNING evo_master(): num_survive goes below 1, set to 1 instead")
         
         #dynam gens
-        gens_per_growth = math.ceil(math.pow(math.e, 4*percent_size))
+        gens_per_growth = 1 #math.ceil(math.pow(math.e, 3*percent_size))
         worker_gens = worker_pop_size
         master_gens = math.ceil(gens_per_growth/worker_gens)
 
@@ -129,11 +129,12 @@ def evolve_master(configs):
 
         size = len(population[0].net.nodes())
         i+=1
+        '''
         print("init took " + str(init_time) + " secs.")
         print("distrib workers took " + str(distrib) + " secs.")
         print("minions took " + str(minions) + " secs.")
         print("reading in workers took " + str(readd) + " secs.\n")
-
+        '''
     output.to_csv(population, output_dir)
 
     print("Evolution finished, generating images.")
@@ -218,6 +219,7 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
     write_t = t1-t0
 
     if (worker_ID == 0 and curr_master_gen==0):
+        '''
         print("\nminion init took " + str(init_t) + " sec.")
         print("minion replication took " + str(replic_t) + " sec.")
         print("minion growth took " + str(growth_t) + " sec.")
@@ -225,7 +227,7 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
         print("minion pressurize took " + str(pressure_t) + " sec.")
         print("minion eval fitness took " + str(eval_t) + " sec.")
         print("minion write took " + str(write_t) + " sec.\n")
-
+        '''
         orig_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
         end_size = len(population[0].net.nodes())
         output.minion_csv(orig_dir, pressure_t, master_gens, num_growth, end_size)
@@ -632,9 +634,9 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
                 Xs.append(1)
 
                 #hub score eval pt1
-                inst_dist_in_sack += abs((Bs[g] - Ds[g]))
-                inst_dist_sq_in_sack += math.pow((Bs[g] - Ds[g]), 2)
-                soln_bens.append(Bs[g])
+                inst_dist_in_sack += abs(g[1] - g[2])
+                inst_dist_sq_in_sack += math.pow((g[1] - g[2]), 2)
+                soln_bens.append(g[1])
 
             # Gs, Bs, Ds, Xs are, respectively,
             # the genes
@@ -652,7 +654,7 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
                 instance_RGGR = (num_green + num_red) / num_grey
             else:
                 instance_RGGR = (num_green + num_red)
-            inst_RGAllR = (num_green + num_red) / len(Bs)
+            inst_RGAllR = (num_green + num_red) / (num_green + num_red + num_grey)
 
         else:
             print ("WARNING in pressurize(): no results from oracle advice")
@@ -671,11 +673,11 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
     ETB_ratio /= num_samples_relative
     RGAllR /= num_samples_relative
 
-    if (fitness_type == 0 or fitness_type == 1):
+    if (fitness_type == 0 or fitness_type == 1 or fitness_type == 2):
         return [RGGR, ETB]
-    elif (fitness_type == 2 or fitness_type == 3):
+    elif (fitness_type == 3 or fitness_type == 4 or fitness_type == 5):
         return [RGAllR, ETB]
-    elif (fitness_type == 4 or fitness_type == 5):
+    elif (fitness_type == 6 or fitness_type == 7 or fitness_type == 8):
         return [RGGR, dist_in_sack]
     elif (fitness_type == 6 or fitness_type == 7):
         return [RGAllR, dist_in_sack]

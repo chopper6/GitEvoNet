@@ -15,7 +15,7 @@ def solve_knapsack (kp_instance, knapsack_solver):
         for key in B_dict.keys():
             if (B_dict[key]>0 and D_dict[key] > 0):
                 grey_genes.append(key)
-                G[i], B[i], D[i] = key, (c_int)(B_dict[key]), (c_int)(D_dict[key])
+                G.append(key)
                 i += 1
             elif (B_dict[key]>0 and D_dict[key]==0):
                 green_genes.append(key)
@@ -26,6 +26,9 @@ def solve_knapsack (kp_instance, knapsack_solver):
         assert (len(grey_genes)+len(green_genes)+len(red_genes)) == len (B_dict.keys())
         N = len (grey_genes)
         F, solver_returns = (c_int*N)(),  (c_int*4)()
+        B, D, i = (c_int*N)(),(c_int*N)(), 0
+        for key in grey_genes:          #ASK MOH, should be able to merge with above loop  
+            B[i], D[i], i = B_dict[key],D_dict[key], i+1
         #---------------------------------------------------------------------    
         knapsack_solver.solve (B, D, T_edges, N, F, solver_returns)   # WARNING: minknap.so does not return the correct knapsack weight (solver_returns[1])                          
         #---------------------------------------------------------------------

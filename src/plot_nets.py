@@ -81,8 +81,6 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
 
         img_dirr = dirr + "/images/"
         for i in range(len(titles)):
-            x_ticks = []
-            buffer_ticks = []
             num_outputs = len(net_info)
             ydata = []
             xdata = []
@@ -93,12 +91,9 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
                 #x_ticks.append(int(g/output_freq))
                 #buffer_ticks.append(gi)
             x_ticks = []
-            buffer_ticks = []
             max_net_size = net_info[num_outputs-1,0]
-            buffer_ticks.append(0)
             for j in range(0,11):
                 x_ticks.append((max_net_size/10)*j)
-                buffer_ticks.append(j)
             plt.plot(xdata, ydata)
             plt.ylabel(titles[i] + " of most fit Individual")
             plt.title(titles[i])
@@ -119,16 +114,19 @@ def pressurize_time(dirr):
         net_size=[]
         time=[]
         for line in lines[1:]:
+            line = line.split(",")
+            line[-1].replace("\n",'')
             net_size.append(line[0])
             time.append(line[1])
-        max_net_size = int(lines[-1][0])
+        max_net_line = lines[-1].split(",")
+        max_net_size = int(max_net_line[0])
         x_ticks = []
         for j in range(0, 11):
             x_ticks.append((max_net_size / 10) * j)
 
         plt.plot(net_size,time)
         plt.xlabel("Net Size")
-        plt.ylabel("Pressurize Time per Growth Step")
+        plt.ylabel("Seconds to Pressurize per Growth Step")
         plt.title("Pressurize Time as Networks Grow")
         plt.xticks(x_ticks, x_ticks)
         plt.savefig(img_dirr + "pressurize_time")
@@ -220,6 +218,6 @@ def write_outro (dirr, num_workers, gens, num_indivs, output_freq, worker_info, 
     return mins, maxs, endpts
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/test2"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/parv5_2"
 
     single_run_plots(dirr)
