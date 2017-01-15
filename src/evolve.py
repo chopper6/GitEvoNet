@@ -23,6 +23,7 @@ class Net:
         copy = Net(self.net, self.id)
         copy.fitness = self.fitness
         copy.fitness_parts = self.fitness_parts
+        assert (copy != self)
         return copy
 
 
@@ -61,11 +62,11 @@ def evolve_master(configs):
     eval_fitness(population, fitness_type)
 
     size = start_size
-    i=0
+    size_iters=0
     while (size < end_size):
 
         t0 = ptime()
-        if (i % int(1 / output_freq) == 0):
+        if (size_iters % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
 
         percent_size = float(size-start_size)/float(end_size-start_size)
@@ -101,11 +102,16 @@ def evolve_master(configs):
             pool = mp.Pool(num_workers)
             args = []
 
+            # check that population is unique
+            for p in range(pop_size):
+                for q in range(0, p):
+                    if (p != q): assert (population[p] != population[q])
+
             #DISTRIBUTE WORKERS
             for w in range(num_workers):
                 #distrib of popn not quite generalizable, nets_per_worker should relate to num_survive
                 #or at least should ensure that ONLY top nets are being passed
-                sub_pop = [population[p] for p in range(num_survive)]  #population[p] should NOT be shared, ie each worker should be working on its own COPY
+                sub_pop = [population[p].copy() for p in range(num_survive)]  #population[p] should NOT be shared, ie each worker should be working on its own COPY
                 worker_args = [w, sub_pop, worker_gens, g, gens_per_growth, num_survive, master_gens, configs]
                 args.append(worker_args)
             t1 = ptime()
@@ -115,7 +121,9 @@ def evolve_master(configs):
             worker_population = pool.starmap(evolve_minion, args)
             pool.close()
             pool.join()
-            #pool.terminate()
+
+            del population
+
             t1 = ptime()
             minions += t1-t0
 
@@ -128,7 +136,7 @@ def evolve_master(configs):
             readd += t1-t0
 
         size = len(population[0].net.nodes())
-        i+=1
+        size_iters+=1
         '''
         print("init took " + str(init_time) + " secs.")
         print("distrib workers took " + str(distrib) + " secs.")
@@ -177,8 +185,16 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
         if (g != 0):
             for p in range(worker_num_survive,pop_size):
                 population[p] = population[p%worker_num_survive].copy()
+                assert (population[p] != population[p%worker_num_survive])
         t1=ptime()
         replic_t += t1-t0
+
+        if (worker_ID == 0): print ("Minion population fitness: " + population[p].fitness for p in range(pop_size))
+
+        #check that population is unique
+        for p in range(pop_size):
+            for q in range(0,p):
+                if (p != q): assert (population[p] != population[q])
 
         for p in range(pop_size):
             t0 = ptime()
@@ -373,9 +389,8 @@ def eval_fitness(population, fitness_type):
             else:
                 population[p].fitness = math.pow(population[p].fitness_parts[1],population[p].fitness_parts[0])
 
-
-    population.sort(key=operator.attrgetter('fitness'))
-    population.reverse() #MAX fitness function
+    population = sorted(population,key=operator.attrgetter('fitness'), reverse=True)
+    #reverse since MAX fitness function
 
 
 def gen_init_population(init_type, start_size, pop_size):
@@ -593,7 +608,10 @@ def parse_worker_popn (worker_population, num_survive):
         for indiv in worker:
             population.append(indiv)
     population.sort(key=operator.attrgetter('fitness'))
-    population.reverse() #MAX fitness function
+    # population.reverse() #MAX fitness function
+    # creating something new that is sorted vs sorting in place
+    # should be same as
+    population = sorted(population,key=operator.attrgetter('fitness'), reverse=True)
 
     return population[:num_survive]
 
@@ -601,7 +619,7 @@ def parse_worker_popn (worker_population, num_survive):
 def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitness_type, num_samples_relative):
     #does all the reducing to kp and solving
     #how can it call configs without being passed???
-
+    fitness_fun = configs['fitness_fun']
     RGGR, ETB = 0, 0
     dist_in_sack = 0
     dist_sq_in_sack = 0
@@ -644,23 +662,17 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
             GENES_in, num_green, num_red, num_grey = a_result[0], a_result[1], a_result[2], a_result[3]
             # -------------------------------------------------------------------------------------------------
             soln_bens = []
-            for g in GENES_in:  # notice that green_genes is a subset of GENES_in
-                Gs.append(
-                    str(g[0]) + '$' + str(net.in_degree(g[0])) + '$' + str(net.out_degree(g[0])))
-                Bs.append(g[1])
-                Ds.append(g[2])
-                Xs.append(1)
+            for g in GENES_in:
+
+                # g[0] gene name
+                # g[1] benefits
+                # g[2] damages
+                # g[3] if in knapsack (binary)
 
                 #hub score eval pt1
                 inst_dist_in_sack += abs(g[1] - g[2])
                 inst_dist_sq_in_sack += math.pow((g[1] - g[2]), 2)
                 soln_bens.append(g[1])
-
-            # Gs, Bs, Ds, Xs are, respectively,
-            # the genes
-            # their corresponding benefits
-            # their corresponding weights (damages)
-            # the solution vector (a binary 0/1 sequence, 0 = outside knapsack, 1=inside knapsack)
 
             #hub score eval pt2
             instance_ETB = sum(set(soln_bens))
