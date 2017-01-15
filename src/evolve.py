@@ -97,13 +97,16 @@ def evolve_master(configs):
             else:                                                            cross_fraction = 0
             population = breed(survivors, pop_size, cross_fraction)
             '''
+            print ("Master population fitness: ")
+            for p in range(len(population)):
+                print(population[p].fitness)
 
             t0 = ptime()
             pool = mp.Pool(num_workers)
             args = []
 
             # check that population is unique
-            for p in range(pop_size):
+            for p in range(len(population)):
                 for q in range(0, p):
                     if (p != q): assert (population[p] != population[q])
 
@@ -189,12 +192,15 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
         t1=ptime()
         replic_t += t1-t0
 
-        if (worker_ID == 0): print ("Minion population fitness: " + population[p].fitness for p in range(pop_size))
+        if (worker_ID == 0): 
+            print ("Minion population fitness: ")
+            for p in range(pop_size):
+                print(population[p].fitness)
 
         #check that population is unique
         for p in range(pop_size):
             for q in range(0,p):
-                if (p != q): assert (population[p] != population[q])
+                if (p != q): assert (population[p].net != population[q].net)
 
         for p in range(pop_size):
             t0 = ptime()
@@ -211,15 +217,26 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
                     mutate(population[p].net, node, mutation_bias)
             t1=ptime()
             mutate_t += t1-t0
+            
+            if (worker_ID == 0 and p==0):
+                print ("Minion population fitness 2: ")
+                for p in range(1000):
+                    x=0
+                    #print(population[p].fitness)
+            
             # apply pressure
             # assumes all nets are the same size
             t0 = ptime()
             num_samples_relative = min(max_sampling_rounds, len(population[0].net.nodes()) * sampling_rounds)
             pressure_relative = int(pressure * len(population[0].net.nodes()))
             population[p].fitness_parts = pressurize(configs, population[p].net, pressure_relative, tolerance, knapsack_solver,fitness_type, num_samples_relative)
+            if (worker_ID == 0 and p==0):
+                print ("Minion population fitness 3: ")
+                for p in range(pop_size):
+                    print(population[p].fitness)
             t1 = ptime()
             pressure_t += t1-t0
-            '''
+            ''' BOUNDARY CHECK
             if (len(population[p].net.nodes()) > len(population[p].net.edges())):
                 print("ERROR in minion: too many nodes")
             elif (2*len(population[p].net.nodes()) < len(population[p].net.edges())):
@@ -402,7 +419,7 @@ def gen_init_population(init_type, start_size, pop_size):
             while (len(population[p].net.nodes()) < start_size): grow(population[p].net, 1)
 
     elif (init_type == 1):
-        population = [Net(nx.erdos_renyi_graph(200,.01, directed=True, seed=None), i) for i in range(pop_size)]
+        population = [Net(nx.erdos_renyi_graph(50,.01, directed=True, seed=None), i) for i in range(pop_size)]
         for p in range(pop_size):
             edge_list = population[p].net.edges()
             for edge in edge_list:
@@ -619,7 +636,6 @@ def parse_worker_popn (worker_population, num_survive):
 def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitness_type, num_samples_relative):
     #does all the reducing to kp and solving
     #how can it call configs without being passed???
-    fitness_fun = configs['fitness_fun']
     RGGR, ETB = 0, 0
     dist_in_sack = 0
     dist_sq_in_sack = 0
