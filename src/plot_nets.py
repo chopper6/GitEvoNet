@@ -1,9 +1,7 @@
 #!/usr/bin/python3
-import math, matplotlib, os, csv
+import matplotlib, os, csv
 matplotlib.use('Agg') # This must be done before importing matplotlib.pyplot
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import numpy as np
+import matplotlib.pyplot as plt, import matplotlib.patches as mpatches, import numpy as np
 
 
 #ORGANIZER
@@ -123,17 +121,16 @@ def pressurize_time(dirr):
             time.append(line[1])
         max_net_line = lines[-1].split(",")
         max_net_size = int(max_net_line[0])
-        x_ticks = []
-        for j in range(0, 11):
-            x_ticks.append((max_net_size / 10) * j)
-
-        plt.plot(net_size,time)
-        plt.xlabel("Net Size")
-        plt.ylabel("Seconds to Pressurize per Growth Step")
-        plt.title("Pressurize Time as Networks Grow")
-        plt.xticks(x_ticks, x_ticks)
-        plt.savefig(img_dirr + "pressurize_time")
-        plt.clf()
+    x_ticks = []
+    for j in range(0, 11):
+        x_ticks.append((max_net_size / 10) * j)
+    plt.plot(net_size,time)
+    plt.xlabel("Net Size")
+    plt.ylabel("Seconds to Pressurize per Growth Step")
+    plt.title("Pressurize Time as Networks Grow")
+    plt.xticks(x_ticks, x_ticks)
+    plt.savefig(img_dirr + "pressurize_time")
+    plt.clf()
 
 #HELPER FNS()
 def parse_info(dirr):
