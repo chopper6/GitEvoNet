@@ -4,7 +4,7 @@ from ctypes import cdll
 import multiprocessing as mp
 import networkx as nx
 from time import process_time as ptime
-import time
+import time, pickle
 
 os.environ['lib'] = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib"
 sys.path.insert(0, os.getenv('lib'))
@@ -93,16 +93,12 @@ def evolve_master(configs):
         for g in range(master_gens):
             # curr no breeding, just replicates
             '''
-            if (crossover_freq != 0 and g % int(1 / crossover_freq) == 0):   cross_fraction = crossover_fraction
-            else:                                                            cross_fraction = 0
-            population = breed(survivors, pop_size, cross_fraction)
-            '''
             print ("Master population fitness: ")
             for p in range(len(population)):
                 print(population[p].fitness)
-
+            '''
             t0 = ptime()
-            pool = mp.Pool(num_workers)
+            pool = mp.Pool(processes = num_workers)
             args = []
 
             # check that population is unique
@@ -112,29 +108,41 @@ def evolve_master(configs):
 
             #DISTRIBUTE WORKERS
             for w in range(num_workers):
-                #distrib of popn not quite generalizable, nets_per_worker should relate to num_survive
-                #or at least should ensure that ONLY top nets are being passed
-                sub_pop = [population[p].copy() for p in range(num_survive)]  #population[p] should NOT be shared, ie each worker should be working on its own COPY
-                worker_args = [w, sub_pop, worker_gens, g, gens_per_growth, num_survive, master_gens, configs]
-                args.append(worker_args)
+                dirr = output_dir + "workers/" + str(w)
+                if not os.path.exists(dirr): #move this to a single call during init
+                    os.makedirs(dirr)
+                dump_file = dirr + "/arg_dump"
+                seed = population[w%num_survive].copy()
+                worker_args = [w, seed, worker_gens, g, gens_per_growth, num_survive, master_gens, configs]
+                with open(dump_file,'wb') as file:
+                    pickle.dump(worker_args, file)
+                pool.map_async(evolve_minion, (dump_file,))
+
             t1 = ptime()
             distrib += t1-t0
-
             t0 = ptime()
-            worker_population = pool.starmap(evolve_minion, args)
             pool.close()
             pool.join()
-
+            print("Workers should be done, master continuing")
+            pool.close()
+            
             del population
+            all_workers_pop = []
+            #assumes only num_survive return from each
 
             t1 = ptime()
             minions += t1-t0
 
             t0 = ptime()
-            #params instead of files seem marginally faster
-            population = parse_worker_popn(worker_population, num_survive)
-            #population = read_in_workers(num_workers, output_dir, num_survive)
-            #only replaces num_survive in population, returns sorted
+            #pickle back popn instead, TODO: change to function
+            for w in range(num_workers):
+                dump_file = output_dir + "workers/" + str(w) + "/arg_dump"
+                with open(dump_file, 'rb') as file:
+                    worker_pop = pickle.load(file)
+                for indiv in worker_pop:
+                    all_workers_pop.append(indiv)
+            all_workers_pop_sorted = sorted(all_workers_pop,key=operator.attrgetter('fitness'), reverse=True)
+            population = all_workers_pop_sorted[:num_survive] 
             t1 = ptime()
             readd += t1-t0
 
@@ -153,8 +161,20 @@ def evolve_master(configs):
 
     print("Master finished.")
 
-def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_growth, num_survive, master_gens, configs):
-    #retrieve configs
+def evolve_minion(worker_file):
+    #def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_growth, num_survive, master_gens, configs):
+    
+    seed = None
+    with open (str(worker_file), 'rb') as file:
+        worker_ID, seed, worker_gens, curr_master_gen, gens_per_growth, num_survive, master_gens, configs = pickle.load(file)
+        file.close()
+
+    population = []
+    population.append(seed)
+    for p in range(num_survive-1):
+        population.append(seed.copy())
+
+
     t0 = ptime()
     pressure = math.ceil ((float(configs['PT_pairs_dict'][1][0])/100.0))
     tolerance = configs['PT_pairs_dict'][1][1]
@@ -185,22 +205,19 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
     for g in range(worker_gens):
         #worker replication
         t0=ptime()
-        if (g != 0):
-            for p in range(worker_num_survive,pop_size):
-                population[p] = population[p%worker_num_survive].copy()
-                assert (population[p] != population[p%worker_num_survive])
         t1=ptime()
         replic_t += t1-t0
 
+        '''
         if (worker_ID == 0): 
             print ("Minion population fitness: ")
             for p in range(pop_size):
                 print(population[p].fitness)
-
+        '''
         #check that population is unique
         for p in range(pop_size):
             for q in range(0,p):
-                if (p != q): assert (population[p].net != population[q].net)
+                if (p != q): assert (population[p] != population[q])
 
         for p in range(pop_size):
             t0 = ptime()
@@ -217,24 +234,26 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
                     mutate(population[p].net, node, mutation_bias)
             t1=ptime()
             mutate_t += t1-t0
-            
+            ''' 
             if (worker_ID == 0 and p==0):
                 print ("Minion population fitness 2: ")
                 for p in range(1000):
                     x=0
                     #print(population[p].fitness)
-            
+            '''
             # apply pressure
             # assumes all nets are the same size
             t0 = ptime()
             num_samples_relative = min(max_sampling_rounds, len(population[0].net.nodes()) * sampling_rounds)
             pressure_relative = int(pressure * len(population[0].net.nodes()))
             population[p].fitness_parts = pressurize(configs, population[p].net, pressure_relative, tolerance, knapsack_solver,fitness_type, num_samples_relative)
+            '''
             if (worker_ID == 0 and p==0):
                 print ("Minion population fitness 3: ")
                 for p in range(pop_size):
                     print(population[p].fitness)
             t1 = ptime()
+            '''
             pressure_t += t1-t0
             ''' BOUNDARY CHECK
             if (len(population[p].net.nodes()) > len(population[p].net.edges())):
@@ -266,6 +285,12 @@ def evolve_minion(worker_ID, population, worker_gens, curr_master_gen, gens_per_
         end_size = len(population[0].net.nodes())
         output.minion_csv(orig_dir, pressure_t, master_gens, num_growth, end_size)
 
+
+    #overwrite own input file with return population
+    with open(worker_file, 'wb') as file:
+        pickle.dump(population[:num_survive], file)
+        file.close()
+    print("Worker finished")
     return population
 
 # GRAPH FN'S
@@ -419,7 +444,7 @@ def gen_init_population(init_type, start_size, pop_size):
             while (len(population[p].net.nodes()) < start_size): grow(population[p].net, 1)
 
     elif (init_type == 1):
-        population = [Net(nx.erdos_renyi_graph(50,.01, directed=True, seed=None), i) for i in range(pop_size)]
+        population = [Net(nx.erdos_renyi_graph(500,.01, directed=True, seed=None), i) for i in range(pop_size)]
         for p in range(pop_size):
             edge_list = population[p].net.edges()
             for edge in edge_list:
