@@ -5,7 +5,6 @@ from operator import attrgetter
 from time import process_time as ptime
 from random import SystemRandom as sysRand
 import output, plot_nets, minion, fitness
-from pympler.tracker import SummaryTracker
 
 # TODO: check Net class scope, is it suffic to just have in master?
 # maybe rename to reduce confusion
@@ -24,6 +23,7 @@ class Net:
         assert (copy != self)
         return copy
 
+
 def evolve_master(configs):
     # get configs
     num_workers = int(configs['number_of_workers'])
@@ -34,7 +34,6 @@ def evolve_master(configs):
     output_freq = float(configs['output_frequency'])
 
     # new configs
-    base_gens = int(configs['base_generations'])
     init_type = int(configs['initial_net_type'])
     start_size = int(configs['starting_size'])
     end_size = int(configs['ending_size'])
@@ -42,7 +41,8 @@ def evolve_master(configs):
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
 
-    pop_size = 10 * num_workers  # should be same eqn as DYNAM POPN SIZE, later add to configs
+    worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, start_size, end_size, num_workers,survive_fraction)
+    print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive))
     population = gen_init_population(init_type, start_size, pop_size)
     fitness.eval_fitness(population, fitness_type)
 
@@ -50,76 +50,57 @@ def evolve_master(configs):
     size_iters = 0
     while (size < end_size):
 
-        t0 = ptime()
         if (size_iters % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
 
-        percent_size = float(size - start_size) / float(end_size - start_size)
-
-        # dynam popn size
-        # pop_size = num_workers
-        # TODO: change back, curr just for debug clarity
-        worker_pop_size = 2 #math.ceil(10 * math.pow(math.e, -4 * percent_size))
-        pop_size = worker_pop_size * num_workers
-        num_survive = 1 #int(pop_size / num_workers)
-        if (num_survive < 1):
-            num_survive = 1
-            print("WARNING evo_master(): num_survive goes below 1, set to 1 instead")
-
-        # dynam gens
-        gens_per_growth = 20 #math.ceil(math.pow(math.e, 4 * percent_size))
-        worker_gens = worker_pop_size
-        master_gens = math.ceil(gens_per_growth / worker_gens) #ie 4 master, 10 worker for debug
-
+        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, start_size, end_size, num_workers, survive_fraction)
         print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(worker_pop_size) + ",\tpopn size = " + str(pop_size) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens_per_growth) + ",\tworker gens = " + str(worker_gens) + ",\tmaster gens = " + str(master_gens))
-        t1 = ptime()
-        init_time = t1 - t0
+
+        # DEBUG STUFF
         distrib, minions, readd = 0, 0, 0
+        '''
+        print ("Master population fitness: ")
+        for p in range(len(population)):
+            print(population[p].fitness)
+        '''
+        # check that population is unique
+        for p in range(len(population)):
+            for q in range(0, p):
+                if (p != q): assert (population[p] != population[q])
 
-        #tracker = SummaryTracker()
-        for g in range(master_gens):
-            #tracker.print_diff()
-            # curr no breeding, just replicates
-            '''
-            print ("Master population fitness: ")
-            for p in range(len(population)):
-                print(population[p].fitness)
-            '''
-            # check that population is unique
-            for p in range(len(population)):
-                for q in range(0, p):
-                    if (p != q): assert (population[p] != population[q])
+        t0 = ptime()
+        pool = mp.Pool(processes=num_workers)
 
-            t0 = ptime()
-            pool = mp.Pool(processes=num_workers)
+        # DISTRIBUTE WORKERS
+        for w in range(num_workers):
+            dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
+            seed = population[w % num_survive].copy()
+            randSeeds = [os.urandom(10000000) for i in range(worker_gens*worker_pop_size)] #diff seed for each mutation call
+            print(randSeeds[3])
+            assert(seed != population[w % num_survive])
+            worker_args = [w, seed, worker_gens, worker_pop_size, num_survive, randSeeds, configs]
+            with open(dump_file, 'wb') as file:
+                pickle.dump(worker_args, file)
+            pool.map_async(minion.evolve_minion, (dump_file,))
 
-            # DISTRIBUTE WORKERS
-            for w in range(num_workers):
-                dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
-                seed = population[w % num_survive].copy()
-                assert(seed != population[w % num_survive])
-                worker_args = [w, seed, worker_gens, g, gens_per_growth, num_survive, master_gens, configs]
-                with open(dump_file, 'wb') as file:
-                    pickle.dump(worker_args, file)
-                pool.map_async(minion.evolve_minion, (dump_file,))
+        t1 = ptime()
+        distrib += t1 - t0
 
-            t1 = ptime()
-            distrib += t1 - t0
+        pool.close()
+        pool.join()
+        pool.terminate()
+        del population
 
-            pool.close()
-            pool.join()
-            pool.terminate()
-            del population
-
-            t0 = ptime()
-            population = parse_worker_popn(num_workers, output_dir, num_survive)
-            t1 = ptime()
-            readd += t1 - t0
+        t0 = ptime()
+        population = parse_worker_popn(num_workers, output_dir, num_survive)
+        t1 = ptime()
+        readd += t1 - t0
 
         size = len(population[0].net.nodes())
         size_iters += 1
+
+        # Timing output
         '''
-        print("init took " + str(init_time) + " secs.")
         print("distrib workers took " + str(distrib) + " secs.")
         print("minions took " + str(minions) + " secs.")
         print("reading in workers took " + str(readd) + " secs.\n")
@@ -133,7 +114,6 @@ def evolve_master(configs):
 
 
 def gen_init_population(init_type, start_size, pop_size):
-    #LATER: add more init seeds
 
     if (init_type == 0):
         population = [Net(nx.DiGraph(), i) for i in range(pop_size)] #change to generate, based on start_size
@@ -157,7 +137,6 @@ def gen_init_population(init_type, start_size, pop_size):
     return population
 
 
-
 def init_dirs(num_workers, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -179,14 +158,20 @@ def parse_worker_popn (num_workers, output_dir, num_survive):
     return sorted_popn[:num_survive]
 
 
+def curr_gen_params(size, start_size, end_size, num_workers, survive_fraction):
+    #TODO: add island switch in CONFIGS for expon popn size curve
 
+    percent_size = float(size - start_size) / float(end_size - start_size)
+    worker_pop_size = math.floor(end_size * percent_size)
+    # ISLAND # math.ceil(10 * math.pow(math.e, -4 * percent_size))
+    pop_size = worker_pop_size * num_workers
+    num_survive = int(pop_size * survive_fraction)
+    if (num_survive < 1):
+        num_survive = 1
+        print("WARNING evo_master(): num_survive goes below 1, set to 1 instead.")
+    worker_gens = worker_pop_size
 
-
-
-
-
-
-
+    return worker_pop_size, pop_size, num_survive, worker_gens
 
 
 
@@ -200,7 +185,6 @@ def evolve_master_sequential_debug(configs):
     output_freq = float(configs['output_frequency'])
 
     # new configs
-    base_gens = int(configs['base_generations'])
     init_type = int(configs['initial_net_type'])
     start_size = int(configs['starting_size'])
     end_size = int(configs['ending_size'])
@@ -208,7 +192,8 @@ def evolve_master_sequential_debug(configs):
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
 
-    pop_size = 10 * num_workers  # should be same eqn as DYNAM POPN SIZE, later add to configs
+    worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, start_size, end_size, num_workers,survive_fraction)
+    print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive))
     population = gen_init_population(init_type, start_size, pop_size)
     fitness.eval_fitness(population, fitness_type)
 
@@ -216,69 +201,55 @@ def evolve_master_sequential_debug(configs):
     size_iters = 0
     while (size < end_size):
 
-        t0 = ptime()
         if (size_iters % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
 
-        percent_size = float(size - start_size) / float(end_size - start_size)
-
-        # dynam popn size
-        # pop_size = num_workers
-        worker_pop_size = math.ceil(10 * math.pow(math.e, -4 * percent_size))
-        pop_size = worker_pop_size * num_workers
-        num_survive = int(pop_size / num_workers)
-        if (num_survive < 1):
-            num_survive = 1
-            print("WARNING evo_master(): num_survive goes below 1, set to 1 instead")
-
-        # dynam gens
-        gens_per_growth = math.ceil(math.pow(math.e, 4 * percent_size))
-        worker_gens = worker_pop_size
-        master_gens = math.ceil(gens_per_growth / worker_gens)
-
+        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, start_size, end_size, num_workers, survive_fraction)
         print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(worker_pop_size) + ",\tpopn size = " + str(pop_size) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens_per_growth) + ",\tworker gens = " + str(worker_gens) + ",\tmaster gens = " + str(master_gens))
-        t1 = ptime()
-        init_time = t1 - t0
+
+        # DEBUG STUFF
         distrib, minions, readd = 0, 0, 0
+        '''
+        print ("Master population fitness: ")
+        for p in range(len(population)):
+            print(population[p].fitness)
+        '''
+        # check that population is unique
+        for p in range(len(population)):
+            for q in range(0, p):
+                if (p != q): assert (population[p] != population[q])
 
-        for g in range(master_gens):
-            # curr no breeding, just replicates
-            '''
-            print ("Master population fitness: ")
-            for p in range(len(population)):
-                print(population[p].fitness)
-            '''
-            # check that population is unique
-            for p in range(len(population)):
-                for q in range(0, p):
-                    if (p != q): assert (population[p] != population[q])
+        t0 = ptime()
+        pool = mp.Pool(processes=num_workers)
 
-            t0 = ptime()
+        # INSTEAD USES 1 SEQUENTIAL MINION
+        for w in range(1):
+            dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
+            seed = population[w % num_survive].copy()
+            assert(seed != population[w % num_survive])
+            worker_args = [w, seed, worker_gens, worker_pop_size, num_survive, configs]
+            with open(dump_file, 'wb') as file:
+                pickle.dump(worker_args, file)
+            minion.evolve_minion(dump_file)
 
-            # iNSTEAD 1 SEQUENTIAL WORKER
-            for w in range(1):
-                dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
-                seed = population[w % num_survive].copy()
-                assert(seed != population[w % num_survive])
-                worker_args = [w, seed, worker_gens, g, gens_per_growth, num_survive, master_gens, configs]
-                with open(dump_file, 'wb') as file:
-                    pickle.dump(worker_args, file)
-                minion.evolve_minion(dump_file)
+        t1 = ptime()
+        distrib += t1 - t0
 
-            t1 = ptime()
-            distrib += t1 - t0
+        pool.close()
+        pool.join()
+        pool.terminate()
+        del population
 
-            del population
-
-            t0 = ptime()
-            population = parse_worker_popn(num_workers, output_dir, num_survive)
-            t1 = ptime()
-            readd += t1 - t0
+        t0 = ptime()
+        population = parse_worker_popn(num_workers, output_dir, num_survive)
+        t1 = ptime()
+        readd += t1 - t0
 
         size = len(population[0].net.nodes())
         size_iters += 1
+
+        # Timing output
         '''
-        print("init took " + str(init_time) + " secs.")
         print("distrib workers took " + str(distrib) + " secs.")
         print("minions took " + str(minions) + " secs.")
         print("reading in workers took " + str(readd) + " secs.\n")
@@ -289,3 +260,6 @@ def evolve_master_sequential_debug(configs):
     plot_nets.single_run_plots(output_dir)
 
     print("Master finished.")
+
+
+

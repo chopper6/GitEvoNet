@@ -74,12 +74,12 @@ def to_csv(population, output_dir):
                 output.writerow(distrib_info)
 
 
-def minion_csv(output_dir, worker_pressurize_time, master_gens, num_growth, end_size):
+def minion_csv(output_dir, solver_time, num_growth, end_size):
     if (num_growth == 0): num_growth = 1
     with open(output_dir + "/timing.csv", 'a') as time_file:
         output=csv.writer(time_file)
         info = []
         info.append(end_size)
-        pressurize_time = worker_pressurize_time*master_gens/num_growth
+        pressurize_time = solver_time/num_growth
         info.append(pressurize_time)
         output.writerow(info)

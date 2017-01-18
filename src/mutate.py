@@ -1,8 +1,9 @@
 import math
-#from random import SystemRandom as sysRand
-import random as sysRand
+import random as rd
+#import random as sysRand
 
-def mutate(configs, net):
+def mutate(configs, net, randSeed):
+    rd.seed(randSeed)
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
 
     #how to elegantly pass booleans
@@ -64,7 +65,7 @@ def mutate(configs, net):
     #SHRINK (REMOVE NODE)
     num_shrink = num_mutations(shrink_freq, net, stoch_mutn, scale)
     for i in range(num_shrink):
-        node = sysRand.sample(net.nodes(), 1)
+        node = rd.sample(net.nodes(), 1)
         node = node[0]
         net.remove_node(node)
 
@@ -73,13 +74,13 @@ def mutate(configs, net):
     for i in range(num_add):
         pre_size = post_size = len(net.nodes())
         while (pre_size == post_size):  # ensure that net adds
-            node = node2 = sysRand.sample(net.nodes(), 1)
+            node = node2 = rd.sample(net.nodes(), 1)
             node = node[0]
             node2 = node
             while (node2 == node):
-                node2 = sysRand.sample(net.nodes(), 1)
+                node2 = rd.sample(net.nodes(), 1)
                 node2 = node2[0]
-            sign = sysRand.randint(0, 1)
+            sign = rd.randint(0, 1)
             if (sign == 0):     sign = -1
             net.add_edge(node, node2, sign=sign)
             #post_size = len(net.nodes())
@@ -88,7 +89,7 @@ def mutate(configs, net):
     #REMOVE EDGE
     num_rm = num_mutations(rm_freq, net, stoch_mutn, scale)
     for i in range(num_rm):
-        edge = sysRand.sample(net.edges(), 1)
+        edge = rd.sample(net.edges(), 1)
         edge = edge[0]
         net.remove_edge(edge[0], edge[1])
 
@@ -98,14 +99,14 @@ def mutate(configs, net):
         pre_edges = post_edges = len(net.edges())
         post_edges = pre_edges+1
         while (pre_edges != post_edges):    #ensure sucessful rewire
-            edge = sysRand.sample(net.edges(), 1)
+            edge = rd.sample(net.edges(), 1)
             edge = edge[0]
             sign = net[edge[0]][edge[1]]['sign']
             net.remove_edge(edge[0], edge[1])
             node = edge[0]
             node2 = node
             while (node2 == node):
-                node2 = sysRand.sample(net.nodes(), 1)
+                node2 = rd.sample(net.nodes(), 1)
                 node2 = node2[0]
             net.add_edge(node, node2, sign=sign)
 
@@ -120,7 +121,7 @@ def mutate(configs, net):
         post_edges = pre_edges + 1
         while (pre_edges != post_edges):
             pre_edges = post_edges = len(net.edges())
-            edge = sysRand.sample(net.out_edges(), 1)
+            edge = rd.sample(net.out_edges(), 1)
             edge = edge[0]
             sign = net[edge[0]][edge[1]]['sign']
             net.remove_edge(edge[0], edge[1])
@@ -134,7 +135,7 @@ def mutate(configs, net):
     num_sign = num_mutations(sign_freq, net, stoch_mutn, scale)
     for i in range(num_sign):
         pre_edges = len(net.edges())
-        edge = sysRand.sample(net.out_edges(), 1)
+        edge = rd.sample(net.out_edges(), 1)
         edge = edge[0]
         net[edge[0]][edge[1]]['sign'] = -1 * net[edge[0]][edge[1]]['sign']
         post_edges = len(net.edges())
@@ -142,7 +143,7 @@ def mutate(configs, net):
 
 
 def num_mutations(mutn_freq, net, stoch, scale):
-    if (stoch == True):     mutn_freq = (sysRand.random()*mutn_freq)
+    if (stoch == True):     mutn_freq = (rd.random()*mutn_freq)
 
     if (scale == True): mutn_freq*= len(net.nodes())
 

@@ -19,7 +19,7 @@ def single_run_plots (dirr):
     mins, maxs = 0,0
     features_over_time(dirr, net_info, titles, mins, maxs, False)
 
-    pressurize_time(dirr)
+    solver_time(dirr)
 
     print("Generating degree distribution plots.")
     degree_distrib(dirr)
@@ -109,7 +109,7 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
 
         return
 
-def pressurize_time(dirr):
+def solver_time(dirr):
     img_dirr = dirr + "/images/"
     with open(dirr + "/timing.csv", 'r') as timing_csv:
         lines = timing_csv.readlines()
@@ -128,10 +128,10 @@ def pressurize_time(dirr):
         x_ticks.append((max_net_size / 10) * j)
     plt.plot(net_size,time)
     plt.xlabel("Net Size")
-    plt.ylabel("Seconds to Pressurize per Growth Step")
-    plt.title("Pressurize Time as Networks Grow")
+    plt.ylabel("Seconds to Solve Knapsack per Instance")
+    plt.title("Knapsack Time as Networks Grow")
     plt.xticks(x_ticks, x_ticks)
-    plt.savefig(img_dirr + "pressurize_time")
+    plt.savefig(img_dirr + "solver_time")
     plt.clf()
 
 #HELPER FNS()
@@ -156,68 +156,6 @@ def parse_info(dirr):
 
     return master_info, titles 
 
-
-#RETIRED FNS(), may be of use as reference
-def fitness_over_params(dirr, num_workers, feature_info, titles):
-
-    num_features = len(titles)
-    for i in range (num_features):
-        x = []
-        y = []
-        xticks = []
-        for w in range(num_workers):
-            x.append(w)
-            y.append(feature_info[w][i])
-            xticks.append(w)
-        plt.bar(x,y, align="center")
-        plt.xticks(xticks)
-        plt.title(titles[i])
-        plt.xlabel("Parameter Set")
-        plt.ylabel("Feature Value at Final Generation")
-        plt.savefig(dirr + "/param_images/" + str(titles[i]) + ".png")
-        plt.clf()
-
-def write_outro (dirr, num_workers, gens, num_indivs, output_freq, worker_info, titles):
-    #incld how to find max,min of param test
-
-    num_features = len(titles)
-    mins = [100000 for i in range(num_features)]
-    maxs = [0 for i in range(num_features)]
-    endpts = [[0 for i in range(num_features)] for j in range(num_workers)]
-
-    with open(dirr + "/outro_info.csv", 'w') as outro_file:
-        output = csv.writer(outro_file)
-
-        header = ["Param Set #"]
-        for i in range(num_features):
-            header += ["Min" + str(titles[i])]
-            header += ["Max" + str(titles[i])]
-            header += ["Endpoint" + str(titles[i])]
-
-        output.writerow(header)
-
-        for w in range(num_workers):
-            row = []
-            row.append(w)
-            for i in range(0,num_features):
-                vals = []
-                feature_endpts = []
-                for j in range(num_indivs):
-                    for g in range(int(gens*output_freq)):
-                        vals.append(worker_info[w,g,j,i]) #titles are one off since net size not included
-                    feature_endpts.append(worker_info[w,int(gens*output_freq)-1,j,i])
-                minn = min(vals)
-                maxx = max(vals)
-                endpt = max(feature_endpts)
-                endpts[w][i] = endpt
-                row.append(minn)
-                row.append(maxx)
-                row.append(endpt)
-                mins[i] = min(minn, mins[i])
-                maxs[i] = max(maxx, maxs[i])
-            output.writerow(row)
-
-    return mins, maxs, endpts
 
 if __name__ == "__main__":
     dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/parv5_12"
