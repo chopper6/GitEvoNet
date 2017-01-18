@@ -40,5 +40,5 @@ def solve_knapsack (kp_instance, knapsack_solver):
 
         coresize  =  solver_returns[2] #if DP_solver.so is used,  coresize = len (grey_genes)      
         execution_time = solver_returns[3]
-        return [GENES_in, len(green_genes), len(red_genes), len(grey_genes)]
+        return [GENES_in, len(green_genes), len(red_genes), len(grey_genes), execution_time]
 # --------------------------------------------------------------------------------------------------
