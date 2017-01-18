@@ -1,5 +1,6 @@
 import math
 import reducer, solver
+from time import process_time as ptime
 
 def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitness_type, num_samples_relative):
     #TODO: parse into at least 2 fns
@@ -11,13 +12,22 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
 
     ETB_ratio = 0
     RGAllR = 0
-
+    t0 = ptime()
     kp_instances = reducer.reverse_reduction(net, pressure_relative, int(tolerance), num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
+    t1 = ptime()
+    reducer_time = t1-t0   
+    solver_time = 0
+    crunch_time = 0
 
     for kp in kp_instances:
+        t0 = ptime()
         a_result = solver.solve_knapsack(kp, knapsack_solver)
+        t1 = ptime()
+        solver_time += t1-t0
+      
+        t0 = ptime()
 
-        parse_result(a_result, fitness_type)
+        #parse_result(a_result, fitness_type)
 
         #various characteristics of a result
         instance_RGGR, instance_ETB,inst_dist_in_sack, inst_dist_sq_in_sack, inst_ETB_ratio, inst_RGAllR  = 0,0,0,0,0,0
@@ -69,6 +79,9 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
         dist_sq_in_sack += inst_dist_sq_in_sack
         ETB_ratio += inst_ETB_ratio
         RGAllR += inst_RGAllR
+ 
+        t1 = ptime()
+        crunch_time += t1-t0
 
     ETB /= num_samples_relative
     RGGR /= num_samples_relative
@@ -76,6 +89,8 @@ def pressurize(configs, net, pressure_relative, tolerance, knapsack_solver, fitn
     dist_sq_in_sack /= num_samples_relative
     ETB_ratio /= num_samples_relative
     RGAllR /= num_samples_relative
+
+    #print("Pressurize time: \t reducer: " + str(reducer_time) + " \t solver: " + str(solver_time) + " \t crunch: " + str(crunch_time))
 
     if (fitness_type == 0 or fitness_type == 1 or fitness_type == 2):
         return [RGGR, ETB]

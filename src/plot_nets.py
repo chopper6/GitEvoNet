@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 import matplotlib, os, csv
 matplotlib.use('Agg') # This must be done before importing matplotlib.pyplot
-import matplotlib.pyplot as plt, import matplotlib.patches as mpatches, import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
 
 
 #ORGANIZER
@@ -218,6 +220,6 @@ def write_outro (dirr, num_workers, gens, num_indivs, output_freq, worker_info, 
     return mins, maxs, endpts
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/parv5_5eR"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/parv5_12"
 
     single_run_plots(dirr)

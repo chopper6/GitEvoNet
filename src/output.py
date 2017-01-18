@@ -62,16 +62,12 @@ def to_csv(population, output_dir):
                 indegs, indegs_freqs = np.unique(in_degrees, return_counts=True)
                 #tmp = itemfreq(in_degrees)
                 #indegs, indegs_freqs = tmp[:, 0], tmp[:, 1]  # 0 = unique values in data, 1 = frequencies
-                indegs.replace("\n",'')
-                indegs_freqs.replace("\n",'')
                 distrib_info.append(indegs)
                 distrib_info.append(indegs_freqs)
 
                 outdegs, outdegs_freqs = np.unique(out_degrees, return_counts=True)
                 #tmp = itemfreq(out_degrees)
                 #outdegs, outdegs_freqs = tmp[:, 0], tmp[:, 1]
-                outdegs.replace("\n",'')
-                outdegs_freqs.replace("\n",'')
                 distrib_info.append(outdegs)
                 distrib_info.append(outdegs_freqs)
 
@@ -79,6 +75,7 @@ def to_csv(population, output_dir):
 
 
 def minion_csv(output_dir, worker_pressurize_time, master_gens, num_growth, end_size):
+    if (num_growth == 0): num_growth = 1
     with open(output_dir + "/timing.csv", 'a') as time_file:
         output=csv.writer(time_file)
         info = []

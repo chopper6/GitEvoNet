@@ -1,13 +1,4 @@
 #!/usr/bin/python3
-''' old imports
-import math, operator, os, random, sys, csv
-from ctypes import cdll
-import multiprocessing as mp
-import networkx as nx
-from time import process_time as ptime
-import time, pickle
-'''
-
 import os,sys
 os.environ['lib'] = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib"
 sys.path.insert(0, os.getenv('lib'))
@@ -38,9 +29,5 @@ if __name__ == "__main__":
     config_file         = util.getCommandLineArgs ()
     M, configs          = init.initialize_master (config_file, 0)
 
+    #master.evolve_master_sequential_debug(configs)
     master.evolve_master(configs)
-
-
-
-
-
