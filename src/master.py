@@ -5,6 +5,7 @@ from operator import attrgetter
 from time import process_time as ptime
 from random import SystemRandom as sysRand
 import output, plot_nets, minion, fitness
+from time import sleep
 
 # TODO: check Net class scope, is it suffic to just have in master?
 # maybe rename to reduce confusion
@@ -41,7 +42,7 @@ def evolve_master(configs):
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
 
-    worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, start_size, end_size, num_workers,survive_fraction)
+    worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size+1, start_size, end_size, num_workers,survive_fraction)
     print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive))
     population = gen_init_population(init_type, start_size, pop_size)
     fitness.eval_fitness(population, fitness_type)
@@ -54,8 +55,7 @@ def evolve_master(configs):
             output.to_csv(population, output_dir)
 
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, start_size, end_size, num_workers, survive_fraction)
-        print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(worker_pop_size) + ",\tpopn size = " + str(pop_size) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens_per_growth) + ",\tworker gens = " + str(worker_gens) + ",\tmaster gens = " + str(master_gens))
-
+        print("At master gen: " + str(size_iters) + ",\t size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(worker_pop_size) + ",\tpopn size = " + str(pop_size) + ",\tnum survive = " + str(num_survive) + ",\tworker gens = " + str(worker_gens))
         # DEBUG STUFF
         distrib, minions, readd = 0, 0, 0
         '''
@@ -75,13 +75,14 @@ def evolve_master(configs):
         for w in range(num_workers):
             dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
             seed = population[w % num_survive].copy()
-            randSeeds = [os.urandom(10000000) for i in range(worker_gens*worker_pop_size)] #diff seed for each mutation call
-            print(randSeeds[3])
+            #randSeeds = [os.urandom(10000000) for i in range(worker_gens*worker_pop_size)] #diff seed for each mutation call
+            randSeeds = [0 for i in range(worker_gens*worker_pop_size)]
             assert(seed != population[w % num_survive])
-            worker_args = [w, seed, worker_gens, worker_pop_size, num_survive, randSeeds, configs]
+            worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, configs]
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
             pool.map_async(minion.evolve_minion, (dump_file,))
+            sleep(.0001)
 
         t1 = ptime()
         distrib += t1 - t0
@@ -161,15 +162,17 @@ def parse_worker_popn (num_workers, output_dir, num_survive):
 def curr_gen_params(size, start_size, end_size, num_workers, survive_fraction):
     #TODO: add island switch in CONFIGS for expon popn size curve
 
-    percent_size = float(size - start_size) / float(end_size - start_size)
-    worker_pop_size = math.floor(end_size * percent_size)
+    percent_size = float(size) / float(end_size - start_size)
+    const = 10
+    worker_pop_size = 1
+    worker_gens = math.ceil(-1*const*math.pow(percent_size,2)+const)
     # ISLAND # math.ceil(10 * math.pow(math.e, -4 * percent_size))
     pop_size = worker_pop_size * num_workers
     num_survive = int(pop_size * survive_fraction)
     if (num_survive < 1):
         num_survive = 1
         print("WARNING evo_master(): num_survive goes below 1, set to 1 instead.")
-    worker_gens = worker_pop_size
+    #worker_gens = worker_pop_size
 
     return worker_pop_size, pop_size, num_survive, worker_gens
 
@@ -204,9 +207,8 @@ def evolve_master_sequential_debug(configs):
         if (size_iters % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
 
-        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, start_size, end_size, num_workers, survive_fraction)
-        print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(worker_pop_size) + ",\tpopn size = " + str(pop_size) + ",\tnum survive = " + str(num_survive) + ",\tdynam gens = " + str(gens_per_growth) + ",\tworker gens = " + str(worker_gens) + ",\tmaster gens = " + str(master_gens))
-
+        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size+1, start_size, end_size, num_workers, survive_fraction)
+        print("At size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(worker_pop_size) + ",\tpopn size = " + str(pop_size) + ",\tnum survive = " + str(num_survive) + ",\tworker gens = " + str(worker_gens))
         # DEBUG STUFF
         distrib, minions, readd = 0, 0, 0
         '''
@@ -227,7 +229,9 @@ def evolve_master_sequential_debug(configs):
             dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
             seed = population[w % num_survive].copy()
             assert(seed != population[w % num_survive])
-            worker_args = [w, seed, worker_gens, worker_pop_size, num_survive, configs]
+            #randSeeds = [os.urandom(10000000) for i in range(worker_gens*worker_pop_size)] #diff seed for each mutation call
+            randSeeds = [0 for i in range(worker_gens*worker_pop_size)]
+            worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, configs]
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
             minion.evolve_minion(dump_file)

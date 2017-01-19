@@ -10,11 +10,13 @@ def slash(path):
     return path+(path[-1] != '/')*'/'
 #--------------------------------------------------------------------------------------------------
 def flip():
-    return random.SystemRandom().choice([1,-1])
+    return random.choice([1,-1])
+    #return random.SystemRandom().choice([1,-1])
 #--------------------------------------------------------------------------------------------------
 def sample_p_elements (elements,p):
     #elements = nodes or edges
-    return  random.SystemRandom().sample(elements,p) 
+    return  random.sample(elements,p)
+    #return  random.SystemRandom().sample(elements,p) 
 #--------------------------------------------------------------------------------------------------
 def advice_nodes (M, sample_nodes, biased):
     advice = {}
@@ -24,7 +26,8 @@ def advice_nodes (M, sample_nodes, biased):
     else:
         for node in sample_nodes:
             biased_center       = 0.5 + M.node[node]['conservation_score']
-            rand                = random.SystemRandom().uniform(0,1)
+            rand                = random.uniform(0,1)
+            #rand                = random.SystemRandom().uniform(0,1)
             if rand <= biased_center:
                 advice[node] = 1    #should be promoted (regulation) or conserved (evolution)
             else:

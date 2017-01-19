@@ -44,7 +44,7 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
     # 1     number_green_genes
     # 2     number_red_genes
     # 3     number_grey genes
-    RGGR, ETB, dist_in_sack, dist_sq_in_sack, ETB_ratio, RGAllR, solver_time = 0,0,0,0,0,0,0
+    RGGR, ETB, dist_in_sack, dist_sq_in_sack, ETB_ratio, RGAllR, ben_ratio, solver_time = 0,0,0,0,0,0,0,0
 
     if len(a_result) > 0:
         # -------------------------------------------------------------------------------------------------
@@ -58,6 +58,7 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
             dist_in_sack += abs(g[1] - g[2])
             dist_sq_in_sack += math.pow((g[1] - g[2]), 2)
             soln_bens.append(g[1])
+            if (g[1] + g[2] != 0): ben_ratio += g[1]/(g[1]+g[2])
 
         # hub score eval pt2
         ETB = sum(set(soln_bens))
@@ -87,4 +88,6 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
     elif (fitness_type == 12 or fitness_type == 13 or fitness_type == 14): #doesn't work at all
         node_to_edge_ratio = num_nodes/ num_edges
         return [node_to_edge_ratio, dist_in_sack, solver_time]
+    elif (fitness_type == 15):
+        return [RGAllR, ben_ratio, solver_time]
     else: print("ERROR in pressurize: unknown fitness type.")

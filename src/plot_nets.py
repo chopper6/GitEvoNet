@@ -158,6 +158,6 @@ def parse_info(dirr):
 
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/parv5_12"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/6_3"
 
     single_run_plots(dirr)

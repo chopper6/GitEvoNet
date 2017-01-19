@@ -5,6 +5,11 @@ from operator import attrgetter
 
 def eval_fitness(population, fitness_type):
     #determines fitness of each individual and orders the population by fitness
+    if (fitness_type == 15):
+        for p in range(len(population)):
+            population[p].fitness = population[p].fitness_parts[1]
+        population = sorted(population,key=attrgetter('fitness'), reverse=True)
+        return
 
     if (fitness_type % 3 == 0):
         generic_rank(population)
