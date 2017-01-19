@@ -10,6 +10,11 @@ def eval_fitness(population, fitness_type):
             population[p].fitness = population[p].fitness_parts[2]
         population = sorted(population,key=attrgetter('fitness'), reverse=True)
         return
+    elif (fitness_type == 16):  #TEMP
+        for p in range(len(population)):
+            population[p].fitness = population[p].fitness_parts[0] * population[p].fitness_parts[1]
+        population = sorted(population,key=attrgetter('fitness'), reverse=True)
+        return
 
     if (fitness_type % 3 == 0):
         generic_rank(population)

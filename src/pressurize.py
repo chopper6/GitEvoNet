@@ -90,4 +90,6 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
         return [node_to_edge_ratio, dist_in_sack, ben_ratio]
     elif (fitness_type == 15):
         return [RGAllR, ETB, ben_ratio]
+    elif (fitness_type == 16):
+        return [ben_ratio, dist_in_sack, RGAllR]
     else: print("ERROR in pressurize: unknown fitness type.")
