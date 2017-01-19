@@ -128,10 +128,10 @@ def solver_time(dirr):
         x_ticks.append((max_net_size / 10) * j)
     plt.plot(net_size,time)
     plt.xlabel("Net Size")
-    plt.ylabel("Seconds to Solve Knapsack per Instance")
-    plt.title("Knapsack Time as Networks Grow")
+    plt.ylabel("Seconds to Pressurize")
+    plt.title("Pressurize Time as Networks Grow")
     plt.xticks(x_ticks, x_ticks)
-    plt.savefig(img_dirr + "solver_time")
+    plt.savefig(img_dirr + "pressurize_time")
     plt.clf()
 
 #HELPER FNS()

@@ -2,6 +2,7 @@
 
 import math, pickle
 import output, mutate, fitness, pressurize
+from time import process_time as ptime
 
 def evolve_minion(worker_file):
     with open(str(worker_file), 'rb') as file:
@@ -17,7 +18,7 @@ def evolve_minion(worker_file):
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
     output_dir += str(worker_ID)
 
-    solver_time = 0
+    pressurize_time = 0
 
     for g in range(worker_gens):
         if (g != 0):
@@ -38,10 +39,13 @@ def evolve_minion(worker_file):
                 if (p != q): assert (population[p] != population[q])
 
         for p in range(pop_size):
-            mutate.mutate(configs, population[p].net, randSeeds[g*pop_size + p])
+            mutate.mutate(configs, population[p].net, worker_ID)
 
+            t0 = ptime()
             pressure_results = pressurize.pressurize(configs, population[p].net)
-            population[p].fitness_parts[0], population[p].fitness_parts[1], solver_time = pressure_results[0], pressure_results[1], pressure_results[2]
+            t1 = ptime()
+            pressurize_time += t1-t0
+            population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
 
             ''' FITNESS CHECK
             if (worker_ID == 0 and p==0):
@@ -64,7 +68,7 @@ def evolve_minion(worker_file):
         orig_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
         end_size = len(population[0].net.nodes())
         growth = end_size - start_size
-        output.minion_csv(orig_dir, solver_time, growth, end_size)
+        output.minion_csv(orig_dir, pressurize_time, growth, end_size)
 
 
 def write_out_worker(worker_file, population, num_return):

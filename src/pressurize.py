@@ -11,7 +11,7 @@ def pressurize(configs, net):
     knapsack_solver = cdll.LoadLibrary(configs['KP_solver_binary'])
     fitness_type = int(configs['fitness_type'])
 
-    leaf_fitness, hub_fitness, solver_time = 0,0,0
+    leaf_fitness, hub_fitness, solo_fitness = 0,0,0
 
     num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
     pressure_relative = int(pressure * len(net.nodes()))
@@ -26,13 +26,13 @@ def pressurize(configs, net):
 
         leaf_fitness += inst_leaf_fitness
         hub_fitness += inst_hub_fitness
-        solver_time += instance_time
+        solo_fitness += instance_time
 
     leaf_fitness /= num_samples_relative
     hub_fitness /= num_samples_relative
-    solver_time /= num_samples_relative
+    solo_fitness /= num_samples_relative
 
-    return [leaf_fitness, hub_fitness, solver_time]
+    return [leaf_fitness, hub_fitness, solo_fitness]
 
 
 
@@ -78,16 +78,16 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
         print("WARNING in pressurize: no results from oracle advice")
 
     if (fitness_type == 0 or fitness_type == 1 or fitness_type == 2):
-        return [RGGR, ETB, solver_time]
+        return [RGGR, ETB, ben_ratio]
     elif (fitness_type == 3 or fitness_type == 4 or fitness_type == 5):
-        return [RGAllR, ETB, solver_time]
+        return [RGAllR, ETB, ben_ratio]
     elif (fitness_type == 6 or fitness_type == 7 or fitness_type == 8):
-        return [RGGR, dist_in_sack, solver_time]
+        return [RGGR, dist_in_sack, ben_ratio]
     elif (fitness_type == 9 or fitness_type == 10 or fitness_type == 11):
-        return [RGAllR, dist_in_sack, solver_time]
+        return [RGAllR, dist_in_sack, ben_ratio]
     elif (fitness_type == 12 or fitness_type == 13 or fitness_type == 14): #doesn't work at all
         node_to_edge_ratio = num_nodes/ num_edges
-        return [node_to_edge_ratio, dist_in_sack, solver_time]
+        return [node_to_edge_ratio, dist_in_sack, ben_ratio]
     elif (fitness_type == 15):
-        return [RGAllR, ben_ratio, solver_time]
+        return [RGAllR, ETB, ben_ratio]
     else: print("ERROR in pressurize: unknown fitness type.")

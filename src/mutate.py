@@ -2,7 +2,8 @@ import math
 import random as rd
 #from random import SystemRandom as rd
 
-def mutate(configs, net, randSeed):
+def mutate(configs, net, worker_ID):
+    print("worker " + str(worker_ID) + " start with " + str(rd.random()))
     #rd.seed(randSeed)
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
 
@@ -143,7 +144,7 @@ def mutate(configs, net, randSeed):
 
 
 def num_mutations(mutn_freq, net, stoch, scale):
-    if (stoch == True):     mutn_freq = (rd.uniform(0,100)*mutn_freq)
+    if (stoch == True):     mutn_freq = (rd.uniform(0,20)*mutn_freq)
 
     if (scale == True): mutn_freq*= len(net.nodes())
 

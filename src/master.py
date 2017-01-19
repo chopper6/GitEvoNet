@@ -12,7 +12,7 @@ from time import sleep
 class Net:
     def __init__(self, net, id):
         self.fitness = 0    #aim to max
-        self.fitness_parts = [0]*2   #leaf-fitness, hub-fitness
+        self.fitness_parts = [0]*3   #leaf-fitness, hub-fitness
         self.net = net.copy()
         assert(self.net != net)
         self.id = id  #irrelv i think
