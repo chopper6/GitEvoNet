@@ -33,29 +33,34 @@ def evolve_master(configs):
     survive_percent = int(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
     output_freq = float(configs['output_frequency'])
+    max_iters = float(configs['max_iterations'])
 
-    # new configs
     init_type = int(configs['initial_net_type'])
     start_size = int(configs['starting_size'])
     end_size = int(configs['ending_size'])
+    worker_pop_size = int(configs['worker_population_size'])
+    worker_gens = int(configs['workers_generations'])
+
+    pop_size = worker_pop_size * num_workers
+    num_survive = survive_fraction*pop_size
 
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
 
-    worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size+1, start_size, end_size, num_workers,survive_fraction)
-    print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive))
+    #worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size+1, start_size, end_size, num_workers,survive_fraction)
+    #print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive))
     population = gen_init_population(init_type, start_size, pop_size)
     fitness.eval_fitness(population, fitness_type)
 
     size = start_size
     size_iters = 0
-    while (size < end_size):
+    while (size < end_size and size_iters < max_iters):
 
         if (size_iters % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
 
-        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, start_size, end_size, num_workers, survive_fraction)
-        print("At master gen: " + str(size_iters) + ",\t size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(worker_pop_size) + ",\tpopn size = " + str(pop_size) + ",\tnum survive = " + str(num_survive) + ",\tworker gens = " + str(worker_gens))
+        #worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, start_size, end_size, num_workers, survive_fraction)
+        #print("At master gen: " + str(size_iters) + ",\t size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(worker_pop_size) + ",\tpopn size = " + str(pop_size) + ",\tnum survive = " + str(num_survive) + ",\tworker gens = " + str(worker_gens))
         # DEBUG STUFF
         distrib, minions, readd = 0, 0, 0
         '''
@@ -64,10 +69,11 @@ def evolve_master(configs):
             print(population[p].fitness)
         '''
         # check that population is unique
+        '''
         for p in range(len(population)):
             for q in range(0, p):
                 if (p != q): assert (population[p] != population[q])
-
+        '''
         t0 = ptime()
         pool = mp.Pool(processes=num_workers)
 
@@ -76,7 +82,7 @@ def evolve_master(configs):
             dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
             seed = population[w % num_survive].copy()
             #randSeeds = [os.urandom(10000000) for i in range(worker_gens*worker_pop_size)] #diff seed for each mutation call
-            randSeeds = [0 for i in range(worker_gens*worker_pop_size)]
+            randSeeds = os.urandom(sysRand().randint(0,1000000))
             assert(seed != population[w % num_survive])
             worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, configs]
             with open(dump_file, 'wb') as file:
@@ -230,7 +236,7 @@ def evolve_master_sequential_debug(configs):
             seed = population[w % num_survive].copy()
             assert(seed != population[w % num_survive])
             #randSeeds = [os.urandom(10000000) for i in range(worker_gens*worker_pop_size)] #diff seed for each mutation call
-            randSeeds = [0 for i in range(worker_gens*worker_pop_size)]
+            randSeeds = os.urandom(sysRand().randint(0,1000000))
             worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, configs]
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)

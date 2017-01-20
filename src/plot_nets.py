@@ -130,7 +130,7 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
         x_ticks = []
         max_net_size = net_info[num_outputs - 1, 0]
         for j in range(0, 11):
-            x_ticks.append((max_net_size / 10) * j)
+            x_ticks.append((num_outputs / 10) * j)
         plt.plot(xdata, ydata)
         plt.ylabel(titles[i] + " of most fit Individual")
         plt.title(titles[i])
@@ -143,7 +143,7 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
     return
 
 def solver_time(dirr):
-    img_dirr = dirr + "/images/"
+    img_dirr = dirr + "/images_by_size/"
     with open(dirr + "/timing.csv", 'r') as timing_csv:
         lines = timing_csv.readlines()
         title = lines[0]
@@ -191,6 +191,6 @@ def parse_info(dirr):
 
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/6_3"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/batch2_mutn/2"
 
     single_run_plots(dirr)

@@ -8,10 +8,10 @@ import util, init, master
 
 def batch_run(dirr):
     #ASSUMES all files in dirr are config files
-
     i=0
     for config_file in os.listdir(dirr):
-        configs = init.initialize_master(config_file, 0)
+        print("Starting evo of config file: " + str(config_file))
+        configs = init.initialize_master(dirr+"/"+config_file, 0)
         master.evolve_master(configs)
         print("Finished evolving config set " + str(i))
         i+=1

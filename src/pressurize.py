@@ -45,13 +45,14 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
     # 2     number_red_genes
     # 3     number_grey genes
     RGGR, ETB, dist_in_sack, dist_sq_in_sack, ETB_ratio, RGAllR, ben_ratio, solver_time = 0,0,0,0,0,0,0,0
-
+    soln_size = 1
     if len(a_result) > 0:
         # -------------------------------------------------------------------------------------------------
         GENES_in, num_green, num_red, num_grey, solver_time = a_result[0], a_result[1], a_result[2], a_result[3], \
                                                                 a_result[4]
         # -------------------------------------------------------------------------------------------------
         soln_bens = []
+        soln_size = len(GENES_in)
         for g in GENES_in:
             # g[0] gene name, g[1] benefits, g[2] damages, g[3] if in knapsack (binary)
             # hub score eval pt1
@@ -91,5 +92,19 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
     elif (fitness_type == 15):
         return [RGAllR, ETB, ben_ratio]
     elif (fitness_type == 16):
-        return [ben_ratio, dist_in_sack, RGAllR]
+        return [RGAllR, ETB, dist_in_sack]
+    elif (fitness_type == 17):
+        return [RGAllR, ETB, RGAllR*ETB]
+    elif (fitness_type == 18):
+        return [RGAllR, ETB, math.pow(ETB,RGAllR)]
+    elif (fitness_type == 19):
+        return [RGAllR, ETB, ben_ratio*ETB]
+    elif (fitness_type == 20):
+        return [RGAllR, ETB, ben_ratio*dist_in_sack]
+    elif (fitness_type == 19):
+        return [RGAllR, ETB, ben_ratio*ETB]
+    elif (fitness_type == 20):
+        return [RGAllR, ETB, ben_ratio*ETB]
+    elif (fitness_type == 21):
+        return [RGAllR, ETB, ben_ratio/soln_size]
     else: print("ERROR in pressurize: unknown fitness type.")

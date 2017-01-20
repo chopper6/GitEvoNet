@@ -3,12 +3,14 @@
 import math, pickle
 import output, mutate, fitness, pressurize
 from time import process_time as ptime
+import random
 
 def evolve_minion(worker_file):
     with open(str(worker_file), 'rb') as file:
-        worker_ID, seed, worker_gens, pop_size, num_return, randSeeds, configs = pickle.load(file)
+        worker_ID, seed, worker_gens, pop_size, num_return, randSeed, configs = pickle.load(file)
         file.close()
 
+    random.seed(randSeed)
     population = gen_population_from_seed(seed, pop_size)
     start_size = len(seed.net.nodes())
 
@@ -27,19 +29,18 @@ def evolve_minion(worker_file):
                 assert (population[p] != population[p%num_survive])
                 assert (population[p].net != population[p % num_survive].net)
 
-        '''
+        ''' #debug info
         if (worker_ID == 0):
             print ("Minion population fitness: ")
             for p in range(pop_size):
                 print(population[p].fitness)
-        '''
         # check that population is unique
         for p in range(pop_size):
             for q in range(0, p):
                 if (p != q): assert (population[p] != population[q])
-
+        '''
         for p in range(pop_size):
-            mutate.mutate(configs, population[p].net, worker_ID)
+            mutate.mutate(configs, population[p].net)
 
             t0 = ptime()
             pressure_results = pressurize.pressurize(configs, population[p].net)

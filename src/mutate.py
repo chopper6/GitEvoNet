@@ -2,9 +2,8 @@ import math
 import random as rd
 #from random import SystemRandom as rd
 
-def mutate(configs, net, worker_ID):
-    print("worker " + str(worker_ID) + " start with " + str(rd.random()))
-    #rd.seed(randSeed)
+def mutate(configs, net):
+    
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
 
     #how to elegantly pass booleans
