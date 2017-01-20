@@ -11,12 +11,15 @@ def single_run_plots (dirr):
     #plots features_over_time and degree_distrib
     #only uses most fit indiv in population
 
-    if not os.path.exists(dirr + "/images/"):
-        os.makedirs(dirr + "/images/")
+    if not os.path.exists(dirr + "/images_by_size/"):
+        os.makedirs(dirr + "/images_by_size/")
+    if not os.path.exists(dirr + "/images_by_time/"):
+        os.makedirs(dirr + "/images_by_time/")
 
     net_info, titles = parse_info(dirr)
 
     mins, maxs = 0,0
+    features_over_size(dirr, net_info, titles, mins, maxs, False)
     features_over_time(dirr, net_info, titles, mins, maxs, False)
 
     solver_time(dirr)
@@ -35,6 +38,7 @@ def degree_distrib(dirr):
 
         all_lines = [Line.strip() for Line in (open(deg_file_name,'r')).readlines()]
         titles = all_lines[0]
+        img_index = 0
         for line in all_lines[1:]:
             line = line.replace('[', '').replace(']','').replace("\n", '')
             line = line.split(',')
@@ -76,13 +80,14 @@ def degree_distrib(dirr):
             plt.title('Degree Distribution (network size = ' + str(line[0]) + ' nodes) of Most Fit Net')
             plt.xlim(1,100)
             plt.ylim(1,1000)
-            plt.savefig(dirr + "/degree_distribution/" + str(line[0]) + ".png", dpi=300)
+            plt.savefig(dirr + "/degree_distribution/" + str(img_index) + ".png", dpi=300)
             plt.clf()
+            img_index += 1
 
 
-def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
+def features_over_size(dirr, net_info, titles, mins, maxs, use_lims):
 
-        img_dirr = dirr + "/images/"
+        img_dirr = dirr + "/images_by_size/"
         for i in range(len(titles)):
             num_outputs = len(net_info)
             ydata = []
@@ -108,6 +113,34 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
 
 
         return
+
+
+def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
+    img_dirr = dirr + "/images_by_time/"
+    for i in range(len(titles)):
+        num_outputs = len(net_info)
+        ydata = []
+        xdata = []
+        for j in range(num_outputs):
+            ydata.append(net_info[j, i])
+            xdata.append(j)
+            # change x_ticks?
+            # x_ticks.append(int(g/output_freq))
+            # buffer_ticks.append(gi)
+        x_ticks = []
+        max_net_size = net_info[num_outputs - 1, 0]
+        for j in range(0, 11):
+            x_ticks.append((max_net_size / 10) * j)
+        plt.plot(xdata, ydata)
+        plt.ylabel(titles[i] + " of most fit Individual")
+        plt.title(titles[i])
+        if (use_lims == True): plt.ylim(mins[i], maxs[i])
+        plt.xlabel("Master Generation")
+        plt.xticks(x_ticks, x_ticks)
+        plt.savefig(img_dirr + str(titles[i]))
+        plt.clf()
+
+    return
 
 def solver_time(dirr):
     img_dirr = dirr + "/images/"
