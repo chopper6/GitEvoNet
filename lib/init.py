@@ -2,19 +2,20 @@ import sys, os, csv, time, math, networkx as nx, shutil
 sys.path.insert(0, os.getenv('lib'))
 import util
 #--------------------------------------------------------------------------------------------------
-def initialize_master (cl_args, num_workers):   
+def initialize_master (cl_arg, num_workers):
     
-    configs                        = load_simulation_configs (cl_args[1], 0)
+    configs                        = load_simulation_configs (cl_arg, 0)
     
-    M                              = load_network    (configs) 
-    configs['number_of_genes']     = len(M.nodes())   #WARNING: does not dynam adapt to net size, but curr unused
+    #M                              = load_network    (configs)
+    #configs['number_of_genes']     = len(M.nodes())   #WARNING: does not dynam adapt to net size, but curr unused
     configs['sampling_rounds']     = configs['sampling_rounds']
         #ORIG: min (configs['sampling_rounds_max'], (len(M.nodes())+len(M.edges()))*configs['sampling_rounds'])
             #now dynam adjusted to net size
     configs ['worker_load']        = int (math.ceil (float(configs['sampling_rounds']) / max(1, float(num_workers))))
     configs ['num_workers']        = num_workers
       
-    return M, configs
+    #return M, configs
+    return configs
 #--------------------------------------------------------------------------------------------------    
 def initialize_worker(cl_args):
     configs = load_simulation_configs (cl_args[1], -1)

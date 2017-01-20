@@ -4,7 +4,7 @@ def getCommandLineArgs():
     if len(sys.argv) < 2:
         print ("Usage: python3 test.py [/absolute/path/to/configs/file.txt]\nExiting..\n")
         sys.exit()
-    return [str(sys.argv[0]), str(sys.argv[1])]
+    return str(sys.argv[1])
 #----------------------------------------------------------------------------  
 def slash(path):
     return path+(path[-1] != '/')*'/'
