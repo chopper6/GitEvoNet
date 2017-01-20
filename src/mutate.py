@@ -9,10 +9,13 @@ def mutate(configs, net, worker_ID):
 
     #how to elegantly pass booleans
     # note: bias and boundary are not curr implemented
+
+    '''
     bias = configs['use_mutation_bias']
     boundary = configs['constrain_node:edge_ratio']
     scale = configs['scale_mutation_frequency_by_net_size']
     stoch_mutn = configs['stochastic_mutation']
+    '''
 
     add_freq = float(configs['add_edge_mutation_frequency'])
     rm_freq = float(configs['remove_edge_mutation_frequency'])
@@ -56,23 +59,21 @@ def mutate(configs, net, worker_ID):
 
     #GROW (ADD NODE)
     #starts unconnected
-    num_grow = num_mutations(grow_freq, net, stoch_mutn, scale)
+    #num_grow = num_mutations(grow_freq, net, stoch_mutn, scale)
     before = len(net.nodes())
-    for i in range(num_grow):
+    if (rd.random() < grow_freq):
         node = len(net.nodes())
         net.add_node(node)
         #print(before, len(net.nodes()))
     
     #SHRINK (REMOVE NODE)
-    num_shrink = num_mutations(shrink_freq, net, stoch_mutn, scale)
-    for i in range(num_shrink):
+    if (rd.random() < shrink_freq):
         node = rd.sample(net.nodes(), 1)
         node = node[0]
         net.remove_node(node)
 
     #ADD EDGE
-    num_add = num_mutations(add_freq, net, stoch_mutn, scale)
-    for i in range(num_add):
+    if (rd.random() < add_freq):
         pre_size = post_size = len(net.nodes())
         while (pre_size == post_size):  # ensure that net adds
             node = node2 = rd.sample(net.nodes(), 1)
@@ -88,15 +89,13 @@ def mutate(configs, net, worker_ID):
             post_size = pre_size +1 #TODO remove this, added due to very long wait in loops
 
     #REMOVE EDGE
-    num_rm = num_mutations(rm_freq, net, stoch_mutn, scale)
-    for i in range(num_rm):
+    if (rd.random() < rm_freq):
         edge = rd.sample(net.edges(), 1)
         edge = edge[0]
         net.remove_edge(edge[0], edge[1])
 
     #REWIRE EDGE
-    num_rewire = num_mutations(rewire_freq, net, stoch_mutn, scale)
-    for i in range(num_rewire):
+    if (rd.random() < rewire_freq):
         pre_edges = post_edges = len(net.edges())
         post_edges = pre_edges+1
         while (pre_edges != post_edges):    #ensure sucessful rewire
@@ -116,8 +115,7 @@ def mutate(configs, net, worker_ID):
                 net.add_edge(edge[0], edge[1], sign=sign)  #rewire failed, undo rm'd edge
 
     #REVERSE EDGE DIRECTION
-    num_reverse = num_mutations(reverse_freq, net, stoch_mutn, scale)
-    for i in range(num_reverse):
+    if (rd.random() < reverse_freq):
         pre_edges = post_edges = len(net.edges())
         post_edges = pre_edges + 1
         while (pre_edges != post_edges):
@@ -133,8 +131,7 @@ def mutate(configs, net, worker_ID):
                 net.add_edge(edge[0], edge[1], sign=sign) #reverse failed, undo rm'd edge
 
     #CHANGE EDGE SIGN
-    num_sign = num_mutations(sign_freq, net, stoch_mutn, scale)
-    for i in range(num_sign):
+    if (rd.random() < sign_freq):
         pre_edges = len(net.edges())
         edge = rd.sample(net.out_edges(), 1)
         edge = edge[0]
