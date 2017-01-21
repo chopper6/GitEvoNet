@@ -128,7 +128,20 @@ def gen_init_population(init_type, start_size, pop_size):
 
     elif (init_type == 1):
         population = [Net(nx.erdos_renyi_graph(start_size,.01, directed=True, seed=None), i) for i in range(pop_size)]
-        # edge probability as param?
+
+    elif (init_type == 2):
+        population = [Net(nx.empty_graph(start_size, create_using=nx.DiGraph()), i) for i in range(pop_size)]
+
+    elif (init_type == 3):
+        population = [Net(nx.complete_graph(start_size, create_using=nx.DiGraph()), i) for i in range(pop_size)]
+
+    elif (init_type == 4):
+        population = [Net(nx.cycle_graph(start_size, create_using=nx.DiGraph()), i) for i in range(pop_size)]
+
+    elif (init_type == 5):
+        population = [Net(nx.star_graph(start_size, create_using=nx.DiGraph()), i) for i in range(pop_size)]
+
+
 
     else:
         print("ERROR in master.gen_init_population(): unknown init_type.")
