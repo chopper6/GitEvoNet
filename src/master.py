@@ -39,10 +39,10 @@ def evolve_master(configs):
     start_size = int(configs['starting_size'])
     end_size = int(configs['ending_size'])
     worker_pop_size = int(configs['worker_population_size'])
-    worker_gens = int(configs['workers_generations'])
+    worker_gens = int(configs['worker_generations'])
 
     pop_size = worker_pop_size * num_workers
-    num_survive = survive_fraction*pop_size
+    num_survive = int(survive_fraction*pop_size)
 
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
@@ -58,6 +58,7 @@ def evolve_master(configs):
 
         if (size_iters % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
+            print("Master at gen " + str(size_iters) + ", with net size = " + str(size))
 
         #worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, start_size, end_size, num_workers, survive_fraction)
         #print("At master gen: " + str(size_iters) + ",\t size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(worker_pop_size) + ",\tpopn size = " + str(pop_size) + ",\tnum survive = " + str(num_survive) + ",\tworker gens = " + str(worker_gens))
