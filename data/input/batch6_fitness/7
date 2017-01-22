@@ -1,0 +1,48 @@
+#files
+KP_solver_source         = /home/2014/choppe1/Documents/EvoNet/virt_workspace/lib/kp_solvers/DPsolver.c
+KP_solver_binary         = /home/2014/choppe1/Documents/EvoNet/virt_workspace/lib/kp_solvers/minknap.so
+output_directory         = /home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/batch6_fitness/7
+
+# evolve params
+sampling_rounds_max      = 500 
+pressure                 = 100
+tolerance                = 10
+
+#worker, master params
+worker_population_size = 5
+worker_generations = 5
+output_frequency = .2
+number_of_workers = 24
+max_iterations = 500
+
+percent_survive = 10
+fitness_type = 22
+ 
+initial_net_type = 4
+starting_size = 200
+ending_size = 1000
+
+#crossover
+crossover_percent = 0
+crossover_frequency = 0
+
+#mutation
+add_edge_mutation_frequency = .2
+remove_edge_mutation_frequency = .2 
+rewire_mutation_frequency = .4
+sign_mutation_frequency = .2
+reverse_edge_mutation_frequency = 0 
+grow_mutation_frequency = .2
+shrink_mutation_frequency = .1
+
+# Do not worry about the following parameters
+network_file             = /home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/Network.txt
+network_name             = Vinayagam
+version                  = v4
+reduction_mode           = reverse
+sampling_rounds          = 1X
+BD_criteria              = both
+advice_upon              = nodes
+biased                   = False
+alpha                    = 0.25
+
