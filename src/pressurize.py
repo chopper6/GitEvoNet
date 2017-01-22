@@ -44,22 +44,24 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
     # 1     number_green_genes
     # 2     number_red_genes
     # 3     number_grey genes
-    RGGR, ETB, dist_in_sack, dist_sq_in_sack, ETB_ratio, RGAllR, ben_ratio, solver_time = 0,0,0,0,0,0,0,0
+    RGGR, ETB, dist_in_sack, dist_sq_in_sack, ETB_ratio, RGAllR, ben_ratio, ratiodist, solver_time = 0,0,0,0,0,0,0,0,0
     soln_size = 1
     if len(a_result) > 0:
         # -------------------------------------------------------------------------------------------------
-        GENES_in, num_green, num_red, num_grey, solver_time = a_result[0], a_result[1], a_result[2], a_result[3], \
-                                                                a_result[4]
+        GENES_in, num_green, num_red, num_grey, solver_time = a_result[0], a_result[1], a_result[2], a_result[3], a_result[4]
         # -------------------------------------------------------------------------------------------------
         soln_bens = []
         soln_size = len(GENES_in)
         for g in GENES_in:
             # g[0] gene name, g[1] benefits, g[2] damages, g[3] if in knapsack (binary)
             # hub score eval pt1
-            dist_in_sack += abs(g[1] - g[2])
+            dist_in_sack += (g[1] - g[2])
             dist_sq_in_sack += math.pow((g[1] - g[2]), 2)
             soln_bens.append(g[1])
-            if (g[1] + g[2] != 0): ben_ratio += g[1]/(g[1]+g[2])
+            if (g[1] + g[2] != 0): 
+                ben_ratio += g[1]/(g[1]+g[2])
+                ratiodist += dist_in_sack*ben_ratio
+            else: ratiodist += dist_in_sack
 
         # hub score eval pt2
         ETB = sum(set(soln_bens))
@@ -100,11 +102,9 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
     elif (fitness_type == 19):
         return [RGAllR, ETB, ben_ratio*ETB]
     elif (fitness_type == 20):
-        return [RGAllR, ETB, ben_ratio*dist_in_sack]
-    elif (fitness_type == 19):
-        return [RGAllR, ETB, ben_ratio*ETB]
-    elif (fitness_type == 20):
-        return [RGAllR, ETB, ben_ratio*ETB]
+        return [RGAllR, ETB, ratiodist]
     elif (fitness_type == 21):
         return [RGAllR, ETB, ben_ratio/soln_size]
+    elif (fitness_type == 22):
+        return [RGAllR, ETB, ben_ratio*RGAllR]
     else: print("ERROR in pressurize: unknown fitness type.")

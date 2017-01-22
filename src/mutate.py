@@ -61,10 +61,12 @@ def mutate(configs, net):
     #num_grow = num_mutations(grow_freq, net, stoch_mutn, scale)
     before = len(net.nodes())
     if (rd.random() < grow_freq):
-        node = len(net.nodes())
-        net.add_node(node)
-        #print(before, len(net.nodes()))
-    
+        pre_size = post_size = len(net.nodes())
+        while(pre_size == post_size):
+            node_num = rd.randint(0,len(net.nodes())*100000) #hope to hit number that doesn't already exist
+            net.add_node(node_num)
+            post_size = len(net.nodes())
+   
     #SHRINK (REMOVE NODE)
     if (rd.random() < shrink_freq):
         node = rd.sample(net.nodes(), 1)
@@ -73,7 +75,7 @@ def mutate(configs, net):
 
     #ADD EDGE
     if (rd.random() < add_freq):
-        pre_size = post_size = len(net.nodes())
+        pre_size = post_size = len(net.edges())
         while (pre_size == post_size):  # ensure that net adds
             node = node2 = rd.sample(net.nodes(), 1)
             node = node[0]
@@ -84,8 +86,8 @@ def mutate(configs, net):
             sign = rd.randint(0, 1)
             if (sign == 0):     sign = -1
             net.add_edge(node, node2, sign=sign)
-            #post_size = len(net.nodes())
-            post_size = pre_size +1 #TODO remove this, added due to very long wait in loops
+            post_size = len(net.edges())
+            #post_size = pre_size +1 #TODO remove this, added due to very long wait in loops
 
     #REMOVE EDGE
     if (rd.random() < rm_freq):

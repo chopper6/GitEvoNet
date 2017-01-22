@@ -99,7 +99,7 @@ def features_over_size(dirr, net_info, titles, mins, maxs, use_lims):
                 #x_ticks.append(int(g/output_freq))
                 #buffer_ticks.append(gi)
             x_ticks = []
-            max_net_size = net_info[num_outputs-1,0]
+            max_net_size = net_info[num_outputs-1,0]  #not nec max if net shrinks
             for j in range(0,11):
                 x_ticks.append((max_net_size/10)*j)
             plt.plot(xdata, ydata)
@@ -130,7 +130,7 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
         x_ticks = []
         max_net_size = net_info[num_outputs - 1, 0]
         for j in range(0, 11):
-            x_ticks.append((num_outputs / 10) * j)
+            x_ticks.append(int((num_outputs / 10) * j))
         plt.plot(xdata, ydata)
         plt.ylabel(titles[i] + " of most fit Individual")
         plt.title(titles[i])
@@ -158,7 +158,7 @@ def solver_time(dirr):
         max_net_size = int(max_net_line[0])
     x_ticks = []
     for j in range(0, 11):
-        x_ticks.append((max_net_size / 10) * j)
+        x_ticks.append(int((max_net_size / 10) * j))
     plt.plot(net_size,time)
     plt.xlabel("Net Size")
     plt.ylabel("Seconds to Pressurize")
@@ -191,6 +191,6 @@ def parse_info(dirr):
 
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/batch4/2"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/batch6_fitness/0"
 
     single_run_plots(dirr)

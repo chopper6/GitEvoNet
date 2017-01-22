@@ -20,8 +20,8 @@ def single_run(config_file):
     #config_file         = util.getCommandLineArgs ()
     configs             = init.initialize_master (config_file, 0)
 
-    #master.evolve_master_sequential_debug(configs)
-    master.evolve_master(configs)
+    master.evolve_master_sequential_debug(configs)
+    #master.evolve_master(configs)
 
 
 

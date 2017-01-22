@@ -61,12 +61,16 @@ def to_csv(population, output_dir):
                 in_degrees, out_degrees = list(population[0].net.in_degree().values()), list(population[0].net.out_degree().values())
 
                 indegs, indegs_freqs = np.unique(in_degrees, return_counts=True)
+                indegs = np.array2string(indegs).replace('\n', '')
+                indegs_freqs = np.array2string(indegs_freqs).replace('\n', '')
                 #tmp = itemfreq(in_degrees)
                 #indegs, indegs_freqs = tmp[:, 0], tmp[:, 1]  # 0 = unique values in data, 1 = frequencies
                 distrib_info.append(indegs)
                 distrib_info.append(indegs_freqs)
 
                 outdegs, outdegs_freqs = np.unique(out_degrees, return_counts=True)
+                outdegs = np.array2string(outdegs).replace('\n', '')
+                outdegs_freqs = np.array2string(outdegs_freqs).replace('\n', '')
                 #tmp = itemfreq(out_degrees)
                 #outdegs, outdegs_freqs = tmp[:, 0], tmp[:, 1]
                 distrib_info.append(outdegs)
