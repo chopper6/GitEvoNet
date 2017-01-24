@@ -54,7 +54,7 @@ def evolve_master(configs):
             worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, configs]
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
-            pool.map_async(minion.evolve_minion, (dump_file,))
+            minion.evolve_minion(dump_file)  #changed this line from map_async
             sleep(.0001)
 
         pool.close()

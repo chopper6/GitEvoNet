@@ -6,16 +6,6 @@ def mutate(configs, net):
     
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
 
-    #how to elegantly pass booleans
-    # note: bias and boundary are not curr implemented
-
-    '''
-    bias = configs['use_mutation_bias']
-    boundary = configs['constrain_node:edge_ratio']
-    scale = configs['scale_mutation_frequency_by_net_size']
-    stoch_mutn = configs['stochastic_mutation']
-    '''
-
     add_freq = float(configs['add_edge_mutation_frequency'])
     rm_freq = float(configs['remove_edge_mutation_frequency'])
     rewire_freq = float(configs['rewire_mutation_frequency'])
@@ -23,36 +13,6 @@ def mutate(configs, net):
     reverse_freq = float(configs['reverse_edge_mutation_frequency'])
     grow_freq = float(configs['grow_mutation_frequency'])
     shrink_freq = float(configs['shrink_mutation_frequency'])
-    #TODO: remove set stoch, ect
-    stoch_mutn = True
-    scale = False 
-    '''
-    # BOUNDARY CURR NOT IMPLEMENTED
-    num_nodes = len(net.nodes())
-    num_edges = len(net.edges())
-    if (boundary == False):
-        rm_allowed = True
-        add_allowed = True
-    else:
-        if (num_nodes == num_edges): rm_allowed = False
-        else: rm_allowed = True
-        if (2*num_nodes == num_edges): add_allowed = False
-        else: add_allowed = True
-    '''
-
-    #BIAS CURR NOT IMPLEMENTED, old code:
-    '''
-    if (bias == True):
-        ngh_deg = nx.average_neighbor_degree(net, nodes=[node])
-        ngh_deg = ngh_deg[node]
-        if (ngh_deg != 0):
-            add_prob = (net.degree(node)) / (ngh_deg + net.degree(node))
-        else:
-            add_prob = .5
-    else:
-        add_prob = .5
-    '''
-
 
     # --------- MUTATIONS ------------- #
 
@@ -150,3 +110,39 @@ def num_mutations(mutn_freq, net, stoch, scale):
  
     return num_mutn
 
+
+def poss_additions(configs):
+
+    #how to elegantly pass booleans
+
+    bias = configs['use_mutation_bias']
+    boundary = configs['constrain_node:edge_ratio']
+
+    '''
+    # BOUNDARY CURR NOT IMPLEMENTED
+    num_nodes = len(net.nodes())
+    num_edges = len(net.edges())
+    if (boundary == False):
+        rm_allowed = True
+        add_allowed = True
+    else:
+        if (num_nodes == num_edges): rm_allowed = False
+        else: rm_allowed = True
+        if (2*num_nodes == num_edges): add_allowed = False
+        else: add_allowed = True
+    '''
+
+    #BIAS CURR NOT IMPLEMENTED, old code:
+    '''
+    if (bias == True):
+        ngh_deg = nx.average_neighbor_degree(net, nodes=[node])
+        ngh_deg = ngh_deg[node]
+        if (ngh_deg != 0):
+            add_prob = (net.degree(node)) / (ngh_deg + net.degree(node))
+        else:
+            add_prob = .5
+    else:
+        add_prob = .5
+    '''
+
+    return

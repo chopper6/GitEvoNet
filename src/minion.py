@@ -10,35 +10,26 @@ def evolve_minion(worker_file):
         worker_ID, seed, worker_gens, pop_size, num_return, randSeed, configs = pickle.load(file)
         file.close()
 
-    random.seed(randSeed)
-    population = gen_population_from_seed(seed, pop_size)
-    start_size = len(seed.net.nodes())
-
     fitness_type = int(configs['fitness_type'])
     survive_fraction = float(configs['worker_percent_survive'])/100
     num_survive = math.ceil(survive_fraction * pop_size)
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
     output_dir += str(worker_ID)
 
+    random.seed(randSeed)
+    population = gen_population_from_seed(seed, pop_size)
+    start_size = len(seed.net.nodes())
     pressurize_time = 0
 
     for g in range(worker_gens):
         if (g != 0):
             for p in range(num_survive,pop_size):
                 population[p] = population[p%num_survive].copy()
-                assert (population[p] != population[p%num_survive])
-                assert (population[p].net != population[p % num_survive].net)
+                #assert (population[p] != population[p%num_survive])
+                #assert (population[p].net != population[p % num_survive].net)
 
-        ''' #debug info
-        if (worker_ID == 0):
-            print ("Minion population fitness: ")
-            for p in range(pop_size):
-                print(population[p].fitness)
-        # check that population is unique
-        for p in range(pop_size):
-            for q in range(0, p):
-                if (p != q): assert (population[p] != population[q])
-        '''
+        #debug(population, worker_ID)
+
         for p in range(pop_size):
             mutate.mutate(configs, population[p].net)
 
@@ -48,18 +39,6 @@ def evolve_minion(worker_file):
             pressurize_time += t1-t0
             population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
 
-            ''' FITNESS CHECK
-            if (worker_ID == 0 and p==0):
-                print ("Minion population fitness: ")
-                for p in range(pop_size):
-                    print(population[p].fitness)
-            '''
-            ''' BOUNDARY CHECK
-            if (len(population[p].net.nodes()) > len(population[p].net.edges())):
-                print("ERROR in minion: too many nodes")
-            elif (2*len(population[p].net.nodes()) < len(population[p].net.edges())):
-                print("ERROR in minion: too many edges")
-            '''
         fitness.eval_fitness(population, fitness_type)
 
     write_out_worker(worker_file, population, num_return)
@@ -84,3 +63,21 @@ def gen_population_from_seed(seed, num_survive):
         population.append(seed.copy())
         assert(population[-1] != seed)
     return population
+
+def debug(population, worker_ID):
+    pop_size = len(population)
+    if (worker_ID == 0):
+        print ("Minion population fitness: ")
+        for p in range(pop_size):
+            print(population[p].fitness)
+    # check that population is unique
+    for p in range(pop_size):
+        for q in range(0, p):
+            if (p != q): assert (population[p] != population[q])
+
+    ''' BOUNDARY CHECK
+    if (len(population[p].net.nodes()) > len(population[p].net.edges())):
+        print("ERROR in minion: too many nodes")
+    elif (2*len(population[p].net.nodes()) < len(population[p].net.edges())):
+        print("ERROR in minion: too many edges")
+    '''
