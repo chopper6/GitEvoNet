@@ -191,6 +191,6 @@ def parse_info(dirr):
 
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/batch6_fitness/0"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/batch7_dist/2"
 
     single_run_plots(dirr)

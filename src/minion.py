@@ -15,7 +15,7 @@ def evolve_minion(worker_file):
     start_size = len(seed.net.nodes())
 
     fitness_type = int(configs['fitness_type'])
-    survive_fraction = float(configs['percent_survive'])/100
+    survive_fraction = float(configs['worker_percent_survive'])/100
     num_survive = math.ceil(survive_fraction * pop_size)
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
     output_dir += str(worker_ID)

@@ -58,7 +58,12 @@ def evolve_master(configs):
 
         if (size_iters % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
-            print("Master at gen " + str(size_iters) + ", with net size = " + str(size))
+            # TEMP way to reduce popn size with large nets
+            if (size > 800): worker_pop_size = math.ceil(int(configs['worker_population_size']) / 2)
+            elif (size > 1600): worker_pop_size, worker_gens = math.ceil(int(configs['worker_population_size']) / 4), math.ceil(int(configs['worker_generations']) / 2)
+            elif (size > 2400): worker_pop_size, worker_gens = 1, 1
+
+            print("Master at gen " + str(size_iters) + ", with net size = " + str(size) + ", with " + str(worker_pop_size) + " nets per worker.")
 
         #worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, start_size, end_size, num_workers, survive_fraction)
         #print("At master gen: " + str(size_iters) + ",\t size " + str(size) + "=" + str(len(population[0].net.nodes())) + ",\tnets per worker = " + str(worker_pop_size) + ",\tpopn size = " + str(pop_size) + ",\tnum survive = " + str(num_survive) + ",\tworker gens = " + str(worker_gens))
@@ -139,7 +144,7 @@ def gen_init_population(init_type, start_size, pop_size):
         population = [Net(nx.cycle_graph(start_size, create_using=nx.DiGraph()), i) for i in range(pop_size)]
 
     elif (init_type == 5):
-        population = [Net(nx.star_graph(start_size, create_using=nx.DiGraph()), i) for i in range(pop_size)]
+        population = [Net(nx.wheel_graph(start_size, create_using=nx.DiGraph()), i) for i in range(pop_size)]
 
     elif (init_type == 6):  #highly connected eR
         population = [Net(nx.erdos_renyi_graph(start_size,.015, directed=True, seed=None), i) for i in range(pop_size)]
