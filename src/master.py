@@ -6,10 +6,91 @@ from operator import attrgetter
 from random import SystemRandom as sysRand
 from time import sleep
 
-import fitness, minion, output, plot_net, net_generator
+import fitness, minion, output, plot_net, net_generator, perturb
+import init #should be able to find, but might have to specify lib
 
 
 def evolve_master(configs):
+    protocol = configs['protocol']
+    if (protocol == 'scramble'):
+        scramble_and_evolve(configs)
+    elif (protocol == 'from seed'):
+        evolve_from_seed(configs)
+    else:
+        print("ERROR in master(): unknown protocol " + str(protocol))
+
+
+def scramble_and_evolve(configs):
+    #curr just scramble edges, same num
+    #TODO: merge with evolve_from_seed more elegantly
+
+    #CONFIGS
+    num_workers = int(configs['number_of_workers'])
+    output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/",'')  # no idea where this is coming from
+    fitness_type = int(configs['fitness_type'])
+    survive_percent = int(configs['percent_survive'])
+    survive_fraction = float(survive_percent) / 100
+    output_freq = float(configs['output_frequency'])
+    max_iters = float(configs['max_iterations'])
+
+    pop_size = num_workers
+    worker_gens = worker_pop_size = 1
+    num_survive = math.ceil(survive_fraction*pop_size)
+
+    init_dirs(num_workers, output_dir)
+    output.init_csv(output_dir, configs)
+
+    #init, pre scramble
+    vinayagam = net_generator.Net(init.load_network(configs),0)
+    population = [net_generator.Net(vinayagam.copy(),i) for i in range(1)]
+    fitness.eval_fitness(population, fitness_type)
+    output.to_csv(population, output_dir)
+    del population
+
+    #scramble
+    perturb.scramble_edges(vinayagam)
+    population = [net_generator.Net(vinayagam.copy(),i) for i in range(pop_size)]
+    fitness.eval_fitness(population, fitness_type)
+    output.to_csv(population, output_dir)
+
+    size_iters = 0
+    while (size_iters < max_iters):
+
+        if (size_iters % int(1 / output_freq) == 0):
+            output.to_csv(population, output_dir)
+
+        debug(population)  #TODO: remove once checked
+        pool = mp.Pool(processes=num_workers)
+
+        # distribute workers
+        for w in range(num_workers):
+            dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
+            seed = population[w % num_survive].copy()
+            randSeeds = os.urandom(sysRand().randint(0,1000000))
+            assert(seed != population[w % num_survive])
+            worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, configs]
+            with open(dump_file, 'wb') as file:
+                pickle.dump(worker_args, file)
+            pool.map_async(minion.evolve_minion, (dump_file,))
+            sleep(.0001)
+
+        pool.close()
+        pool.join()
+        pool.terminate()
+
+        del population
+        population = parse_worker_popn(num_workers, output_dir, num_survive)
+
+        size_iters += 1
+
+    output.to_csv(population, output_dir)
+
+    print("Evolution finished, generating images.")
+    plot_nets.single_run_plots(output_dir)
+    print("Master finished.")
+
+
+def evolve_from_seed(configs):
     # get configs
     num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/",'')  # no idea where this is coming from
@@ -112,9 +193,10 @@ def curr_gen_params(size, end_size, num_workers, survive_fraction):
 
 def debug(population):
     print("Master population fitness: ")
+    '''
     for p in range(len(population)):
         print(population[p].fitness)
-
+    '''
     # check that population is unique
     for p in range(len(population)):
         for q in range(0, p):
