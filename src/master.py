@@ -51,13 +51,13 @@ def scramble_and_evolve(configs):
 
     #scramble
     perturb.scramble_edges(vinayagam.net, percent_perturb)
-    population = [vinayagam.copy() for i in range(pop_size)]
-    assert (init_size == len(population[0].net.edges()))
-    assert (population[0] != vinayagam != population[1])
     pressure_results = pressurize.pressurize(configs, vinayagam.net)
     vinayagam.fitness_parts[0], vinayagam.fitness_parts[1], vinayagam.fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
     fitness.eval_fitness([vinayagam], fitness_type)
-    output.to_csv([vinayagam], output_dir)    
+    output.to_csv([vinayagam], output_dir)
+    population = [vinayagam.copy() for i in range(pop_size)]
+    assert (init_size == len(population[0].net.edges()))
+    assert (population[0] != vinayagam != population[1])
     print("Finished scrambling, beginning the return evolution.")
 
 

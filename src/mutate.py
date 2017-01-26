@@ -86,7 +86,7 @@ def mutate(configs, net):
         post_edges = pre_edges + 1
         while (pre_edges != post_edges):
             pre_edges = post_edges = len(net.edges())
-            edge = rd.sample(net.out_edges(), 1)
+            edge = rd.sample(net.edges(), 1)
             edge = edge[0]
             sign = net[edge[0]][edge[1]]['sign']
             net.remove_edge(edge[0], edge[1])
@@ -100,7 +100,7 @@ def mutate(configs, net):
     num_sign = num_mutations(sign_freq)
     for i in range(num_sign):
         pre_edges = len(net.edges())
-        edge = rd.sample(net.out_edges(), 1)
+        edge = rd.sample(net.edges(), 1)
         edge = edge[0]
         net[edge[0]][edge[1]]['sign'] = -1 * net[edge[0]][edge[1]]['sign']
         post_edges = len(net.edges())
