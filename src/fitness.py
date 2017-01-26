@@ -5,22 +5,8 @@ from operator import attrgetter
 
 def eval_fitness(population, fitness_type):
     #determines fitness of each individual and orders the population by fitness
-    if (fitness_type > 14):
-        for p in range(len(population)):
-            population[p].fitness = population[p].fitness_parts[2]
-        population = sorted(population,key=attrgetter('fitness'), reverse=True)
-        return
-
-    if (fitness_type % 3 == 0):
-        generic_rank(population)
-
-    else:
-        for p in range(len(population)):
-            if (fitness_type % 3 == 1):
-                population[p].fitness = population[p].fitness_parts[0] * population[p].fitness_parts[1]
-            else:
-                population[p].fitness = math.pow(population[p].fitness_parts[1],population[p].fitness_parts[0])
-
+    for p in range(len(population)):
+        population[p].fitness = population[p].fitness_parts[2]
     population = sorted(population,key=attrgetter('fitness'), reverse=True)
     #reverse since MAX fitness function
 

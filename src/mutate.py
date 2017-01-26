@@ -76,6 +76,8 @@ def mutate(configs, net):
             post_edges = len(net.edges())
             if (post_edges != pre_edges):
                 net.add_edge(edge[0], edge[1], sign=sign)  #rewire failed, undo rm'd edge
+                post_edges = len(net.edges())
+                if (post_edges != pre_edges): print("MUTATION ERR: undo rm edge failed.")
 
     #REVERSE EDGE DIRECTION
     num_reverse = num_mutations(reverse_freq)

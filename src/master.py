@@ -5,8 +5,8 @@ import multiprocessing as mp
 from operator import attrgetter
 from random import SystemRandom as sysRand
 from time import sleep
-
-import fitness, minion, output, plot_net, net_generator, perturb
+import networkx as nx
+import fitness, minion, output, plot_nets, net_generator, perturb, pressurize
 import init #should be able to find, but might have to specify lib
 
 
@@ -32,6 +32,7 @@ def scramble_and_evolve(configs):
     survive_fraction = float(survive_percent) / 100
     output_freq = float(configs['output_frequency'])
     max_iters = float(configs['max_iterations'])
+    percent_perturb = float(configs['percent_perturb'])/100
 
     pop_size = num_workers
     worker_gens = worker_pop_size = 1
@@ -42,22 +43,30 @@ def scramble_and_evolve(configs):
 
     #init, pre scramble
     vinayagam = net_generator.Net(init.load_network(configs),0)
-    population = [net_generator.Net(vinayagam.copy(),i) for i in range(1)]
-    fitness.eval_fitness(population, fitness_type)
-    output.to_csv(population, output_dir)
-    del population
+    init_size = (len(vinayagam.net.edges()))
+    pressure_results = pressurize.pressurize(configs, vinayagam.net)
+    vinayagam.fitness_parts[0], vinayagam.fitness_parts[1], vinayagam.fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
+    fitness.eval_fitness([vinayagam], fitness_type)
+    output.to_csv([vinayagam], output_dir)
 
     #scramble
-    perturb.scramble_edges(vinayagam)
-    population = [net_generator.Net(vinayagam.copy(),i) for i in range(pop_size)]
-    fitness.eval_fitness(population, fitness_type)
-    output.to_csv(population, output_dir)
+    perturb.scramble_edges(vinayagam.net, percent_perturb)
+    population = [vinayagam.copy() for i in range(pop_size)]
+    assert (init_size == len(population[0].net.edges()))
+    assert (population[0] != vinayagam != population[1])
+    pressure_results = pressurize.pressurize(configs, vinayagam.net)
+    vinayagam.fitness_parts[0], vinayagam.fitness_parts[1], vinayagam.fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
+    fitness.eval_fitness([vinayagam], fitness_type)
+    output.to_csv([vinayagam], output_dir)    
+    print("Finished scrambling, beginning the return evolution.")
+
 
     size_iters = 0
     while (size_iters < max_iters):
 
         if (size_iters % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
+            print("Master at gen " + str(size_iters) + ", with net node size = " + str(len(population[0].net.nodes())) + ", and net edge size of " + str(len(population[0].net.edges())) + ",\t " + str(num_survive) + " survive out of " + str(pop_size) + ", with " + str(worker_pop_size) + " nets per worker.")
 
         debug(population)  #TODO: remove once checked
         pool = mp.Pool(processes=num_workers)
@@ -192,8 +201,8 @@ def curr_gen_params(size, end_size, num_workers, survive_fraction):
 
 
 def debug(population):
-    print("Master population fitness: ")
     '''
+    print("Master population fitness: ")
     for p in range(len(population)):
         print(population[p].fitness)
     '''
