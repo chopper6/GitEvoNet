@@ -79,7 +79,7 @@ def degree_distrib(dirr):
             plt.ylabel('Number of nodes with that degree (log)')
             plt.title('Degree Distribution (network size = ' + str(line[0]) + ' nodes) of Most Fit Net')
             plt.xlim(1,100)
-            plt.ylim(1,1000)
+            plt.ylim(1,10000)
             plt.savefig(dirr + "/degree_distribution/" + str(img_index) + ".png", dpi=300)
             plt.clf()
             img_index += 1
@@ -191,6 +191,6 @@ def parse_info(dirr):
 
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/b9_scramble/0"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/b11_scramble/1"
 
     single_run_plots(dirr)

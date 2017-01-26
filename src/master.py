@@ -54,7 +54,7 @@ def scramble_and_evolve(configs):
     pressure_results = pressurize.pressurize(configs, vinayagam.net)
     vinayagam.fitness_parts[0], vinayagam.fitness_parts[1], vinayagam.fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
     fitness.eval_fitness([vinayagam], fitness_type)
-    output.to_csv([vinayagam], output_dir)
+    #output.to_csv([vinayagam], output_dir)
     population = [vinayagam.copy() for i in range(pop_size)]
     assert (init_size == len(population[0].net.edges()))
     assert (population[0] != vinayagam != population[1])
@@ -117,7 +117,7 @@ def evolve_from_seed(configs):
     output.init_csv(output_dir, configs)
 
     worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction)
-    print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive))
+    print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
 
     population = net_generator.init_population(init_type, start_size, pop_size)
     fitness.eval_fitness(population, fitness_type)
@@ -136,7 +136,7 @@ def evolve_from_seed(configs):
         pool = mp.Pool(processes=num_workers)
 
         # distribute workers
-        for w in range(num_workers):
+        for w in range(num_workers): 
             dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
             seed = population[w % num_survive].copy()
             randSeeds = os.urandom(sysRand().randint(0,1000000))
@@ -145,6 +145,7 @@ def evolve_from_seed(configs):
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
             pool.map_async(minion.evolve_minion, (dump_file,))
+            #minion.evolve_minion(dump_file)
             sleep(.0001)
 
         pool.close()

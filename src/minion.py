@@ -42,14 +42,14 @@ def evolve_minion(worker_file):
         fitness.eval_fitness(population, fitness_type)
 
     write_out_worker(worker_file, population, num_return)
-
+    
     # some output
     if (worker_ID == 0):
         orig_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
         end_size = len(population[0].net.nodes())
         growth = end_size - start_size
         output.minion_csv(orig_dir, pressurize_time, growth, end_size)
-
+        debug(population, worker_ID)
 
 def write_out_worker(worker_file, population, num_return):
     # overwrite own input file with return population

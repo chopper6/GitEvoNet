@@ -22,11 +22,11 @@ def pressurize(configs, net):
         a_result = solver.solve_knapsack(kp, knapsack_solver)
 
         #various characteristics of a result
-        inst_leaf_fitness, inst_hub_fitness, instance_time  = fitness.kp_instance_properties(a_result, fitness_type, len(net.nodes()), len(net.edges()))
+        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness  = fitness.kp_instance_properties(a_result, fitness_type, len(net.nodes()), len(net.edges()))
 
         leaf_fitness += inst_leaf_fitness
         hub_fitness += inst_hub_fitness
-        solo_fitness += instance_time
+        solo_fitness += inst_solo_fitness
 
     leaf_fitness /= num_samples_relative
     hub_fitness /= num_samples_relative

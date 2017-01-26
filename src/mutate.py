@@ -66,12 +66,18 @@ def mutate(configs, net):
             edge = edge[0]
             sign = net[edge[0]][edge[1]]['sign']
             net.remove_edge(edge[0], edge[1])
-            node = edge[0]
+            if (rd.random() < .5):
+                node = edge[0]
+            else:
+                node = edge[1]
             node2 = node
             while (node2 == node):
                 node2 = rd.sample(net.nodes(), 1)
                 node2 = node2[0]
-            net.add_edge(node, node2, sign=sign)
+            if (rd.random() < .5):
+                net.add_edge(node, node2, sign=sign)
+            else:
+                net.add_edge(node2, node, sign=sign)
 
             post_edges = len(net.edges())
             if (post_edges != pre_edges):
