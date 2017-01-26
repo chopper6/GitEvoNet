@@ -34,11 +34,15 @@ def solve_knapsack (kp_instance, knapsack_solver):
         #---------------------------------------------------------------------
         #old: TOTAL_Bin, TOTAL_Din, TOTAL_Bout, TOTAL_Dout, GENES_in, GENES_out = 0, 0, 0, 0, [], []
         GENES_in = []
+        GENES_out = []
         for g in range (0, N):
             if F[g] == 1:
                 GENES_in.append ((G[g], B[g], D[g]))
+            else:
+                GENES_out.append ((G[g], B[g], D[g]))
+
 
         coresize  =  solver_returns[2] #if DP_solver.so is used,  coresize = len (grey_genes)      
         execution_time = solver_returns[3]
-        return [GENES_in, len(green_genes), len(red_genes), len(grey_genes), execution_time]
+        return [GENES_in, GENES_out, len(green_genes), len(red_genes), len(grey_genes), execution_time]
 # --------------------------------------------------------------------------------------------------
