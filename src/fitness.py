@@ -40,22 +40,28 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
     soln_size = 1
     if len(a_result) > 0:
         # -------------------------------------------------------------------------------------------------
-        GENES_in, num_green, num_red, num_grey, solver_time = a_result[0], a_result[1], a_result[2], a_result[3], a_result[4]
+        GENES_in, GENES_out, num_green, num_red, num_grey, solver_time = a_result[0], a_result[1], a_result[2], a_result[3], a_result[4], a_result[5]
         # -------------------------------------------------------------------------------------------------
         soln_bens = []
         soln_size = len(GENES_in)
         for g in GENES_in:
             # g[0] gene name, g[1] benefits, g[2] damages, g[3] if in knapsack (binary)
             # hub score eval pt1
-            ben += g[1]
-            soln_bens.append(g[1])
-            if (g[1] + g[2] != 0):
-                ben_ratio += g[1]/(g[1]+g[2])
-            if (g[2] > 0 and g[1] > 0): ben_dmg *=  g[1]/g[2] 
-            elif (g[1]>0): ben_dmg *= g[1]
+            B,D=g[1],g[2]
+
+            ben += B
+            soln_bens.append(B)
+            if (B + D != 0): ben_ratio += B/(B+D)
+            if (D > 0 and B > 0): ben_dmg *=  B/D
+            elif (B>0): ben_dmg *= B
             
-            if (g[2] > 0): uncorr += ((g[1]-g[2])/g[2])*g[1]
-            else: uncorr += g[1]*g[1]
+            if (D > 0): uncorr += ((B-D)/D)*B
+            else: uncorr += B*B
+
+        for g in GENES_out:
+            B,D=g[1],g[2]
+            if (B + D != 0): ben_ratio += B/(B+D)
+
         # hub score eval pt2
         ETB = sum(set(soln_bens))
         if (sum(soln_bens) != 0):
