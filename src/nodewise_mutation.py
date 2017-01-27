@@ -43,16 +43,16 @@ def mutate_node(net, node, configs):
     sign_freq = float(configs['sign_mutation_frequency'])
     reverse_freq = float(configs['reverse_edge_mutation_frequency'])
 
-    # preferential attchmt
-    num_edges = float(len(net.edges(node)))
-    check_edges = float(len(net.out_edges(node))+len(net.in_edges(node)))
-    
+    # preferential attchmt, assumes UNDIRECTED edges
+    num_edges = float(len(net.out_edges(node))+len(net.in_edges(node)))
+
     if (num_edges != 0): add_freq *= num_edges
     if (num_edges != 0): rm_freq /= num_edges
+
     # ADD EDGE
     num_add = num_mutations(add_freq)
     for i in range(num_add):
-        pre_size = post_size = len(net.edges(node))
+        pre_size = post_size = (len(net.out_edges(node))+len(net.in_edges(node)))
         while (pre_size == post_size):  # ensure that net adds
             node2 = rd.sample(net.nodes(), 1)
             node2 = node2[0]
@@ -61,30 +61,36 @@ def mutate_node(net, node, configs):
                 node2 = node2[0]
             sign = rd.randint(0, 1)
             if (sign == 0):     sign = -1
-            net.add_edge(node, node2, sign=sign)  #this must be randomized if direction is relevant
-            post_size = len(net.edges(node))
-    # REMOVE EDGE
-    if (num_edges == 0): 
+            if (rd.random() < .5):
+                net.add_edge(node, node2, sign=sign)
+            else:
+                net.add_edge(node2, node, sign=sign)
+            post_size = (len(net.out_edges(node))+len(net.in_edges(node)))
+
+    if (num_edges == 0):
         return #TODO more elegant handling of no edges
 
+    #SIGN CHANGE
     num_sign = num_mutations(sign_freq)
     for i in range(num_sign):
-        pre_edges = len(net.edges(node))
-        edge = rd.sample(net.edges(node), 1)
+        pre_edges = (len(net.out_edges(node))+len(net.in_edges(node)))
+        edge = rd.sample(net.out_edges(node)+net.in_edges(node), 1)
         edge = edge[0]
         net[edge[0]][edge[1]]['sign'] = -1 * net[edge[0]][edge[1]]['sign']
-        post_edges = len(net.edges(node))
+        post_edges = (len(net.out_edges(node))+len(net.in_edges(node)))
         if (pre_edges != post_edges):   print("ERROR: mutn sign change has changed the number of edges!")
 
-
-        
+    # REMOVE EDGE
     num_rm = num_mutations(rm_freq)
     for i in range(num_rm):
-        edge = rd.sample(net.edges(node), 1)
+        edge = rd.sample(net.out_edges(node)+net.in_edges(node), 1)
         edge = edge[0]
-        net.remove_edge(edge[0], edge[1])
+        net.remove_edge(edge[0], edge[1])  #i think in_edges would still be oriented in the same way
 
-    # REWIRE EDGE TODO: add this back
+    # WARNING: careful about adding mutns after rm, since node may no longer have edges
+
+
+    # REWIRE EDGE TODO: add these back
     '''
     num_rewire = num_mutations(rewire_freq)
     for i in range(num_rewire):
