@@ -1,5 +1,6 @@
 import math
 import random as rd
+import networkx as nx
 
 
 # from random import SystemRandom as rd
@@ -11,6 +12,8 @@ def mutate(configs, net):
     rm_freq = float(configs['remove_edge_mutation_frequency'])
     rewire_freq = float(configs['rewire_mutation_frequency'])
     sign_freq = float(configs['sign_mutation_frequency'])
+    add_freq = float(configs['add_edge_mutation_frequency'])
+
     # --------- NET MUTATIONS ------------- #
 
     # GROW (ADD NODE)
@@ -45,13 +48,25 @@ def mutate(configs, net):
         edge = edge[0]
         net.remove_edge(edge[0], edge[1])  #i think in_edges would still be oriented in the same way
 
+    edge_list = net.edges()
+    pref_atch_vals = nx.preferential_attachment(net)
+    num_attempt = 50
+    rd.shuffle(pref_atch_vals)
+    for i in range(num_attempt):
+        curr = pref_atch_vals[i]
+        print("mutn add prob = " + str(add_freq*len(net.edges)/50))
+        if (rd.random()*add_freq*len(net.edges)/50 < curr[2]):
+            pre_size = (len(net.out_edges(node))+len(net.in_edges(node)))
+            sign = rd.randint(0, 1)
+            if (sign == 0):     sign = -1
+            if (rd.random() < .5):
+                net.add_edge(curr[0], curr[1], sign=sign)
+            else:
+                net.add_edge(curr[1], curr[0], sign=sign)
+            post_size = (len(net.out_edges(node))+len(net.in_edges(node)))
+            if (pre_size==post_size): print("MUTN ERR: add edge fails.")
 
-    # --------- NODE MUTATIONS ------------- #
-    nodes = net.nodes()
-    for node in nodes:
-        edges = net.edges(node)
-        
-        mutate_node(net, node, configs)
+
 
 
 def mutate_node(net, node, configs):
