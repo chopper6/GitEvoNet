@@ -15,15 +15,12 @@ def pressurize(configs, net):
 
     num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
     pressure_relative = int(pressure * len(net.nodes()))
-
     kp_instances = reducer.reverse_reduction(net, pressure_relative, int(tolerance), num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
 
     for kp in kp_instances:
         a_result = solver.solve_knapsack(kp, knapsack_solver)
-
         #various characteristics of a result
         inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness  = fitness.kp_instance_properties(a_result, fitness_type, len(net.nodes()), len(net.edges()))
-
         leaf_fitness += inst_leaf_fitness
         hub_fitness += inst_hub_fitness
         solo_fitness += inst_solo_fitness

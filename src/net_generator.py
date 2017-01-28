@@ -13,8 +13,9 @@ class Net:
     def copy(self):
         copy = Net(self.net, self.id)
         copy.fitness = self.fitness
-        copy.fitness_parts = self.fitness_parts
-        assert (copy != self)
+        self.fitness_parts = [0]*3   #leaf-fitness, hub-fitness
+        assert (copy != self and copy.net != self.net)
+        #assert (copy.fitness_parts != self.fitness_parts)
         return copy
 
 

@@ -1,15 +1,16 @@
 #TODO: parse pressurize into here?
 
-import math
+import math, random
 from operator import attrgetter
 
 def eval_fitness(population, fitness_type):
     #determines fitness of each individual and orders the population by fitness
     for p in range(len(population)):
-        population[p].fitness = population[p].fitness_parts[2]
+        population[p].fitness = population[p].fitness_parts[2] 
     population = sorted(population,key=attrgetter('fitness'), reverse=True)
+    assert(population[0].fitness = population[0].fitness_parts[2])
     #reverse since MAX fitness function
-
+    return population
 
 def generic_rank(population):
 
@@ -91,7 +92,10 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
         return [RGAllR, ETB, ben*RGAllR]
     elif (fitness_type == 5):
         return [RGAllR, ETB, uncorr]
-
+    elif (fitness_type == 6):
+        return [RGAllR, ETB, random.random()]
+    elif (fitness_type == 7):
+        return [RGAllR, ETB, ETB]
     else: print("ERROR in pressurize: unknown fitness type.")
 
 

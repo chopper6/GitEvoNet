@@ -1,7 +1,8 @@
 # worker processes
 
 import math, pickle
-import output, mutate, fitness, pressurize
+import output, fitness, pressurize
+import pref_mutate as mutate
 from time import process_time as ptime
 import random
 
@@ -20,6 +21,7 @@ def evolve_minion(worker_file):
     population = gen_population_from_seed(seed, pop_size)
     start_size = len(seed.net.nodes())
     pressurize_time = 0
+    mutate_time = 0
 
     for g in range(worker_gens):
         if (g != 0):
@@ -28,18 +30,22 @@ def evolve_minion(worker_file):
                 #assert (population[p] != population[p%num_survive])
                 #assert (population[p].net != population[p % num_survive].net)
 
-        #debug(population, worker_ID)
-
         for p in range(pop_size):
+            t0 = ptime()
             mutate.mutate(configs, population[p].net)
-
+            t1 = ptime()
+            mutate_time += t1-t0
+          
             t0 = ptime()
             pressure_results = pressurize.pressurize(configs, population[p].net)
             t1 = ptime()
             pressurize_time += t1-t0
             population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-
-        fitness.eval_fitness(population, fitness_type)
+       
+        old_popn = population
+        population = fitness.eval_fitness(old_popn, fitness_type)
+        del old_popn
+        #debug(population,worker_ID)
 
     write_out_worker(worker_file, population, num_return)
     
@@ -49,7 +55,9 @@ def evolve_minion(worker_file):
         end_size = len(population[0].net.nodes())
         growth = end_size - start_size
         output.minion_csv(orig_dir, pressurize_time, growth, end_size)
-        debug(population, worker_ID)
+        #debug(population, worker_ID)
+        #if (worker_ID==0): print("Pressurizing took " + str(pressurize_time) + " secs, while mutate took " + str(mutate_time) + " secs.")
+
 
 def write_out_worker(worker_file, population, num_return):
     # overwrite own input file with return population
@@ -69,7 +77,7 @@ def debug(population, worker_ID):
     if (worker_ID == 0):
         print ("Minion population fitness: ")
         for p in range(pop_size):
-            print(population[p].fitness)
+            print(population[p].fitness_parts[2])
     # check that population is unique
     for p in range(pop_size):
         for q in range(0, p):

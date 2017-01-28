@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 import os, csv
-from scipy.stats import itemfreq
+#from scipy.stats import itemfreq
 import numpy as np
 np.set_printoptions(formatter={'int_kind': lambda x:' {0:d}'.format(x)})
 

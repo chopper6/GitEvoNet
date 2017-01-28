@@ -39,7 +39,8 @@ def mutate(configs, net):
     # curr only one node is chosen preferentially
     num_add = num_mutations(add_freq)
     for i in range(num_add):
-        edge = rd.sample(net.edges())
+        edge = rd.sample(net.edges(),1)
+        edge = edge[0]
         #assumes undirected implm
         from_edges = len(net.out_edges(edge[0])+net.in_edges(edge[0]))
         to_edges = len(net.out_edges(edge[1])+net.in_edges(edge[1]))
@@ -56,7 +57,8 @@ def mutate(configs, net):
                 node2 = node2[0]
             sign = rd.randint(0, 1)
             if (sign == 0):     sign = -1
-            net.add_edge(node, node2, sign=sign)
+            if (rd.random() < .5): net.add_edge(node, node2, sign=sign)
+            else: net.add_edge (node2, node, sign=sign)
             post_size = len(net.edges())
 
     # REMOVE EDGE

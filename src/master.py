@@ -68,7 +68,7 @@ def scramble_and_evolve(configs):
             output.to_csv(population, output_dir)
             print("Master at gen " + str(size_iters) + ", with net node size = " + str(len(population[0].net.nodes())) + ", and net edge size of " + str(len(population[0].net.edges())) + ",\t " + str(num_survive) + " survive out of " + str(pop_size) + ", with " + str(worker_pop_size) + " nets per worker.")
 
-        debug(population)  #TODO: remove once checked
+        #debug(population) 
         pool = mp.Pool(processes=num_workers)
 
         # distribute workers
@@ -116,7 +116,7 @@ def evolve_from_seed(configs):
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
 
-    worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction)
+    worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, 10000000)
     print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
 
     population = net_generator.init_population(init_type, start_size, pop_size)
@@ -126,17 +126,17 @@ def evolve_from_seed(configs):
     size_iters = 0
     while (size < end_size and size_iters < max_iters):
 
-        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction)
+        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive)
 
         if (size_iters % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
-            print("Master at gen " + str(size_iters) + ", with net size = " + str(size) + ", " + str(num_survive) + " survive out of " + str(pop_size) + ", with " + str(worker_pop_size) + " nets per worker.")
+            print("Master at gen " + str(size_iters) + ", with net size = " + str(size) + ", " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size) + ", with " + str(worker_pop_size) + " nets per worker.")
 
         #debug(population)
         pool = mp.Pool(processes=num_workers)
 
         # distribute workers
-        for w in range(num_workers): 
+        for w in range(num_workers):
             dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
             seed = population[w % num_survive].copy()
             randSeeds = os.urandom(sysRand().randint(0,1000000))
@@ -186,7 +186,7 @@ def parse_worker_popn (num_workers, output_dir, num_survive):
     return sorted_popn[:num_survive]
 
 
-def curr_gen_params(size, end_size, num_workers, survive_fraction):
+def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_survive):
 
     percent_size = float(size) / float(end_size)
     worker_pop_size = math.floor(end_size/size)
@@ -197,6 +197,10 @@ def curr_gen_params(size, end_size, num_workers, survive_fraction):
     if (num_survive < 1):
         num_survive = 1
         print("WARNING evo_master(): num_survive goes below 1, set to 1 instead.")
+    if (num_survive > prev_num_survive):   num_survive = prev_num_survive
+
+    #TODO: more elegant vresion
+    if (worker_gens > 1): worker_gens *= 2
 
     return worker_pop_size, pop_size, num_survive, worker_gens
 
