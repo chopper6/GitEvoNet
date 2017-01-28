@@ -1,13 +1,14 @@
 #!/usr/local/bin/python3
-import os, csv
+import os, csv, math
 #from scipy.stats import itemfreq
 import numpy as np
 np.set_printoptions(formatter={'int_kind': lambda x:' {0:d}'.format(x)})
+import networkx as nx
 
 
 def init_csv(out_dir, configs):
 
-    csv_title = "Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio\n"
+    csv_title = "Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Clustering Coefficient, # Communities of Size Net_Size/50\n"
     #, In-Degree Powerlaw Fit (vs Exponential) LogLikelihood Ratio, In-Degree Powerlaw Fit (vs Exponential) P-Value, In-Degree Powerlaw xmin, Out-Degree Powerlaw Fit (vs Exponential) LogLikelihood Ratio, Out-Degree Powerlaw Fit (vs Exponential) P-Value, Out-Degree Powerlaw xmin
     deg_distrib_title = "Net Size, In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
 
@@ -37,16 +38,22 @@ def to_csv(population, output_dir):
 
             #now only most fit new
             for p in range(1):
+                net = population[p].net
                 net_info = []
-                net_info.append(len(population[p].net.nodes()))
+                net_info.append(len(net.nodes()))
                 #net_info.append(population[p].id)
                 net_info.append(population[p].fitness)
                 #net_info.append(population[p].fitness_parts[0])
                 net_info.append(population[p].fitness_parts[0])
                 net_info.append(population[p].fitness_parts[1])
                 net_info.append(population[p].fitness_parts[2])
-                net_info.append(sum(population[p].net.degree().values())/len(population[p].net.nodes()))
-                net_info.append(len(population[p].net.edges())/len(population[p].net.nodes()))
+                net_info.append(sum(net.degree().values())/len(net.nodes()))
+                net_info.append(len(net.edges())/len(net.nodes()))
+
+                net_info.append(nx.average_clustering(net))
+
+                clique_size = int(math.floor(len(net.nodes())/50))
+                net_info.append(nx.k_clique_communities(net, clique_size))
 
                 output.writerow(net_info)
                 #write rows more concisely?
