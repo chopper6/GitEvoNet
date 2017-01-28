@@ -16,6 +16,8 @@ def mutate(configs, net):
     grow_freq = float(configs['grow_mutation_frequency'])
     shrink_freq = float(configs['shrink_mutation_frequency'])
 
+    pref_type = int(configs['preferential_type'])
+
     # --------- MUTATIONS ------------- #
 
     # GROW (ADD NODE)
@@ -36,9 +38,36 @@ def mutate(configs, net):
         net.remove_node(node)
 
     # PREFERENTIALLY ADD EDGE
-    # curr only one node is chosen preferentially
     num_add = num_mutations(add_freq)
     for i in range(num_add):
+        pre_size = post_size = len(net.edges())
+        while (pre_size == post_size):  # ensure that net adds
+            node = rd.sample(net.nodes(), 1)
+            node = node[0]
+            node2 = node
+            while (node2 == node):
+                node2 = rd.sample(net.nodes(), 1)
+                node2 = node2[0]
+
+            x = len(net.out_edges(node)+net.in_edges(node))
+            y = len(net.out_edges(node2)+net.in_edges(node2))
+            if (pref_type==0): #NO PREF ATTCH
+                pref_score = .5
+            elif (pref_type == 1):
+                pref_score = (1+abs(x-y))/(1+x+y)
+            elif (pref_type == 2):
+                pref_score = x/(x+y)
+            else: print("ERROR IN MUTATION: unknown preferential attachment type.")
+
+            print("in mutn pref score = " + str(pref_score))
+            if (rd.random() < pref_score):
+                sign = rd.randint(0, 1)
+                if (sign == 0):     sign = -1
+                net.add_edge(node, node2, sign=sign)
+                post_size = len(net.edges())
+
+
+        ''' OLD ADD
         edge = rd.sample(net.edges(),1)
         edge = edge[0]
         #assumes undirected implm
@@ -60,6 +89,8 @@ def mutate(configs, net):
             if (rd.random() < .5): net.add_edge(node, node2, sign=sign)
             else: net.add_edge (node2, node, sign=sign)
             post_size = len(net.edges())
+
+        '''
 
     # REMOVE EDGE
     num_rm = num_mutations(rm_freq)
