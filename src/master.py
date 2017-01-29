@@ -16,9 +16,29 @@ def evolve_master(configs):
         scramble_and_evolve(configs)
     elif (protocol == 'from seed'):
         evolve_from_seed(configs)
+    elif (protocol == 'control'):
+        control(configs)
     else:
         print("ERROR in master(): unknown protocol " + str(protocol))
 
+
+def control(configs):
+    output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/",'')  # no idea where this is coming from
+    init_type = int(configs['initial_net_type'])
+    start_size = int(configs['starting_size'])
+    fitness_type = int(configs['fitness_type'])
+
+    pop_size = 1
+
+    population = net_generator.init_population(init_type, start_size, pop_size)
+    print("Control individual generated, applying pressure.")
+
+    pressure_results = pressurize.pressurize(configs, population[0].net)
+    population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1],pressure_results[2]
+    population = fitness.eval_fitness(population, fitness_type)
+    output.to_csv(population, output_dir)
+
+    print("Control run finished.")
 
 def scramble_and_evolve(configs):
     #curr just scramble edges, same num

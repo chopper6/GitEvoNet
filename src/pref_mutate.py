@@ -1,8 +1,6 @@
 import math
 import random as rd
 import networkx as nx
-
-
 # from random import SystemRandom as rd
 
 def mutate(configs, net):
@@ -40,68 +38,36 @@ def mutate(configs, net):
     # PREFERENTIALLY ADD EDGE
     num_add = num_mutations(add_freq)
     for i in range(num_add):
-        if (pref_type == 0):
-            edge = rd.sample(net.edges(), 1)
-            edge = edge[0]
-            # assumes undirected implm
-            from_edges = len(net.out_edges(edge[0]) + net.in_edges(edge[0]))
-            to_edges = len(net.out_edges(edge[1]) + net.in_edges(edge[1]))
-            if (rd.random() < from_edges / (from_edges + to_edges)):
-                node = edge[0]
-            else:
-                node = edge[1]
+        pre_size = post_size = len(net.edges())
+        while (pre_size == post_size):  # ensure that net adds
+            node = rd.sample(net.nodes(), 1)
+            node = node[0]
+            node2 = node
+            while (node2 == node):
+                node2 = rd.sample(net.nodes(), 1)
+                node2 = node2[0]
 
-            pre_size = post_size = len(net.edges())
-            while (pre_size == post_size):  # ensure that net adds
-                node2 = node
-                while (node2 == node):
-                    node2 = rd.sample(net.nodes(), 1)
-                    node2 = node2[0]
+            pref_score = calc_pref(net, node, node2, pref_type)
+
+            if (rd.random() < pref_score):
                 sign = rd.randint(0, 1)
                 if (sign == 0):     sign = -1
-                if (rd.random() < .5):
-                    net.add_edge(node, node2, sign=sign)
-                else:
-                    net.add_edge(node2, node, sign=sign)
+                net.add_edge(node, node2, sign=sign)
                 post_size = len(net.edges())
-
-        else:
-            pre_size = post_size = len(net.edges())
-            while (pre_size == post_size):  # ensure that net adds
-                node = rd.sample(net.nodes(), 1)
-                node = node[0]
-                node2 = node
-                while (node2 == node):
-                    node2 = rd.sample(net.nodes(), 1)
-                    node2 = node2[0]
-
-                x = len(net.out_edges(node)+net.in_edges(node))
-                y = len(net.out_edges(node2)+net.in_edges(node2))
-
-                if (pref_type == 1):
-                    pref_score = (1+abs(x-y))/(1+x+y)
-                elif (pref_type == 2):
-                    if (x+y != 0): pref_score = x/(x+y)
-                    else: pref_score = 0
-                elif (pref_type == 3):
-                    pref_score = x/(pre_size*2)
-                else: print("ERROR IN MUTATION: unknown preferential attachment type.")
-
-                if (rd.random() < pref_score):
-                    sign = rd.randint(0, 1)
-                    if (sign == 0):     sign = -1
-                    if (rd.random() < .5):
-                        net.add_edge(node, node2, sign=sign)
-                    else:
-                        net.add_edge(node2, node, sign=sign)
-                    post_size = len(net.edges())
 
     # REMOVE EDGE
     num_rm = num_mutations(rm_freq)
     for i in range(num_rm):
-        edge = rd.sample(net.edges(), 1)
-        edge = edge[0]
-        net.remove_edge(edge[0], edge[1])
+        pre_size = post_size = len(net.edges())
+        while(pre_size == post_size):
+            edge = rd.sample(net.edges(), 1)
+            edge = edge[0]
+
+            pref_score = calc_pref(net, edge[0], edge[1], pref_type)
+
+            if (rd.random() < 1-pref_score):
+                    net.remove_edge(edge[0], edge[1])
+                    post_size = len(net.edges())
 
     # REWIRE EDGE
     num_rewire = num_mutations(rewire_freq)
@@ -112,25 +78,29 @@ def mutate(configs, net):
             edge = rd.sample(net.edges(), 1)
             edge = edge[0]
             sign = net[edge[0]][edge[1]]['sign']
-            net.remove_edge(edge[0], edge[1])
-            if (rd.random() < .5):
-                node = edge[0]
-            else:
-                node = edge[1]
-            node2 = node
-            while (node2 == node):
-                node2 = rd.sample(net.nodes(), 1)
-                node2 = node2[0]
-            if (rd.random() < .5):
-                net.add_edge(node, node2, sign=sign)
-            else:
-                net.add_edge(node2, node, sign=sign)
+            rm_pref_score = calc_pref(net,edge[0],edge[1],pref_type)
 
-            post_edges = len(net.edges())
-            if (post_edges != pre_edges):
-                net.add_edge(edge[0], edge[1], sign=sign)  # rewire failed, undo rm'd edge
-                post_edges = len(net.edges())
-                if (post_edges != pre_edges): print("MUTATION ERR: undo rm edge failed.")
+            if (rd.random() < rm_pref_score):
+                if (rd.random() < .5): node = edge[0]
+                else: node = edge[1]
+                node2 = node
+                while (node2 == node):
+                    node2 = rd.sample(net.nodes(), 1)
+                    node2 = node2[0]
+
+                add_pref_score = calc_pref(net,node,node2,pref_type)
+
+                if (rd.random < add_pref_score):
+                    net.remove_edge(edge[0], edge[1])
+
+                    if (rd.random() < .5): net.add_edge(node, node2, sign=sign)
+                    else: net.add_edge(node2, node, sign=sign)
+
+                    post_edges = len(net.edges())
+                    if (post_edges != pre_edges):
+                        net.add_edge(edge[0], edge[1], sign=sign)  # rewire failed, undo rm'd edge
+                        post_edges = len(net.edges())
+                        if (post_edges != pre_edges): print("MUTATION ERR: undo rm edge failed.")
 
     # REVERSE EDGE DIRECTION
     num_reverse = num_mutations(reverse_freq)
@@ -171,3 +141,59 @@ def num_mutations(mutn_freq):
     else:
         return rd.randint(0, mutn_freq)
 
+
+def calc_pref(net, node1, node2, pref_type):
+    pref_score = None
+
+    size = len(net.edges())
+    x = len(net.out_edges(node1) + net.in_edges(node1))
+    y = len(net.out_edges(node2) + net.in_edges(node2))
+
+    if (pref_type == 1):
+        pref_score = (1 + abs(x - y)) / (1 + x + y)
+    elif (pref_type == 2):
+        if (x + y != 0):
+            pref_score = x / (x + y)
+        else:
+            pref_score = 0
+    elif (pref_type == 3):
+        if (rd.random()<.5): pref_score = x / (size * 2)
+        else:                pref_score = y / (size * 2)
+    elif (pref_type == 4):  # control, first selection is used
+        pref_score = 1
+    elif (pref_type == 5):
+        pref_score = abs(x - y) / (size * 2)
+    else:
+        print("ERROR IN MUTATION: unknown preferential attachment type.")
+
+    return pref_score
+
+
+def orig_pref():
+    ''' ORIG
+            if (pref_type == 0):
+            edge = rd.sample(net.edges(), 1)
+            edge = edge[0]
+            # assumes undirected implm
+            from_edges = len(net.out_edges(edge[0]) + net.in_edges(edge[0]))
+            to_edges = len(net.out_edges(edge[1]) + net.in_edges(edge[1]))
+            if (rd.random() < from_edges / (from_edges + to_edges)):
+                node = edge[0]
+            else:
+                node = edge[1]
+
+            pre_size = post_size = len(net.edges())
+            while (pre_size == post_size):  # ensure that net adds
+                node2 = node
+                while (node2 == node):
+                    node2 = rd.sample(net.nodes(), 1)
+                    node2 = node2[0]
+                sign = rd.randint(0, 1)
+                if (sign == 0):     sign = -1
+                if (rd.random() < .5):
+                    net.add_edge(node, node2, sign=sign)
+                else:
+                    net.add_edge(node2, node, sign=sign)
+                post_size = len(net.edges())
+    '''
+    return
