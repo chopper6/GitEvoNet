@@ -191,6 +191,9 @@ def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_surv
 
     percent_size = float(size) / float(end_size)
     worker_pop_size = math.floor(end_size/size)
+    #TODO: rm temp speedup
+    if (worker_pop_size > 1): worker_pop_size = int(math.floor(worker_pop_size/2))  
+
     worker_gens = worker_pop_size
     # ISLAND # math.ceil(10 * math.pow(math.e, -4 * percent_size))
     pop_size = worker_pop_size * num_workers

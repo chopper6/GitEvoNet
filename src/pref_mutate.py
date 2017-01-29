@@ -81,14 +81,19 @@ def mutate(configs, net):
                 if (pref_type == 1):
                     pref_score = (1+abs(x-y))/(1+x+y)
                 elif (pref_type == 2):
-                    pref_score = x/(x+y)
+                    if (x+y != 0): pref_score = x/(x+y)
+                    else: pref_score = 0
+                elif (pref_type == 3):
+                    pref_score = x/(pre_size*2)
                 else: print("ERROR IN MUTATION: unknown preferential attachment type.")
 
-                print("in mutn pref score = " + str(pref_score))
                 if (rd.random() < pref_score):
                     sign = rd.randint(0, 1)
                     if (sign == 0):     sign = -1
-                    net.add_edge(node, node2, sign=sign)
+                    if (rd.random() < .5):
+                        net.add_edge(node, node2, sign=sign)
+                    else:
+                        net.add_edge(node2, node, sign=sign)
                     post_size = len(net.edges())
 
     # REMOVE EDGE

@@ -18,7 +18,7 @@ def solve_knapsack (kp_instance, knapsack_solver):
                 i += 1
             elif (B_dict[key]>0 and D_dict[key]==0):
                 green_genes.append(key)
-                GENES_in.append((key, B_dict[key], D_dict[key]))
+                #GENES_in.append((key, B_dict[key], D_dict[key]))
             elif (B_dict[key]==0):
                 red_genes.append(key)
 
@@ -34,20 +34,21 @@ def solve_knapsack (kp_instance, knapsack_solver):
         #old: TOTAL_Bin, TOTAL_Din, TOTAL_Bout, TOTAL_Dout, GENES_in, GENES_out = 0, 0, 0, 0, [], []
         GENES_in = []
         GENES_out = []
-        '''
+        
         for g in range (0, N):
             if F[g] == 1:
                 GENES_in.append ((G[g], B[g], D[g]))
+            
             else:
                 GENES_out.append ((G[g], B[g], D[g]))
-        '''
+        
         for key in green_genes: # green_genes are automatically in knapsack
             GENES_in.append((key, B_dict[key], D_dict[key]))
-        '''
+        
         for key in red_genes: # red_genes are automatically outside knapsack
             GENES_out.append((key, B_dict[key], D_dict[key]))
-        '''
-        #assert(len(GENES_in) + len(GENES_out) == len(green_genes) + len(red_genes) + len(grey_genes))
+        
+        assert(len(GENES_in) + len(GENES_out) == len(green_genes) + len(red_genes) + len(grey_genes))
         coresize  =  solver_returns[2] #if DP_solver.so is used,  coresize = len (grey_genes)      
         execution_time = solver_returns[3]
         return [GENES_in, GENES_out, len(green_genes), len(red_genes), len(grey_genes), execution_time]

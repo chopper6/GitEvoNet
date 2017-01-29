@@ -6,9 +6,8 @@ from operator import attrgetter
 def eval_fitness(population, fitness_type):
     #determines fitness of each individual and orders the population by fitness
     for p in range(len(population)):
-        population[p].fitness = population[p].fitness_parts[2] 
+        population[p].fitness = population[p].fitness_parts[2]
     population = sorted(population,key=attrgetter('fitness'), reverse=True)
-    assert(population[0].fitness = population[0].fitness_parts[2])
     #reverse since MAX fitness function
     return population
 
@@ -36,7 +35,7 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
     # 2     number_red_genes
     # 3     number_grey genes
     RGGR, ETB, RGAllR, ben_ratio, ben, solver_time = 0,0,0,0,0,0
-    ben_dmg = 1
+    ben_dmg = 0
     uncorr = 0
     soln_size = 1
     if len(a_result) > 0:
@@ -53,8 +52,8 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
             ben += B
             soln_bens.append(B)
             if (B + D != 0): ben_ratio += B/(B+D)
-            if (D > 0 and B > 0): ben_dmg *=  B/D
-            elif (B>0): ben_dmg *= B
+            if (D > 0): ben_dmg +=  B/D
+            else: ben_dmg += B
             
             if (D > 0): uncorr += ((B-D)/D)*B
             else: uncorr += B*B
@@ -62,6 +61,8 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
         for g in GENES_out:
             B,D=g[1],g[2]
             if (B + D != 0): ben_ratio += B/(B+D)
+            if (D > 0): ben_dmg +=  B/D
+            else: ben_dmg += B
 
         # hub score eval pt2
         ETB = sum(set(soln_bens))
@@ -96,6 +97,8 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
         return [RGAllR, ETB, random.random()]
     elif (fitness_type == 7):
         return [RGAllR, ETB, ETB]
+    elif (fitness_type == 8):
+        return [RGAllR, ETB, RGAllR]
     else: print("ERROR in pressurize: unknown fitness type.")
 
 
