@@ -30,7 +30,6 @@ def control(configs):
 
     pop_size = 1
 
-    output.init_csv(output_dir, configs)
     population = net_generator.init_population(init_type, start_size, pop_size)
     print("Control individual generated, applying pressure.")
 
@@ -38,10 +37,6 @@ def control(configs):
     population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1],pressure_results[2]
     population = fitness.eval_fitness(population, fitness_type)
     output.to_csv(population, output_dir)
-    output.to_csv(population, output_dir)    
-    
-    print("Finished pressuring, generating images.")
-    plot_nets.single_run_plots(output_dir)
 
     print("Control run finished.")
 
@@ -73,16 +68,17 @@ def scramble_and_evolve(configs):
     vinayagam.fitness_parts[0], vinayagam.fitness_parts[1], vinayagam.fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
     fitness.eval_fitness([vinayagam], fitness_type)
     output.to_csv([vinayagam], output_dir)
-
+    
     #scramble
     perturb.scramble_edges(vinayagam.net, percent_perturb)
     pressure_results = pressurize.pressurize(configs, vinayagam.net)
-    vinayagam.fitness_parts[0], vinayagam.fitness_parts[1], vinayagam.fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-    fitness.eval_fitness([vinayagam], fitness_type)
-    assert(vinayagam.fitness == vinayagam.fitness_parts[2])
+
+    population = []
+    for p in range(pop_size):
+        population.append(vinayagam.copy())
+        population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0],  pressure_results[1],  pressure_results[2]
+    fitness.eval_fitness(population, fitness_type)    
     #output.to_csv([vinayagam], output_dir)
-    if (pop_size > 1): print("ERROR in master scramble: not designed for population sizes > 1.")
-    population = [vinayagam]
     assert (init_size == len(population[0].net.edges()))
     print("Finished scrambling, beginning the return evolution.")
 
