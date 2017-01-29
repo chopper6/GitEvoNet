@@ -10,7 +10,7 @@ def scramble_edges(net, percent):
     num_scramble = round(percent*len(edge_list))
     print("perturb(): scrambling " + str(num_scramble) + " edges.")
 
-    signs = []
+    signs = [] #could also include sign data in init edge_list but oh well
     for edge in edge_list[:num_scramble]:
         signs.append(net[edge[0]][edge[1]]['sign'])
         net.remove_edge(edge[0], edge[1])
@@ -26,7 +26,7 @@ def scramble_edges(net, percent):
                 node2 = rd.sample(net.nodes(), 1)
                 node2 = node2[0]
             orig_sign = signs[i] 
-            net.add_edge(node, node2, sign=orig_sign)  #may throw err
+            net.add_edge(node, node2, sign=orig_sign)
             post_size = len(net.edges())
         i+=1
 

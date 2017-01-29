@@ -368,3 +368,70 @@ def write_outro (dirr, num_workers, gens, num_indivs, output_freq, worker_info, 
             output.writerow(row)
 
     return mins, maxs, endpts
+
+
+
+def old_fitness_defs():
+    # for reference from prev runs
+
+    '''
+    if (fitness_type == 0 or fitness_type == 1 or fitness_type == 2):
+        return [RGGR, ETB, ben_ratio]
+    elif (fitness_type == 3 or fitness_type == 4 or fitness_type == 5):
+        return [RGAllR, ETB, ben_ratio]
+    elif (fitness_type == 6 or fitness_type == 7 or fitness_type == 8):
+        return [RGGR, dist_in_sack, ben_ratio]
+    elif (fitness_type == 9 or fitness_type == 10 or fitness_type == 11):
+        return [RGAllR, dist_in_sack, ben_ratio]
+    elif (fitness_type == 12 or fitness_type == 13 or fitness_type == 14): #doesn't work at all
+        node_to_edge_ratio = num_nodes/ num_edges
+        return [node_to_edge_ratio, dist_in_sack, ben_ratio]
+    elif (fitness_type == 15):
+        return [RGAllR, ETB, ben_ratio]
+    elif (fitness_type == 16):
+        return [RGAllR, ETB, dist_in_sack]
+    elif (fitness_type == 17):
+        return [RGAllR, ETB, RGAllR*ETB]
+    elif (fitness_type == 18):
+        return [RGAllR, ETB, math.pow(ETB,RGAllR)]
+    elif (fitness_type == 19):
+        return [RGAllR, ETB, ben_ratio*ETB]
+    elif (fitness_type == 20):
+        return [RGAllR, ETB, ratiodist]
+    elif (fitness_type == 21):
+        return [RGAllR, ETB, ben_ratio/soln_size]
+    elif (fitness_type == 22):
+        return [RGAllR, ETB, ben_ratio*RGAllR]
+    '''
+    return
+
+
+
+def orig_pref():
+    ''' ORIG
+            if (pref_type == 0):
+            edge = rd.sample(net.edges(), 1)
+            edge = edge[0]
+            # assumes undirected implm
+            from_edges = len(net.out_edges(edge[0]) + net.in_edges(edge[0]))
+            to_edges = len(net.out_edges(edge[1]) + net.in_edges(edge[1]))
+            if (rd.random() < from_edges / (from_edges + to_edges)):
+                node = edge[0]
+            else:
+                node = edge[1]
+
+            pre_size = post_size = len(net.edges())
+            while (pre_size == post_size):  # ensure that net adds
+                node2 = node
+                while (node2 == node):
+                    node2 = rd.sample(net.nodes(), 1)
+                    node2 = node2[0]
+                sign = rd.randint(0, 1)
+                if (sign == 0):     sign = -1
+                if (rd.random() < .5):
+                    net.add_edge(node, node2, sign=sign)
+                else:
+                    net.add_edge(node2, node, sign=sign)
+                post_size = len(net.edges())
+    '''
+    return

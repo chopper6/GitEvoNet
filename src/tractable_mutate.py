@@ -27,7 +27,7 @@ def mutate(configs, net):
             node_num = rd.randint(0, len(net.nodes()) * 100000)  # hope to hit number that doesn't already exist
             net.add_node(node_num)
             post_size = len(net.nodes())
-            if (post_size==pre_size): print("MUTATE(): Tried to add node that already exists, new node has " + str(len(net.out_edges(node_num)+net.in_edge(node_num))) + " edges.")
+            if (post_size == pre_size): print("MUTATE(): Tried to add node that already exists, new node has " + str(len(net.out_edges(node_num) + net.in_edge(node_num))) + " edges.")
 
     # SHRINK (REMOVE NODE)
     num_shrink = num_mutations(shrink_freq)
@@ -38,6 +38,7 @@ def mutate(configs, net):
         net.remove_node(node)
         post_size = len(net.nodes())
         if (pre_size == post_size): print("MUTATE SHRINK() ERR: node not removed.")
+
 
     # PREFERENTIALLY ADD EDGE
     num_add = num_mutations(add_freq)
@@ -74,8 +75,8 @@ def mutate(configs, net):
             pref_score = calc_pref(net, edge[0], edge[1], pref_type)
 
             if (rd.random() < 1-pref_score):
-                net.remove_edge(edge[0], edge[1])
-                post_size = len(net.edges())
+                    net.remove_edge(edge[0], edge[1])
+                    post_size = len(net.edges())
 
     # REWIRE EDGE
     num_rewire = num_mutations(rewire_freq)
@@ -90,7 +91,7 @@ def mutate(configs, net):
             sign = net[edge[0]][edge[1]]['sign']
             rm_pref_score = calc_pref(net,edge[0],edge[1],pref_type)
 
-            if (rd.random() < 1-rm_pref_score):
+            if (rd.random() < rm_pref_score):
                 if (rd.random() < .5): node = edge[0]
                 else: node = edge[1]
                 node2 = node
@@ -152,30 +153,49 @@ def num_mutations(mutn_freq):
         return rd.randint(0, mutn_freq)
 
 
-def calc_pref(net, node1, node2, pref_type):
-    pref_score = None
+def calc_tractability(net, node1, node2, pref_type, node_fitness_type):
+    tract_score = None
 
-    size = len(net.edges())
-    x = len(net.out_edges(node1) + net.in_edges(node1))
-    y = len(net.out_edges(node2) + net.in_edges(node2))
+    size = float(len(net.edges()))
 
-    if (pref_type == 1):
-        pref_score = (1 + abs(x - y)) / (1 + x + y)
-    elif (pref_type == 2):
-        if (x + y != 0):
-            pref_score = x / (x + y)
+    fit1 = net[node1]['fitness']
+    fit2 = net[node2]['fitness']
+
+    if (node_fitness_type==0):
+        if (pref_type == 0):  # control, first selection is used
+            tract_score= 1
+        if (pref_type == 1):
+            if (rd.random()<.5): tract_score = fit1/size
+            else:                tract_score = fit2/size
+        elif (pref_type == 5):
+            tract_score = abs(fit1 - fit2) /size
+
+    elif (node_fitness_type==1):
+        if (pref_type == 0):  # control, first selection is used
+            tract_score = 1
+        if (pref_type == 1):
+            if (rd.random() < .5):
+                tract_score = fit1 / (size*size)
+            else:
+                tract_score = fit2 / (size*size)
+        elif (pref_type == 5):
+            tract_score = abs(fit1 - fit2) / (size*size)
+
+
+    elif (node_fitness_type==2):
+
+        if (pref_type == 0):  # control, first selection is used
+            tract_score= 1
+        if (pref_type == 1):
+            if (rd.random()<.5): tract_score = fit1
+            else:                tract_score = fit2
+        elif (pref_type == 5):
+            tract_score = abs(fit1 - fit2)
         else:
-            pref_score = 0
-    elif (pref_type == 3):
-        if (rd.random()<.5): pref_score = x / (size * 2)
-        else:                pref_score = y / (size * 2)
-    elif (pref_type == 4):  # control, first selection is used
-        pref_score = 1
-    elif (pref_type == 5):
-        pref_score = abs(x - y) / (size * 2)
-    else:
-        print("ERROR IN MUTATION: unknown preferential attachment type.")
+            print("ERROR IN MUTATION: unknown preferential attachment type.")
 
-    return pref_score
+    print("tractable_mutate.calc_tract(): tract score = " + str(tract_score))
+
+    return tract_score
 
 

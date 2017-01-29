@@ -10,8 +10,11 @@ def pressurize(configs, net):
     max_sampling_rounds = int(configs['sampling_rounds_max'])
     knapsack_solver = cdll.LoadLibrary(configs['KP_solver_binary'])
     fitness_type = int(configs['fitness_type'])
+    node_fitness_type = int(configs['node_fitness_type'])
 
     leaf_fitness, hub_fitness, solo_fitness = 0,0,0
+
+    fitness.reset_node_fitness(net)
 
     num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
     pressure_relative = int(pressure * len(net.nodes()))
@@ -20,10 +23,12 @@ def pressurize(configs, net):
     for kp in kp_instances:
         a_result = solver.solve_knapsack(kp, knapsack_solver)
         #various characteristics of a result
-        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness  = fitness.kp_instance_properties(a_result, fitness_type, len(net.nodes()), len(net.edges()))
+        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness  = fitness.kp_instance_properties(a_result, fitness_type, node_fitness_type, net)
         leaf_fitness += inst_leaf_fitness
         hub_fitness += inst_hub_fitness
         solo_fitness += inst_solo_fitness
+
+    fitness.normalize_nodes_by_num_samples(net, num_samples_relative)
 
     leaf_fitness /= num_samples_relative
     hub_fitness /= num_samples_relative

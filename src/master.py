@@ -7,7 +7,7 @@ from random import SystemRandom as sysRand
 from time import sleep
 import networkx as nx
 import fitness, minion, output, plot_nets, net_generator, perturb, pressurize
-import init #should be able to find, but might have to specify lib
+import init
 
 
 def evolve_master(configs):

@@ -83,7 +83,6 @@ def custom_to_directed(population):
 
 
 
-
 def sign_edges(population):
     for p in range(len(population)):
         edge_list = population[p].net.edges()
