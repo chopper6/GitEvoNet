@@ -45,12 +45,14 @@ def init_population(init_type, start_size, pop_size):
         population = [Net(nx.erdos_renyi_graph(start_size,.015, directed=True, seed=None), i) for i in range(pop_size)]
 
 
-    elif (init_type == 7):
+    elif (init_type == 7):  # curr does not work, since can't go to undirected for output
         population = [Net(nx.scale_free_graph(start_size),i) for i in range(pop_size)]
     elif (init_type == 8):
         population = [Net(nx.barabasi_albert_graph(start_size, 2),i) for i in range(pop_size)]
         custom_to_directed(population)
-
+    elif (init_type == 9):
+        population = [Net(nx.barabasi_albert_graph(start_size, 1),i) for i in range(pop_size)]
+        custom_to_directed(population)
 
     else:
         print("ERROR in master.gen_init_population(): unknown init_type.")

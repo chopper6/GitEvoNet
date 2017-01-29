@@ -39,7 +39,9 @@ def mutate(configs, net):
     num_add = num_mutations(add_freq)
     for i in range(num_add):
         pre_size = post_size = len(net.edges())
-        while (pre_size == post_size):  # ensure that net adds
+        count = 0
+        while (pre_size == post_size and count < 10000):  # ensure that net adds
+            count += 1
             node = rd.sample(net.nodes(), 1)
             node = node[0]
             node2 = node
@@ -59,7 +61,9 @@ def mutate(configs, net):
     num_rm = num_mutations(rm_freq)
     for i in range(num_rm):
         pre_size = post_size = len(net.edges())
-        while(pre_size == post_size):
+        count = 0
+        while(pre_size == post_size and count < 10000):
+            count += 1
             edge = rd.sample(net.edges(), 1)
             edge = edge[0]
 
@@ -74,7 +78,9 @@ def mutate(configs, net):
     for i in range(num_rewire):
         pre_edges = post_edges = len(net.edges())
         post_edges = pre_edges + 1
-        while (pre_edges != post_edges):  # ensure sucessful rewire
+        count = 0
+        while (pre_edges != post_edges and count < 10000):  # ensure sucessful rewire
+            count += 1
             edge = rd.sample(net.edges(), 1)
             edge = edge[0]
             sign = net[edge[0]][edge[1]]['sign']

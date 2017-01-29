@@ -84,11 +84,11 @@ def kp_instance_properties(a_result, fitness_type, num_nodes, num_edges):
     if (fitness_type == 0):
         return [RGGR, ETB, RGAllR*ETB]
     elif (fitness_type == 1):
-        return [RGAllR, ETB, ben_ratio]
+        return [ben_ratio, ETB, ben_ratio]
     elif (fitness_type == 2):
-        return [RGAllR, ETB, ben]
+        return [ben_ratio, ETB, ben]
     elif (fitness_type == 3):
-        return [RGAllR, ETB, ben_dmg]
+        return [ben_ratio, ETB, ben_dmg]
     elif (fitness_type == 4):
         return [RGAllR, ETB, ben*RGAllR]
     elif (fitness_type == 5):

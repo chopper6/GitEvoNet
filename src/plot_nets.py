@@ -22,7 +22,7 @@ def single_run_plots (dirr):
     features_over_size(dirr, net_info, titles, mins, maxs, False)
     features_over_time(dirr, net_info, titles, mins, maxs, False)
 
-    solver_time(dirr)
+    #solver_time(dirr)
 
     print("Generating degree distribution plots.")
     degree_distrib(dirr)
@@ -191,6 +191,6 @@ def parse_info(dirr):
 
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/b20/2"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/b20/0"
 
     single_run_plots(dirr)

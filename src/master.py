@@ -30,6 +30,7 @@ def control(configs):
 
     pop_size = 1
 
+    output.init_csv(output_dir, configs)
     population = net_generator.init_population(init_type, start_size, pop_size)
     print("Control individual generated, applying pressure.")
 
@@ -37,6 +38,10 @@ def control(configs):
     population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1],pressure_results[2]
     population = fitness.eval_fitness(population, fitness_type)
     output.to_csv(population, output_dir)
+    output.to_csv(population, output_dir)    
+    
+    print("Finished pressuring, generating images.")
+    plot_nets.single_run_plots(output_dir)
 
     print("Control run finished.")
 
