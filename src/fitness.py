@@ -38,7 +38,6 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
             else: uncorr += B*B
 
             # NODE FITNESS inside soln
-            print ("Node id = " + str(id))
             if (node_fitness_type == 0):
                 net[id]['fitness'] += abs(B-D)
             elif (node_fitness_type == 1):
@@ -56,7 +55,6 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
             else: ben_dmg += B
 
             # NODE FITNESS outside soln
-            print ("Node id = " + str(id))
             if (node_fitness_type == 0):
                 net[id]['fitness'] += abs(B-D)
             elif (node_fitness_type == 1):
@@ -100,12 +98,12 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
 
 def normalize_nodes_by_num_samples(net, num_samples):
     for node in net.nodes():
-        print ("fitness.node_normz(): BEFORE normz = " + str(net[node]['fitness']))
+        #print ("fitness.node_normz(): BEFORE normz = " + str(net[node]['fitness']))
         net[node]['fitness'] /= num_samples
-        print ("fitness.node_normz(): AFTER normz = " + str(net[node]['fitness']))
+        #print ("fitness.node_normz(): AFTER normz = " + str(net[node]['fitness']))
 
 
-def reset_node_fitness (net, node_fitness_type):
+def reset_node_fitness (net):
 
     for node in net.nodes():
         net[node]['fitness'] = 0

@@ -7,9 +7,9 @@ import networkx as nx
 
 
 def init_csv(out_dir, configs):
-
-    csv_title = "Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Clustering Coefficient, # Triangle Communities\n"
-    #, In-Degree Powerlaw Fit (vs Exponential) LogLikelihood Ratio, In-Degree Powerlaw Fit (vs Exponential) P-Value, In-Degree Powerlaw xmin, Out-Degree Powerlaw Fit (vs Exponential) LogLikelihood Ratio, Out-Degree Powerlaw Fit (vs Exponential) P-Value, Out-Degree Powerlaw xmin
+ 
+    csv_title = "Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio\n"
+    #csv_title = "Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Clustering Coefficient, # Triangle Communities\n"
     deg_distrib_title = "Net Size, In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
 
     with open(out_dir+"info.csv",'w') as csv_out:
@@ -50,12 +50,12 @@ def to_csv(population, output_dir):
                 net_info.append(sum(net.degree().values())/len(net.nodes()))
                 net_info.append(len(net.edges())/len(net.nodes()))
 
-                undir = net.to_undirected()
-                net_info.append(nx.average_clustering(undir))
+                #undir = net.to_undirected()
+                #net_info.append(nx.average_clustering(undir))
 
                 #clique_size = int(math.floor(len(net.nodes())/50))
                 #net_info.append(len(list(nx.k_clique_communities(undir, clique_size))))
-                net_info.append(len(list(nx.k_clique_communities(undir, 3))))
+                #net_info.append(len(list(nx.k_clique_communities(undir, 3))))
 
                 output.writerow(net_info)
                 #write rows more concisely?

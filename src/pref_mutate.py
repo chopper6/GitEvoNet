@@ -73,7 +73,7 @@ def mutate(configs, net):
 
             pref_score = calc_pref(net, edge[0], edge[1], pref_type)
 
-            if (rd.random() < 1-pref_score):
+            if (rd.random() < 1-pref_score or pref_type==4):
                 net.remove_edge(edge[0], edge[1])
                 post_size = len(net.edges())
 
@@ -90,7 +90,7 @@ def mutate(configs, net):
             sign = net[edge[0]][edge[1]]['sign']
             rm_pref_score = calc_pref(net,edge[0],edge[1],pref_type)
 
-            if (rd.random() < 1-rm_pref_score):
+            if (rd.random() < 1-rm_pref_score or pref_type==4):
                 if (rd.random() < .5): node = edge[0]
                 else: node = edge[1]
                 node2 = node
@@ -154,7 +154,6 @@ def num_mutations(mutn_freq):
 
 def calc_pref(net, node1, node2, pref_type):
     pref_score = None
-
     size = len(net.edges())
     x = len(net.out_edges(node1) + net.in_edges(node1))
     y = len(net.out_edges(node2) + net.in_edges(node2))
@@ -175,7 +174,7 @@ def calc_pref(net, node1, node2, pref_type):
         pref_score = abs(x - y) / (size * 2)
     else:
         print("ERROR IN MUTATION: unknown preferential attachment type.")
-
+    
     return pref_score
 
 
