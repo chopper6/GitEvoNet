@@ -15,6 +15,7 @@ def mutate(configs, net):
     shrink_freq = float(configs['shrink_mutation_frequency'])
 
     pref_type = int(configs['preferential_type'])
+    node_fitness_type = int(configs['node_fitness_type'])
 
     # --------- MUTATIONS ------------- #
 
@@ -54,7 +55,7 @@ def mutate(configs, net):
                 node2 = rd.sample(net.nodes(), 1)
                 node2 = node2[0]
 
-            pref_score = calc_pref(net, node, node2, pref_type)
+            pref_score = calc_tractability(net, node, node2, pref_type, node_fitness_type)
 
             if (rd.random() < pref_score):
                 sign = rd.randint(0, 1)
@@ -72,7 +73,7 @@ def mutate(configs, net):
             edge = rd.sample(net.edges(), 1)
             edge = edge[0]
 
-            pref_score = calc_pref(net, edge[0], edge[1], pref_type)
+            pref_score = calc_tractability(net, edge[0], edge[1], pref_type, node_fitness_type)
 
             if (rd.random() < 1-pref_score):
                     net.remove_edge(edge[0], edge[1])
@@ -89,7 +90,7 @@ def mutate(configs, net):
             edge = rd.sample(net.edges(), 1)
             edge = edge[0]
             sign = net[edge[0]][edge[1]]['sign']
-            rm_pref_score = calc_pref(net,edge[0],edge[1],pref_type)
+            rm_pref_score = calc_tractability(net,edge[0],edge[1],pref_type, node_fitness_type)
 
             if (rd.random() < rm_pref_score):
                 if (rd.random() < .5): node = edge[0]
@@ -99,7 +100,7 @@ def mutate(configs, net):
                     node2 = rd.sample(net.nodes(), 1)
                     node2 = node2[0]
 
-                add_pref_score = calc_pref(net,node,node2,pref_type)
+                add_pref_score = calc_tractability(net,node,node2,pref_type, node_fitness_type)
 
                 if (rd.random < add_pref_score):
                     net.remove_edge(edge[0], edge[1])
@@ -158,8 +159,8 @@ def calc_tractability(net, node1, node2, pref_type, node_fitness_type):
 
     size = float(len(net.edges()))
 
-    fit1 = net[node1]['fitness']
-    fit2 = net[node2]['fitness']
+    fit1 = net.node[node1]['fitness']
+    fit2 = net.node[node2]['fitness']
 
     if (node_fitness_type==0):
         if (pref_type == 0):  # control, first selection is used

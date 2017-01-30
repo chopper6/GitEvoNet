@@ -1,5 +1,6 @@
 import math, random
 from operator import attrgetter
+import networkx as nx
 
 def eval_fitness(population, fitness_type):
     #determines fitness of each individual and orders the population by fitness
@@ -39,12 +40,12 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
 
             # NODE FITNESS inside soln
             if (node_fitness_type == 0):
-                net[id]['fitness'] += abs(B-D)
+                net.node[id]['fitness'] += abs(B-D)
             elif (node_fitness_type == 1):
-                net[id]['fitness'] += math.pow(B-D,2)
+                net.node[id]['fitness'] += math.pow(B-D,2)
             elif (node_fitness_type == 2):
-                if (B != 0 and D != 0):   net[id]['fitness'] += 1-min(B/D, D/B)
-                else: net[id]['fitness'] += 1
+                if (B != 0 and D != 0):  net.node[id]['fitness'] += 1-min(B/D, D/B)
+                else: net.node[id]['fitness'] += 1
 
 
         for g in GENES_out:
@@ -56,12 +57,12 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
 
             # NODE FITNESS outside soln
             if (node_fitness_type == 0):
-                net[id]['fitness'] += abs(B-D)
+                net.node[id]['fitness'] += abs(B-D)
             elif (node_fitness_type == 1):
-                net[id]['fitness'] += math.pow(B-D,2)
+                net.node[id]['fitness'] += math.pow(B-D,2)
             elif (node_fitness_type == 2):
                 if (B != 0 and D != 0):   net[id]['fitness'] += 1-min(B/D, D/B)
-                else: net[id]['fitness'] += 1
+                else: net.node[id]['fitness']  += 1
 
         ETB = sum(set(soln_bens))
 
@@ -97,15 +98,15 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
 
 
 def normalize_nodes_by_num_samples(net, num_samples):
-    for node in net.nodes():
+    for id in net.nodes():
         #print ("fitness.node_normz(): BEFORE normz = " + str(net[node]['fitness']))
-        net[node]['fitness'] /= num_samples
+        net.node[id]['fitness'] /= num_samples
         #print ("fitness.node_normz(): AFTER normz = " + str(net[node]['fitness']))
 
 
 def reset_node_fitness (net):
 
     for node in net.nodes():
-        net[node]['fitness'] = 0
+        nx.set_node_attributes(net, 'fitness', {node:0})
 
 
