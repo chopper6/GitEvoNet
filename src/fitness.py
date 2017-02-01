@@ -17,7 +17,7 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
     RGGR, ETB, RGAllR, ben_ratio, ben, solver_time = 0,0,0,0,0,0
     ben_dmg, ben_dmg_sq, ben_sq = 0,0,0
     uncorr, uncorr_sq = 0,0
-    all_ben, all_dmg, bendmg = 0,0,0
+    all_ben, all_dmg, bendmg, all_ben_sq = 0,0,0,0
     grey=0
     grey_score = 0
     soln_size = 1
@@ -59,6 +59,7 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
             all_ben += B
             all_dmg += D
             bendmg += B*D
+            all_ben_sq += math.pow(B,2)
 
             
 
@@ -81,6 +82,7 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
             all_dmg += D
             bendmg += B*D
             ben_dmg_sq += math.pow(B-D,2)
+            all_ben_sq += math.pow(B,2)
 
             if (B + D != 0):
                 ben_ratio += B/(B+D)
@@ -107,6 +109,7 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
                 if (B != 0 and D != 0):   net[id]['fitness'] += 1-min(B/D, D/B)
                 else: net.node[id]['fitness']  += 1
 
+
         num_obj = len(GENES_in+GENES_out)
         ETB = sum(set(soln_bens))
         uncorr = 1-(uncorr/num_obj)
@@ -127,6 +130,12 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
     denom = math.pow(math.pow(all_ben,2)*math.pow(all_dmg,2),.5)
     if (denom != 0):  corr = (1-(bendmg /denom))
     else: corr=1
+
+    ben /= soln_size
+    all_ben /= num_obj
+
+    hub_ratio_in_soln = (math.pow(ben_sq,.5)/ben) / soln_size
+    hub_ratio = (math.pow(all_ben_sq,.5)/all_ben) / num_obj
 
     if (fitness_type == 0):
         return [RGGR, ETB, RGAllR*ETB]
@@ -202,6 +211,14 @@ def kp_instance_properties(a_result, fitness_type, node_fitness_type, net):
         return [RGGR, ETB, ratio2_btm_sq*ben_dmg_sq]
     elif (fitness_type == 34):
         return [RGGR, ETB, ratio2_btm_sq*ETB]
+
+    elif (fitness_type == 35):
+        return [RGGR, ETB, all_ben]
+    elif (fitness_type == 36):
+        return [RGGR, ETB, hub_ratio_in_soln]
+    elif (fitness_type == 37):
+        return [RGGR, ETB, hub_ratio]
+
     else: print("ERROR in pressurize: unknown fitness type.")
 
 
