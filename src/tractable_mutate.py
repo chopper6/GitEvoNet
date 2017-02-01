@@ -28,7 +28,6 @@ def mutate(configs, net):
             node_num = rd.randint(0, len(net.nodes()) * 100000)  # hope to hit number that doesn't already exist
             net.add_node(node_num)
             post_size = len(net.nodes())
-            if (post_size == pre_size): print("MUTATE(): Tried to add node that already exists, new node has " + str(len(net.out_edges(node_num) + net.in_edge(node_num))) + " edges.")
 
     # SHRINK (REMOVE NODE)
     num_shrink = num_mutations(shrink_freq)

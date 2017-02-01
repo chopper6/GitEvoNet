@@ -42,7 +42,7 @@ def init_population(init_type, start_size, pop_size):
         custom_to_directed(population)
 
     elif (init_type == 6):  #highly connected eR
-        population = [Net(nx.erdos_renyi_graph(start_size,.015, directed=True, seed=None), i) for i in range(pop_size)]
+        population = [Net(nx.erdos_renyi_graph(start_size,.005, directed=True, seed=None), i) for i in range(pop_size)]
 
 
     elif (init_type == 7):  # curr does not work, since can't go to undirected for output
