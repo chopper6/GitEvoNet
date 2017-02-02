@@ -11,7 +11,6 @@ def evolve_minion(worker_file):
         worker_ID, seed, worker_gens, pop_size, num_return, randSeed, configs = pickle.load(file)
         file.close()
 
-    fitness_type = int(configs['fitness_type'])
     survive_fraction = float(configs['worker_percent_survive'])/100
     num_survive = math.ceil(survive_fraction * pop_size)
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
@@ -43,7 +42,7 @@ def evolve_minion(worker_file):
             population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
        
         old_popn = population
-        population = fitness.eval_fitness(old_popn, fitness_type)
+        population = fitness.eval_fitness(old_popn)
         del old_popn
         #debug(population,worker_ID)
 

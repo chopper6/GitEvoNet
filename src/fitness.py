@@ -2,7 +2,7 @@ import math, random
 from operator import attrgetter
 import networkx as nx
 
-def eval_fitness(population, fitness_type):
+def eval_fitness(population):
     #determines fitness of each individual and orders the population by fitness
     for p in range(len(population)):
         population[p].fitness = population[p].fitness_parts[2]

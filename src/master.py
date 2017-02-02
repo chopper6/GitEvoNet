@@ -35,7 +35,7 @@ def control(configs):
 
     pressure_results = pressurize.pressurize(configs, population[0].net)
     population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1],pressure_results[2]
-    population = fitness.eval_fitness(population, fitness_type)
+    population = fitness.eval_fitness(population)
     output.to_csv(population, output_dir)
 
     print("Control run finished.")
@@ -47,7 +47,6 @@ def scramble_and_evolve(configs):
     #CONFIGS
     num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/",'')  # no idea where this is coming from
-    fitness_type = int(configs['fitness_type'])
     survive_percent = int(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
     output_freq = float(configs['output_frequency'])
@@ -66,7 +65,7 @@ def scramble_and_evolve(configs):
     init_size = (len(vinayagam.net.edges()))
     pressure_results = pressurize.pressurize(configs, vinayagam.net)
     vinayagam.fitness_parts[0], vinayagam.fitness_parts[1], vinayagam.fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-    fitness.eval_fitness([vinayagam], fitness_type)
+    fitness.eval_fitness([vinayagam])
     output.to_csv([vinayagam], output_dir)
     
     #scramble
@@ -77,7 +76,7 @@ def scramble_and_evolve(configs):
     for p in range(pop_size):
         population.append(vinayagam.copy())
         population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0],  pressure_results[1],  pressure_results[2]
-    fitness.eval_fitness(population, fitness_type)    
+    fitness.eval_fitness(population)
     #output.to_csv([vinayagam], output_dir)
     assert (init_size == len(population[0].net.edges()))
     print("Finished scrambling, beginning the return evolution.")
@@ -125,7 +124,6 @@ def evolve_from_seed(configs):
     # get configs
     num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/",'')  # no idea where this is coming from
-    fitness_type = int(configs['fitness_type'])
     survive_percent = int(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
     output_freq = float(configs['output_frequency'])
@@ -142,7 +140,7 @@ def evolve_from_seed(configs):
     print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
 
     population = net_generator.init_population(init_type, start_size, pop_size)
-    fitness.eval_fitness(population, fitness_type)
+    fitness.eval_fitness(population)
 
     size = start_size
     size_iters = 0
