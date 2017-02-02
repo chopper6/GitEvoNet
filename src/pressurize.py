@@ -14,8 +14,6 @@ def pressurize(configs, net):
 
     leaf_fitness, hub_fitness, solo_fitness = 0,0,0
 
-    fitness.reset_node_fitness(net)
-
     num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
     pressure_relative = int(pressure * len(net.nodes()))
     kp_instances = reducer.reverse_reduction(net, pressure_relative, int(tolerance), num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
@@ -27,8 +25,6 @@ def pressurize(configs, net):
         leaf_fitness += inst_leaf_fitness
         hub_fitness += inst_hub_fitness
         solo_fitness += inst_solo_fitness
-
-    fitness.normalize_nodes_by_num_samples(net, num_samples_relative)
 
     leaf_fitness /= num_samples_relative
     hub_fitness /= num_samples_relative
