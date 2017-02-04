@@ -9,7 +9,7 @@ def reverse_reduction(M, sample_size, T_percentage, advice_sampling_threshold, a
     else:      
         for i in range(advice_sampling_threshold):
             yield [
-                    BDT_calculator_node_both   (M, util.advice_nodes (M, util.sample_p_elements(M.nodes(),sample_size), biased), T_percentage)
+                    BDT_calculator_node_out   (M, util.advice_nodes (M, util.sample_p_elements(M.nodes(),sample_size), biased), T_percentage)
                   ]    
 #--------------------------------------------------------------------------------------------------                
 def BDT_calculator_node_both (M, Advice, T_percentage):
@@ -54,4 +54,34 @@ def BDT_calculator_node_both (M, Advice, T_percentage):
 
     assert len(BENEFITS.keys())==len(DAMAGES.keys())
     return BENEFITS, DAMAGES, T_edges
+
+# --------------------------------------------------------------------------------------------------
+def BDT_calculator_node_out(M, Advice, T_percentage):
+        BENEFITS, DAMAGES = {}, {}
+        for target in Advice.keys():
+            for source in M.predecessors(target):
+                if M[source][target]['sign'] == Advice[target]:  # in agreement with the Oracle
+                    ######### REWARDING the source node ###########
+                    if source in BENEFITS.keys():
+                        BENEFITS[source] += 1
+                    else:
+                        BENEFITS[source] = 1
+                        if source not in DAMAGES.keys():
+                            DAMAGES[source] = 0
+                ###############################################
+                ###############################################
+                else:  # in disagreement with the Oracle
+                    ######### PENALIZING the source node ##########
+                    if source in DAMAGES.keys():
+                        DAMAGES[source] += 1
+                    else:
+                        DAMAGES[source] = 1
+                        if source not in BENEFITS.keys():
+                            BENEFITS[source] = 0
+
+        T_edges = round(max(1, math.ceil(sum(DAMAGES.values()) * (T_percentage / 100))))
+
+        assert len(BENEFITS.keys()) == len(DAMAGES.keys())
+        return BENEFITS, DAMAGES, T_edges
+
 #--------------------------------------------------------------------------------------------------
