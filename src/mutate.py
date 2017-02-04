@@ -36,24 +36,25 @@ def mutate(configs, net):
         post_size = len(net.nodes())
         if (pre_size == post_size): print("MUTATE SHRINK() ERR: node not removed.")
 
-    # PREFERENTIALLY ADD EDGE
+    # ADD EDGE
     num_add = num_mutations(add_freq)
     for i in range(num_add):
         pre_size = post_size = len(net.edges())
-        count = 0
         while (pre_size == post_size):  # ensure that net adds
-            count += 1
             node = rd.sample(net.nodes(), 1)
             node = node[0]
-            node2 = node
-            while (node2 == node):
-                node2 = rd.sample(net.nodes(), 1)
-                node2 = node2[0]
+            count = 0
+            while (pre_size == post_size and count < 100000):
+                count += 1
+                node2 = node
+                while (node2 == node):
+                    node2 = rd.sample(net.nodes(), 1)
+                    node2 = node2[0]
 
-            sign = rd.randint(0, 1)
-            if (sign == 0):     sign = -1
-            net.add_edge(node, node2, sign=sign)
-            post_size = len(net.edges())
+                sign = rd.randint(0, 1)
+                if (sign == 0):     sign = -1
+                net.add_edge(node, node2, sign=sign)
+                post_size = len(net.edges())
 
     # REMOVE EDGE
     num_rm = num_mutations(rm_freq)
@@ -62,45 +63,47 @@ def mutate(configs, net):
         count = 0
         while (pre_size == post_size):
             count += 1
-            edge = rd.sample(net.edges(), 1)
-            edge = edge[0]
+            node = rd.sample(net.nodes(),1)  #by node
+            node = node[0]
+            edge = rd.sample(net.edges(node), 1)
+            if (edge != None):
+                edge = edge[0]
 
-            net.remove_edge(edge[0], edge[1])
-            post_size = len(net.edges())
+                net.remove_edge(edge[0], edge[1])
+                post_size = len(net.edges())
 
     # REWIRE EDGE
     num_rewire = num_mutations(rewire_freq)
     for i in range(num_rewire):
-        pre_edges = post_edges = len(net.edges())
+        pre_edges = len(net.edges())
         post_edges = pre_edges + 1
-        count = 0
         while (pre_edges != post_edges):  # ensure sucessful rewire
-            count += 1
-            edge = rd.sample(net.edges(), 1)
-            edge = edge[0]
-            sign = net[edge[0]][edge[1]]['sign']
-            net.remove_edge(edge[0], edge[1])
+            node = rd.sample(net.nodes(),1)  #by node
+            node = node[0]
+            edge = rd.sample(net.edges(node), 1)
+            if (edge != None):
+                edge = edge[0]
+                sign = net[edge[0]][edge[1]]['sign']
+                net.remove_edge(edge[0], edge[1])
 
-            if (rd.random() < .5):
-                node = edge[0]
-            else:
-                node = edge[1]
-            node2 = node
-            while (node2 == node):
-                node2 = rd.sample(net.nodes(), 1)
-                node2 = node2[0]
+                count = 0
+                while (post_edges != pre_edges and count < 100000): #try repeatedly from same starting node
+                    count += 1
+                    node2 = node
+                    while (node2 == node):
+                        node2 = rd.sample(net.nodes(), 1)
+                        node2 = node2[0]
 
+                    if (rd.random() < .5): net.add_edge(node, node2, sign=sign)
+                    else: net.add_edge(node2, node, sign=sign)
 
-            if (rd.random() < .5):
-                net.add_edge(node, node2, sign=sign)
-            else:
-                net.add_edge(node2, node, sign=sign)
+                    post_edges = len(net.edges())
 
-            post_edges = len(net.edges())
-            if (post_edges != pre_edges):
-                net.add_edge(edge[0], edge[1], sign=sign)  # rewire failed, undo rm'd edge
-                post_edges = len(net.edges())
-                if (post_edges != pre_edges): print("MUTATION ERR: undo rm edge failed.")
+                #give up on that node, return its old edge
+                if (post_edges != pre_edges):
+                    net.add_edge(edge[0], edge[1], sign=sign)  # rewire failed, undo rm'd edge
+                    post_edges = len(net.edges())
+                    if (post_edges != pre_edges): print("MUTATION ERR: undo rm edge failed.")
 
     # REVERSE EDGE DIRECTION
     num_reverse = num_mutations(reverse_freq)
