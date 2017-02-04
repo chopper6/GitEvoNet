@@ -1,8 +1,7 @@
 # worker processes
 
 import math, pickle
-import output, fitness, pressurize
-import pref_mutate as mutate
+import output, fitness, pressurize, mutate
 from time import process_time as ptime
 import random
 
