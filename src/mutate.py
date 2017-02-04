@@ -65,7 +65,7 @@ def mutate(configs, net):
             count += 1
             node = rd.sample(net.nodes(),1)  #by node
             node = node[0]
-            edges = net.edges(node)
+            edges = net.out_edges(node)+net.in_edges(node)
             if (len(edges) > 0):
                 edge = rd.sample(net.edges(node), 1)
                 edge = edge[0]
@@ -81,7 +81,7 @@ def mutate(configs, net):
         while (pre_edges != post_edges):  # ensure sucessful rewire
             node = rd.sample(net.nodes(),1)  #by node
             node = node[0]
-            edges = net.edges(node)
+            edges = net.out_edges(node)+net.in_edges(node)
             if (len(edges) > 0):
                 edge = rd.sample(edges, 1)
                 edge = edge[0]
