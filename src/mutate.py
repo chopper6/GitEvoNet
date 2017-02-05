@@ -112,16 +112,23 @@ def mutate(configs, net):
         pre_edges = post_edges = len(net.edges())
         post_edges = pre_edges + 1
         while (pre_edges != post_edges):
-            pre_edges = post_edges = len(net.edges())
-            edge = rd.sample(net.edges(), 1)
-            edge = edge[0]
-            sign = net[edge[0]][edge[1]]['sign']
-            net.remove_edge(edge[0], edge[1])
-            net.add_edge(edge[1], edge[0], sign=sign)
+            node = rd.sample(net.nodes(),1)  #by node
+            node = node[0]
+            edges = net.out_edges(node)
+            count = 0
+            if (len(edges) > 0):
+                post_edges = pre_edges + 1
+                while (post_edges != pre_edges and count<10): #each node has 10 tries
+                    count += 1
+                    edge = rd.sample(edges, 1)
+                    edge = edge[0]
+                    sign = net[edge[0]][edge[1]]['sign']
+                    net.remove_edge(edge[0], edge[1])
+                    net.add_edge(edge[1], edge[0], sign=sign)
 
-            post_edges = len(net.edges())
-            if (pre_edges != post_edges):
-                net.add_edge(edge[0], edge[1], sign=sign)  # reverse failed, undo rm'd edge
+                    post_edges = len(net.edges())
+                    if (pre_edges != post_edges):
+                        net.add_edge(edge[0], edge[1], sign=sign)  # reverse failed, undo rm'd edge
 
     # CHANGE EDGE SIGN
     num_sign = num_mutations(sign_freq)
