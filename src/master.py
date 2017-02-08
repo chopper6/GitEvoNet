@@ -6,7 +6,7 @@ from operator import attrgetter
 from random import SystemRandom as sysRand
 from time import sleep
 import networkx as nx
-import fitness, minion, output, plot_nets, net_generator, perturb, pressurize
+import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets
 import init
 
 
@@ -127,6 +127,7 @@ def evolve_from_seed(configs):
     survive_percent = int(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
     output_freq = float(configs['output_frequency'])
+    draw_freq =  float(configs['draw_frequency'])
     max_iters = float(configs['max_iterations'])
 
     init_type = int(configs['initial_net_type'])
@@ -151,6 +152,10 @@ def evolve_from_seed(configs):
         if (size_iters % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir)
             print("Master at gen " + str(size_iters) + ", with net size = " + str(size) + ", " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size) + ", with " + str(worker_pop_size) + " nets per worker.")
+
+        if (size_iters % int(1 / draw_freq) == 0):
+            draw_nets.basic(population, output_dir, size_iters)
+
 
         #debug(population)
         pool = mp.Pool(processes=num_workers)
