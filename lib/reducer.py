@@ -9,7 +9,7 @@ def reverse_reduction(M, sample_size, T_percentage, advice_sampling_threshold, a
     else:      
         for i in range(advice_sampling_threshold):
             yield [
-                    BDT_calculator_node_target   (M, util.advice_nodes (M, util.sample_p_elements(M.nodes(),sample_size), biased), T_percentage)
+                    BDT_calculator_node_both   (M, util.advice_nodes (M, util.sample_p_elements(M.nodes(),sample_size), biased), T_percentage)
                   ]    
 #--------------------------------------------------------------------------------------------------                
 def BDT_calculator_node_both (M, Advice, T_percentage):

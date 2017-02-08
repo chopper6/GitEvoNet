@@ -54,6 +54,16 @@ def init_population(init_type, start_size, pop_size):
         population = [Net(nx.barabasi_albert_graph(start_size, 1),i) for i in range(pop_size)]
         custom_to_directed(population)
 
+    elif (init_type == 10): #double cycle
+        population = [Net(nx.cycle_graph(start_size, create_using=nx.DiGraph()), i) for i in range(pop_size)]
+        double_edges(population)
+
+    elif (init_type == 11): #double star
+        population = [Net(nx.star_graph(start_size), i) for i in range(pop_size)]
+        custom_to_directed(population)
+        double_edges(population)
+
+
     else:
         print("ERROR in master.gen_init_population(): unknown init_type.")
         return
@@ -90,3 +100,10 @@ def sign_edges(population):
             sign = sysRand().randint(0, 1)
             if (sign == 0):     sign = -1
             population[p].net[edge[0]][edge[1]]['sign'] = sign
+
+def double_edges(population):
+    for p in range(len(population)):
+        net = population[p].net
+        edges = net.edges()
+        for edge in edges:
+            net.add_edge(edge[1], edge[0])  # add reverse edge

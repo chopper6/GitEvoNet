@@ -174,7 +174,6 @@ def evolve_from_seed(configs):
 
         del population
         population = parse_worker_popn(num_workers, output_dir, num_survive)
-
         size = len(population[0].net.nodes())
         size_iters += 1
 

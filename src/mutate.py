@@ -82,7 +82,7 @@ def mutate(configs, net):
         while (rewire_success==False):  # ensure sucessful rewire
             node = rd.sample(net.nodes(),1)  #by node
             node = node[0]
-            edges = net.out_edges(node)+net.in_edges
+            edges = net.out_edges(node)+net.in_edges(node)
             if (len(edges) > 0):
                 edge = rd.sample(edges, 1)
                 edge = edge[0]
@@ -97,13 +97,11 @@ def mutate(configs, net):
                         node2 = rd.sample(net.nodes(), 1)
                         node2 = node2[0]
 
-                    if (rd.random() < .5): net.add_edge(node, node2, sign=sign)
+                    if (rd.random() < .5): net.add_edge(node, node2, sign=sign) #possible reverse
                     else: net.add_edge(node2, node, sign=sign)
                     post_edges = len(net.edges())
                     if (post_edges > pre_edges): #check that edge successfully added
-                        if (edge[0] == node): net.remove_edge(edge[0], edge[1])
-                        elif (edge[1] == node): net.remove_edge(edge[1], edge[0])
-                        else: print("REWIRE MUTN ERR: edge is not connected to orig node.")
+                        net.remove_edge(edge[0], edge[1])
                         post_edges = len(net.edges())
                         if (post_edges==pre_edges): #check that edge successfully removed
                             node_success = True
