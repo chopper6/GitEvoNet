@@ -144,8 +144,14 @@ def evolve_from_seed(configs):
     print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
 
     population = net_generator.init_population(init_type, start_size, pop_size)
-    fitness.eval_fitness(population)
-    output.deg_change_csv(population, output_dir)
+
+    #init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
+    #TODO: for final results, should NOT just use net0
+    #instead pass to workers, but w/o any mutation and just for a single gen
+    pressure_results = pressurize.pressurize(configs, population[0].net)
+    population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
+    fitness.eval_fitness([population[0]])
+    output.deg_change_csv([population[0]], output_dir)
 
     total_gens = 0
     size = start_size

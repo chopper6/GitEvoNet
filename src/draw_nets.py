@@ -16,7 +16,7 @@ def basic(population, dirr, iter):
 
     file_name = dirr + "/draw/" + str(iter) + ".png"
     undir = net.to_undirected()
-    nx.draw(undir, node_size=10, node_color = node_degs, cmap=plt.get_cmap('plasma'))
+    nx.draw(undir, node_size=node_degs, node_color = node_degs, cmap=plt.get_cmap('plasma'))
     plt.savefig(file_name)
     plt.clf()
 
