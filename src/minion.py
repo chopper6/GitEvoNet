@@ -15,6 +15,7 @@ def evolve_minion(worker_file):
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
     output_dir += str(worker_ID)
 
+
     random.seed(randSeed)
     population = gen_population_from_seed(seed, pop_size)
     start_size = len(seed.net.nodes())

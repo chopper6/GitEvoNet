@@ -26,6 +26,7 @@ def single_run_plots (dirr):
 
     print("Generating degree distribution plots.")
     degree_distrib(dirr)
+    degree_distrib_change(dirr)
 
 
 
@@ -42,19 +43,18 @@ def degree_distrib(dirr):
         for line in all_lines[1:]:
             line = line.replace('[', '').replace(']','').replace("\n", '')
             line = line.split(',')
-            in_deg = line[1].split(" ")
-            in_deg_freq = line[2].split(" ")
-            out_deg = line[3].split(" ")
-            out_deg_freq = line[4].split(" ")
+            gen = line[0]
+            in_deg = line[2].split(" ")
+            in_deg_freq = line[3].split(" ")
+            out_deg = line[4].split(" ")
+            out_deg_freq = line[5].split(" ")
 
             in_deg = list(filter(None, in_deg))
             in_deg_freq = list(filter(None, in_deg_freq))
             out_deg = list(filter(None, out_deg))
             out_deg_freq = list(filter(None, out_deg_freq))
 
-            for ele in out_deg_freq:
-                if (ele == '"'):
-                    out_deg_freq.remove(ele)
+
             # plot in degrees
             plt.loglog(in_deg, in_deg_freq, basex=10, basey=10, linestyle='', color='blue', alpha=0.7, markersize=7, marker='o', markeredgecolor='blue')
 
@@ -77,42 +77,136 @@ def degree_distrib(dirr):
             plt.legend(loc='upper right', handles=[in_patch, out_patch], frameon=False)
             plt.xlabel('Degree (log) ')
             plt.ylabel('Number of nodes with that degree (log)')
-            plt.title('Degree Distribution (network size = ' + str(line[0]) + ' nodes) of Most Fit Net')
+            plt.title('Degree Distribution (network size = ' + str(line[0]) + ' nodes, generation = ' + str(gen) + ') of Most Fit Net')
             plt.xlim(1,100)
             plt.ylim(1,10000)
-            plt.savefig(dirr + "/degree_distribution/" + str(img_index) + ".png", dpi=300)
+            plt.savefig(dirr + "/degree_distribution/" + str(gen) + ".png", dpi=300)
             plt.clf()
             img_index += 1
 
 
 def features_over_size(dirr, net_info, titles, mins, maxs, use_lims):
+    #size is 2nd col of net info
 
-        img_dirr = dirr + "/images_by_size/"
-        for i in range(len(titles)):
-            num_outputs = len(net_info)
-            ydata = []
-            xdata = []
-            for j in range(num_outputs):
-                ydata.append(net_info[j,i])
-                xdata.append(net_info[j,0])
-                #change x_ticks?
-                #x_ticks.append(int(g/output_freq))
-                #buffer_ticks.append(gi)
-            x_ticks = []
-            max_net_size = net_info[num_outputs-1,0]  #not nec max if net shrinks
-            for j in range(0,11):
-                x_ticks.append((max_net_size/10)*j)
-            plt.plot(xdata, ydata)
-            plt.ylabel(titles[i] + " of most fit Individual")
-            plt.title(titles[i])
-            if (use_lims==True): plt.ylim(mins[i], maxs[i])
-            plt.xlabel("Net Size")
-            plt.xticks(x_ticks, x_ticks)
-            plt.savefig(img_dirr + str(titles[i]))
-            plt.clf()
+    img_dirr = dirr + "/images_by_size/"
+    for i in range(len(titles)):
+        num_outputs = len(net_info)
+        ydata = []
+        xdata = []
+        for j in range(num_outputs):
+            ydata.append(net_info[j,i])
+            xdata.append(net_info[j,1])
+        x_ticks = []
+        max_net_size = max(xdata)
+        for j in range(0,11):
+            x_ticks.append((max_net_size/10)*j)
+        plt.plot(xdata, ydata)
+        plt.ylabel(titles[i] + " of most fit Individual")
+        plt.title(titles[i])
+        if (use_lims==True): plt.ylim(mins[i], maxs[i])
+        plt.xlabel("Net Size")
+        plt.xticks(x_ticks, x_ticks)
+        plt.savefig(img_dirr + str(titles[i]))
+        plt.clf()
+    return
 
 
-        return
+def degree_distrib_change(dirr):
+    deg_file_name = dirr + "/degree_change.csv"
+
+    if not os.path.exists(dirr + "/degree_distribution_change/"):
+        os.makedirs(dirr + "/degree_distribution_change/")
+
+    all_lines = [Line.strip() for Line in (open(deg_file_name, 'r')).readlines()]
+    if (len(all_lines) != 3): print ("Degree_distrib_diff() ERROR: should only have 3 lines in csv, instead found " + str(len(all_lines)))
+    titles = all_lines[0]
+
+    # Get starting degree distribution
+    line = all_lines[1]
+    line = line.replace('[', '').replace(']', '').replace("\n", '')
+    line = line.split(',')
+    in_deg = line[0].split(" ")
+    in_deg_freq = line[1].split(" ")
+    out_deg = line[2].split(" ")
+    out_deg_freq = line[3].split(" ")
+
+    start_in_deg = list(filter(None, in_deg))
+    start_in_deg_freq = list(filter(None, in_deg_freq))
+    start_out_deg = list(filter(None, out_deg))
+    start_out_deg_freq = list(filter(None, out_deg_freq))
+
+    # Get ending degree distribution
+    line = all_lines[2]
+    line = line.replace('[', '').replace(']', '').replace("\n", '')
+    line = line.split(',')
+    in_deg = line[0].split(" ")
+    in_deg_freq = line[1].split(" ")
+    out_deg = line[2].split(" ")
+    out_deg_freq = line[3].split(" ")
+
+    end_in_deg = list(filter(None, in_deg))
+    end_in_deg_freq = list(filter(None, in_deg_freq))
+    end_out_deg = list(filter(None, out_deg))
+    end_out_deg_freq = list(filter(None, out_deg_freq))
+
+    # CHANGE IN IN-DEGREE
+    # plot start in degrees
+    plt.loglog(start_in_deg, start_in_deg_freq, basex=10, basey=10, linestyle='', color='cyan', alpha=0.7, markersize=7,
+               marker='o', markeredgecolor='cyan')
+
+    # plot end in degrees on same figure
+    plt.loglog(end_in_deg, end_in_deg_freq, basex=10, basey=10, linestyle='', color='green', alpha=0.7, markersize=7,
+               marker='D', markeredgecolor='green')
+
+    ax = matplotlib.pyplot.gca()
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    plt.tick_params(  # http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
+        axis='both',  # changes apply to the x-axis
+        which='both',  # both major and minor ticks are affected
+        right='off',  # ticks along the right edge are off
+        top='off',  # ticks along the top edge are off
+    )
+    in_patch = mpatches.Patch(color='cyan', label='In-degree at Start')
+    out_patch = mpatches.Patch(color='green', label='In-degree at End')
+    plt.legend(loc='upper right', handles=[in_patch, out_patch], frameon=False)
+    plt.xlabel('Degree (log) ')
+    plt.ylabel('Number of nodes with that degree (log)')
+    plt.title('Change in In Degree Distribution of Most Fit Net')
+    plt.xlim(1, 100)
+    plt.ylim(1, 10000)
+    plt.savefig(dirr + "/degree_distribution_change/in_degree_change.png", dpi=300)
+    plt.clf()
+
+
+    # CHANGE IN OUT DEGREES
+    plt.loglog(start_out_deg, start_out_deg_freq, basex=10, basey=10, linestyle='', color='cyan', alpha=0.7, markersize=7,
+               marker='o', markeredgecolor='cyan')
+    plt.loglog(end_out_deg, end_out_deg_freq, basex=10, basey=10, linestyle='', color='green', alpha=0.7, markersize=7,
+               marker='D', markeredgecolor='green')
+
+    ax = matplotlib.pyplot.gca()
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    plt.tick_params(  # http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
+        axis='both',  # changes apply to the x-axis
+        which='both',  # both major and minor ticks are affected
+        right='off',  # ticks along the right edge are off
+        top='off',  # ticks along the top edge are off
+    )
+    in_patch = mpatches.Patch(color='cyan', label='Out-degree at Start')
+    out_patch = mpatches.Patch(color='green', label='Out-degree at End')
+    plt.legend(loc='upper right', handles=[in_patch, out_patch], frameon=False)
+    plt.xlabel('Degree (log) ')
+    plt.ylabel('Number of nodes with that degree (log)')
+    plt.title('Change in In Degree Distribution of Most Fit Net')
+    plt.xlim(1, 100)
+    plt.ylim(1, 10000)
+    plt.savefig(dirr + "/degree_distribution_change/out_degree_change.png", dpi=300)
+    plt.clf()
+
 
 
 def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
@@ -123,14 +217,11 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
         xdata = []
         for j in range(num_outputs):
             ydata.append(net_info[j, i])
-            xdata.append(j)
-            # change x_ticks?
-            # x_ticks.append(int(g/output_freq))
-            # buffer_ticks.append(gi)
+            xdata.append(net_info[j, 0])
         x_ticks = []
-        max_net_size = net_info[num_outputs - 1, 0]
+        max_gen = xdata[-1]
         for j in range(0, 11):
-            x_ticks.append(int((num_outputs / 10) * j))
+            x_ticks.append(int((max_gen / 10) * j))
         plt.plot(xdata, ydata)
         plt.ylabel(titles[i] + " of most fit Individual")
         plt.title(titles[i])
@@ -139,7 +230,6 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
         plt.xticks(x_ticks, x_ticks)
         plt.savefig(img_dirr + str(titles[i]))
         plt.clf()
-
     return
 
 def solver_time(dirr):

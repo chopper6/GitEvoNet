@@ -130,6 +130,8 @@ def evolve_from_seed(configs):
     draw_freq =  float(configs['draw_frequency'])
     max_iters = float(configs['max_iterations'])
 
+    worker_survive_fraction = float(configs['worker_percent_survive'])/100
+
     init_type = int(configs['initial_net_type'])
     start_size = int(configs['starting_size'])
     end_size = int(configs['ending_size'])
@@ -143,7 +145,9 @@ def evolve_from_seed(configs):
 
     population = net_generator.init_population(init_type, start_size, pop_size)
     fitness.eval_fitness(population)
+    output.deg_change_csv(population, output_dir)
 
+    total_gens = 0
     size = start_size
     size_iters = 0
     while (size < end_size and size_iters < max_iters):
@@ -151,11 +155,13 @@ def evolve_from_seed(configs):
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive)
 
         if (size_iters % int(1 / output_freq) == 0):
-            output.to_csv(population, output_dir)
-            print("Master at gen " + str(size_iters) + ", with net size = " + str(size) + ", " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size) + ", with " + str(worker_pop_size) + " nets per worker.")
+            output.to_csv(population, output_dir, total_gens)
+            print("Master at gen " + str(size_iters) + ", with net size = " + str(size) + ", " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
+            worker_percent_survive = math.ceil(worker_survive_fraction * worker_pop_size)
+            print("Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".")
 
         if (size_iters % int(1 / draw_freq) == 0):
-            draw_nets.basic(population, output_dir, size_iters)
+            draw_nets.basic(population, output_dir, total_gens)
 
 
         #debug(population)
@@ -182,8 +188,11 @@ def evolve_from_seed(configs):
         population = parse_worker_popn(num_workers, output_dir, num_survive)
         size = len(population[0].net.nodes())
         size_iters += 1
+        total_gens += worker_gens
 
     output.to_csv(population, output_dir)
+    output.deg_change_csv(population, output_dir)
+    draw_nets.basic(population, output_dir, total_gens)
 
     print("Evolution finished, generating images.")
     plot_nets.single_run_plots(output_dir)
@@ -213,22 +222,18 @@ def parse_worker_popn (num_workers, output_dir, num_survive):
 
 def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_survive):
 
-    percent_size = float(size) / float(end_size)
+
     worker_pop_size = math.floor(end_size/size)
 
-    #if (worker_pop_size > 1): worker_pop_size = int(math.floor(worker_pop_size/2))  
-
     worker_gens = worker_pop_size
-    # ISLAND # math.ceil(10 * math.pow(math.e, -4 * percent_size))
+    # ISLAND #
+    # percent_size = float(size) / float(end_size)
+    # math.ceil(10 * math.pow(math.e, -4 * percent_size))
     pop_size = worker_pop_size * num_workers
     num_survive = int(pop_size * survive_fraction)
-    if (num_survive < 1):
-        num_survive = 1
-        print("WARNING evo_master(): num_survive goes below 1, set to 1 instead.")
+    if (num_survive < 1):  num_survive = 1
     if (num_survive > prev_num_survive):   num_survive = prev_num_survive
 
-    #TODO: more elegant vresion
-    #if (worker_gens > 1): worker_gens *= 2
 
     return worker_pop_size, pop_size, num_survive, worker_gens
 

@@ -8,9 +8,11 @@ import networkx as nx
 
 def init_csv(out_dir, configs):
  
-    csv_title = "Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio\n"
+    csv_title = "Generation, Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio\n"
     #csv_title = "Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Clustering Coefficient, # Triangle Communities\n"
-    deg_distrib_title = "Net Size, In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
+    deg_distrib_title = "Generation, Net Size, In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
+
+    deg_summary_title = "In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
 
     with open(out_dir+"info.csv",'w') as csv_out:
         csv_out.write(csv_title)
@@ -28,7 +30,36 @@ def init_csv(out_dir, configs):
         out_timing.write("Net Size, Presssurize Time\n")
 
 
-def to_csv(population, output_dir):
+    out_deg_summary = out_dir + "/degree_change.csv"
+    with open(out_deg_summary, 'w') as out_summary:
+        out_summary.write(deg_summary_title)
+
+
+def deg_change_csv(population, output_dir):
+    with open(output_dir + "/degree_change.csv", 'a') as deg_file:
+        # only distribution of most fit net
+        output = csv.writer(deg_file)
+        distrib_info = []
+
+        in_degrees, out_degrees = list(population[0].net.in_degree().values()), list(
+            population[0].net.out_degree().values())
+
+        indegs, indegs_freqs = np.unique(in_degrees, return_counts=True)
+        indegs = np.array2string(indegs).replace('\n', '')
+        indegs_freqs = np.array2string(indegs_freqs).replace('\n', '')
+        distrib_info.append(indegs)
+        distrib_info.append(indegs_freqs)
+
+        outdegs, outdegs_freqs = np.unique(out_degrees, return_counts=True)
+        outdegs = np.array2string(outdegs).replace('\n', '')
+        outdegs_freqs = np.array2string(outdegs_freqs).replace('\n', '')
+        distrib_info.append(outdegs)
+        distrib_info.append(outdegs_freqs)
+
+        output.writerow(distrib_info)
+
+
+def to_csv(population, output_dir, gen):
 
     if (population[0].net.edges()):
         output_csv = output_dir + "/info.csv"
@@ -40,6 +71,7 @@ def to_csv(population, output_dir):
             for p in range(1):
                 net = population[p].net
                 net_info = []
+                net_info.append(gen)
                 net_info.append(len(net.nodes()))
                 #net_info.append(population[p].id)
                 net_info.append(population[p].fitness)
@@ -65,6 +97,7 @@ def to_csv(population, output_dir):
                 output = csv.writer(deg_file)
 
                 distrib_info = []
+                distrib_info.append(gen)
                 distrib_info.append(len(population[0].net.nodes()))
 
                 in_degrees, out_degrees = list(population[0].net.in_degree().values()), list(population[0].net.out_degree().values())
