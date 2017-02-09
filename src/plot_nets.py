@@ -191,6 +191,6 @@ def parse_info(dirr):
 
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/directed_leaf/RGAR3.5med"
+    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/size100_leaf/ratio_btmsq_fast"
 
     single_run_plots(dirr)

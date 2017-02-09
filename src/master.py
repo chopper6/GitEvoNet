@@ -47,7 +47,7 @@ def scramble_and_evolve(configs):
     #CONFIGS
     num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/",'')  # no idea where this is coming from
-    survive_percent = int(configs['percent_survive'])
+    survive_percent = float(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
     output_freq = float(configs['output_frequency'])
     max_iters = float(configs['max_iterations'])
@@ -124,7 +124,7 @@ def evolve_from_seed(configs):
     # get configs
     num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/",'')  # no idea where this is coming from
-    survive_percent = int(configs['percent_survive'])
+    survive_percent = float(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
     output_freq = float(configs['output_frequency'])
     draw_freq =  float(configs['draw_frequency'])
@@ -136,6 +136,7 @@ def evolve_from_seed(configs):
 
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
+    draw_nets.init(output_dir)
 
     worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, 10000000)
     print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
@@ -227,7 +228,7 @@ def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_surv
     if (num_survive > prev_num_survive):   num_survive = prev_num_survive
 
     #TODO: more elegant vresion
-    if (worker_gens > 1): worker_gens *= 2
+    #if (worker_gens > 1): worker_gens *= 2
 
     return worker_pop_size, pop_size, num_survive, worker_gens
 
