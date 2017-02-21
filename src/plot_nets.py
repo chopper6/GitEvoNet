@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import matplotlib, os, csv
+import matplotlib, os, csv, sys
 matplotlib.use('Agg') # This must be done before importing matplotlib.pyplot
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -77,7 +77,7 @@ def degree_distrib(dirr):
             plt.legend(loc='upper right', handles=[in_patch, out_patch], frameon=False)
             plt.xlabel('Degree (log) ')
             plt.ylabel('Number of nodes with that degree (log)')
-            plt.title('Degree Distribution (network size = ' + str(line[0]) + ' nodes, generation = ' + str(gen) + ') of Most Fit Net')
+            plt.title('Degree Distribution of Most Fit Net at Generation ' + str(gen))
             plt.xlim(1,100)
             plt.ylim(1,10000)
             plt.savefig(dirr + "/degree_distribution/" + str(gen) + ".png", dpi=300)
@@ -118,7 +118,9 @@ def degree_distrib_change(dirr):
         os.makedirs(dirr + "/degree_distribution_change/")
 
     all_lines = [Line.strip() for Line in (open(deg_file_name, 'r')).readlines()]
-    if (len(all_lines) != 3): print ("Degree_distrib_diff() ERROR: should only have 3 lines in csv, instead found " + str(len(all_lines)))
+    if (len(all_lines) != 3): 
+        print ("WARNING: Degree_distrib_diff(): should only have 3 lines in csv, instead found " + str(len(all_lines)) + ", returning without plotting degree change.")
+        return
     titles = all_lines[0]
 
     # Get starting degree distribution
@@ -156,7 +158,7 @@ def degree_distrib_change(dirr):
 
     # plot end in degrees on same figure
     plt.loglog(end_in_deg, end_in_deg_freq, basex=10, basey=10, linestyle='', color='green', alpha=0.7, markersize=7,
-               marker='D', markeredgecolor='green')
+               marker='o', markeredgecolor='green')
 
     ax = matplotlib.pyplot.gca()
     ax.spines["top"].set_visible(False)
@@ -182,7 +184,7 @@ def degree_distrib_change(dirr):
 
     # CHANGE IN OUT DEGREES
     plt.loglog(start_out_deg, start_out_deg_freq, basex=10, basey=10, linestyle='', color='cyan', alpha=0.7, markersize=7,
-               marker='o', markeredgecolor='cyan')
+               marker='D', markeredgecolor='cyan')
     plt.loglog(end_out_deg, end_out_deg_freq, basex=10, basey=10, linestyle='', color='green', alpha=0.7, markersize=7,
                marker='D', markeredgecolor='green')
 
@@ -201,7 +203,7 @@ def degree_distrib_change(dirr):
     plt.legend(loc='upper right', handles=[in_patch, out_patch], frameon=False)
     plt.xlabel('Degree (log) ')
     plt.ylabel('Number of nodes with that degree (log)')
-    plt.title('Change in In Degree Distribution of Most Fit Net')
+    plt.title('Change in Out Degree Distribution of Most Fit Net')
     plt.xlim(1, 100)
     plt.ylim(1, 10000)
     plt.savefig(dirr + "/degree_distribution_change/out_degree_change.png", dpi=300)
@@ -226,7 +228,7 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
         plt.ylabel(titles[i] + " of most fit Individual")
         plt.title(titles[i])
         if (use_lims == True): plt.ylim(mins[i], maxs[i])
-        plt.xlabel("Master Generation")
+        plt.xlabel("Generation")
         plt.xticks(x_ticks, x_ticks)
         plt.savefig(img_dirr + str(titles[i]))
         plt.clf()
@@ -281,6 +283,13 @@ def parse_info(dirr):
 
 
 if __name__ == "__main__":
-    dirr = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/size100_leaf/ratio_btmsq_fast"
+    #first bash arg should be parent directory, then each child directory
+    dirr_base = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
+    dirr_parent = sys.argv[1]
+    dirr_base += dirr_parent
 
-    single_run_plots(dirr)
+    for arg in sys.argv[2:]:
+        print("Plotting dirr " + str(arg))
+        dirr_addon = arg
+        dirr= dirr_base + dirr_addon
+        single_run_plots(dirr)

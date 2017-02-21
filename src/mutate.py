@@ -3,7 +3,7 @@ import random as rd
 import networkx as nx
 # from random import SystemRandom as rd
 
-def mutate(configs, net):
+def mutate(configs, net, gen_percent):
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
 
     add_freq = float(configs['add_edge_mutation_frequency'])
@@ -14,11 +14,12 @@ def mutate(configs, net):
     grow_freq = float(configs['grow_mutation_frequency'])
     shrink_freq = float(configs['shrink_mutation_frequency'])
 
+    mutn_type = str(configs['mutation_type'])
     # --------- MUTATIONS ------------- #
 
     # GROW (ADD NODE)
     # starts unconnected
-    num_grow = num_mutations(grow_freq)
+    num_grow = num_mutations(grow_freq, mutn_type, gen_percent)
     for i in range(num_grow):
         pre_size = post_size = len(net.nodes())
         while (pre_size == post_size):
@@ -27,7 +28,7 @@ def mutate(configs, net):
             post_size = len(net.nodes())
 
     # SHRINK (REMOVE NODE)
-    num_shrink = num_mutations(shrink_freq)
+    num_shrink = num_mutations(shrink_freq, mutn_type, gen_percent)
     pre_size = len(net.nodes())
     for i in range(num_shrink):
         node = rd.sample(net.nodes(), 1)
@@ -37,7 +38,7 @@ def mutate(configs, net):
         if (pre_size == post_size): print("MUTATE SHRINK() ERR: node not removed.")
 
     # ADD EDGE
-    num_add = num_mutations(add_freq)
+    num_add = num_mutations(add_freq, mutn_type, gen_percent)
     for i in range(num_add):
         pre_size = post_size = len(net.edges())
         while (pre_size == post_size):  # ensure that net adds
@@ -57,7 +58,7 @@ def mutate(configs, net):
                 post_size = len(net.edges())
 
     # REMOVE EDGE
-    num_rm = num_mutations(rm_freq)
+    num_rm = num_mutations(rm_freq, mutn_type, gen_percent)
     for i in range(num_rm):
         pre_size = post_size = len(net.edges())
         count = 0
@@ -75,16 +76,13 @@ def mutate(configs, net):
                 if (post_size==pre_size): print("WARNING: mutate remove edge failed, trying again.")
 
     # REWIRE EDGE
-    num_rewire = num_mutations(rewire_freq)
+    num_rewire = num_mutations(rewire_freq, mutn_type, gen_percent)
     for i in range(num_rewire):
         pre_edges = len(net.edges())
         rewire_success = False
         while (rewire_success==False):  # ensure sucessful rewire
-            node = rd.sample(net.nodes(),1)  #by node
-            node = node[0]
-            edges = net.out_edges(node)+net.in_edges(node)
-            if (len(edges) > 0):
-                edge = rd.sample(edges, 1)
+                #edge = rd.sample(edges, 1)
+                edge = rd.sample(net.edges(), 1)
                 edge = edge[0]
                 sign = net[edge[0]][edge[1]]['sign']
 
@@ -97,8 +95,9 @@ def mutate(configs, net):
                         node2 = rd.sample(net.nodes(), 1)
                         node2 = node2[0]
 
-                    if (rd.random() < .5): net.add_edge(node, node2, sign=sign) #possible reverse
-                    else: net.add_edge(node2, node, sign=sign)
+                    net.add_edge(node, node2, sign=sign)
+                    #if (rd.random() < .5): net.add_edge(node, node2, sign=sign) #possible reverse
+                    #else: net.add_edge(node2, node, sign=sign)
                     post_edges = len(net.edges())
                     if (post_edges > pre_edges): #check that edge successfully added
                         net.remove_edge(edge[0], edge[1])
@@ -111,7 +110,7 @@ def mutate(configs, net):
                             return
 
     # REVERSE EDGE DIRECTION
-    num_reverse = num_mutations(reverse_freq)
+    num_reverse = num_mutations(reverse_freq, mutn_type, gen_percent)
     for i in range(num_reverse):
         pre_edges = post_edges = len(net.edges())
         post_edges = pre_edges + 1
@@ -135,24 +134,29 @@ def mutate(configs, net):
                         net.add_edge(edge[0], edge[1], sign=sign)  # reverse failed, undo rm'd edge
 
     # CHANGE EDGE SIGN
-    num_sign = num_mutations(sign_freq)
+    num_sign = num_mutations(sign_freq, mutn_type, gen_percent)
     for i in range(num_sign):
         pre_edges = len(net.edges())
         post_edges = pre_edges + 1
         while (pre_edges != post_edges):
             node = rd.sample(net.nodes(), 1)  # mutation by node
             node = node[0]
-            edges = net.out_edges(node)
+            #edges = net.out_edges(node)
+            edges = net.edges()
             if (len(edges) > 0):
-                edge = rd.sample(net.edges(node), 1)
+                edge = rd.sample(net.edges(), 1)
                 edge = edge[0]
 
                 net[edge[0]][edge[1]]['sign'] = -1 * net[edge[0]][edge[1]]['sign']
                 post_edges = len(net.edges())
 
 
-def num_mutations(mutn_freq):
+def num_mutations(base_mutn_freq, mutn_type, gen_percent):
     # note: mutation should be < 1 OR, if > 1, an INT
+    if (mutn_type == 'static' or base_mutn_freq == 0):  mutn_freq = base_mutn_freq
+    elif (mutn_type == 'dynamic'): mutn_freq = math.ceil(base_mutn_freq - base_mutn_freq*gen_percent)
+    else: print("ERROR in mutation(): unknwon mutation type.")
+
     if (mutn_freq < 1):
         if (rd.random() < mutn_freq):
             return 1

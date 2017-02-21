@@ -128,7 +128,7 @@ def evolve_from_seed(configs):
     survive_fraction = float(survive_percent) / 100
     output_freq = float(configs['output_frequency'])
     draw_freq =  float(configs['draw_frequency'])
-    max_iters = float(configs['max_iterations'])
+    max_gen = float(configs['max_generations'])
 
     worker_survive_fraction = float(configs['worker_percent_survive'])/100
 
@@ -156,15 +156,15 @@ def evolve_from_seed(configs):
     total_gens = 0
     size = start_size
     size_iters = 0
-    while (size < end_size and size_iters < max_iters):
+    while (size < end_size and total_gens < max_gen):
 
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive)
 
         if (size_iters % int(1 / output_freq) == 0):
             output.to_csv(population, output_dir, total_gens)
-            print("Master at gen " + str(size_iters) + ", with net size = " + str(size) + ", " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
+            print("Master at gen " + str(total_gens) + ", with net size = " + str(size) + ", " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
             worker_percent_survive = math.ceil(worker_survive_fraction * worker_pop_size)
-            print("Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".")
+            print("Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
 
         if (size_iters % int(1 / draw_freq) == 0):
             draw_nets.basic(population, output_dir, total_gens)
@@ -179,7 +179,7 @@ def evolve_from_seed(configs):
             seed = population[w % num_survive].copy()
             randSeeds = os.urandom(sysRand().randint(0,1000000))
             assert(seed != population[w % num_survive])
-            worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, configs]
+            worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, total_gens, configs]
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
             pool.map_async(minion.evolve_minion, (dump_file,))
@@ -196,7 +196,7 @@ def evolve_from_seed(configs):
         size_iters += 1
         total_gens += worker_gens
 
-    output.to_csv(population, output_dir)
+    output.to_csv(population, output_dir, total_gens)
     output.deg_change_csv(population, output_dir)
     draw_nets.basic(population, output_dir, total_gens)
 

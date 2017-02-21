@@ -7,14 +7,14 @@ import random
 
 def evolve_minion(worker_file):
     with open(str(worker_file), 'rb') as file:
-        worker_ID, seed, worker_gens, pop_size, num_return, randSeed, configs = pickle.load(file)
+        worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, configs = pickle.load(file)
         file.close()
 
     survive_fraction = float(configs['worker_percent_survive'])/100
     num_survive = math.ceil(survive_fraction * pop_size)
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
     output_dir += str(worker_ID)
-
+    max_gen = int(configs['max_generations'])
 
     random.seed(randSeed)
     population = gen_population_from_seed(seed, pop_size)
@@ -23,6 +23,7 @@ def evolve_minion(worker_file):
     mutate_time = 0
 
     for g in range(worker_gens):
+        gen_percent = float(curr_gen/max_gen)
         if (g != 0):
             for p in range(num_survive,pop_size):
                 population[p] = population[p%num_survive].copy()
@@ -31,7 +32,7 @@ def evolve_minion(worker_file):
 
         for p in range(pop_size):
             t0 = ptime()
-            mutate.mutate(configs, population[p].net)
+            mutate.mutate(configs, population[p].net, gen_percent)
             t1 = ptime()
             mutate_time += t1-t0
           
@@ -45,6 +46,7 @@ def evolve_minion(worker_file):
         population = fitness.eval_fitness(old_popn)
         del old_popn
         #debug(population,worker_ID)
+        curr_gen += 1
 
     write_out_worker(worker_file, population, num_return)
     
