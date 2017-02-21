@@ -81,33 +81,29 @@ def mutate(configs, net, gen_percent):
         pre_edges = len(net.edges())
         rewire_success = False
         while (rewire_success==False):  # ensure sucessful rewire
-                #edge = rd.sample(edges, 1)
-                edge = rd.sample(net.edges(), 1)
-                edge = edge[0]
-                sign = net[edge[0]][edge[1]]['sign']
+            edge = rd.sample(net.edges(), 1)
+            edge = edge[0]
+            #sign = net[edge[0]][edge[1]]['sign']
 
-                count = 0
-                node_success = False
-                while (node_success==False and count < 10000): #try repeatedly from same starting node
-                    count += 1
-                    node2 = node
-                    while (node2 == node):
-                        node2 = rd.sample(net.nodes(), 1)
-                        node2 = node2[0]
+            node = rd.sample(net.nodes(), 1)
+            node = node[0]
+            node2 = node
+            while (node2 == node):
+                node2 = rd.sample(net.nodes(), 1)
+                node2 = node2[0]
+            sign = rd.randint(0, 1)
+            if (sign == 0):     sign = -1
 
-                    net.add_edge(node, node2, sign=sign)
-                    #if (rd.random() < .5): net.add_edge(node, node2, sign=sign) #possible reverse
-                    #else: net.add_edge(node2, node, sign=sign)
-                    post_edges = len(net.edges())
-                    if (post_edges > pre_edges): #check that edge successfully added
-                        net.remove_edge(edge[0], edge[1])
-                        post_edges = len(net.edges())
-                        if (post_edges==pre_edges): #check that edge successfully removed
-                            node_success = True
-                            rewire_success = True
-                        else:
-                            print("ERROR IN REWIRE: num edges not kept constant")
-                            return
+            net.add_edge(node, node2, sign=sign)
+            post_edges = len(net.edges())
+            if (post_edges > pre_edges): #check that edge successfully added
+                net.remove_edge(edge[0], edge[1])
+                post_edges = len(net.edges())
+                if (post_edges==pre_edges): #check that edge successfully removed
+                    rewire_success = True
+                else:
+                    print("ERROR IN REWIRE: num edges not kept constant")
+                    return
 
     # REVERSE EDGE DIRECTION
     num_reverse = num_mutations(reverse_freq, mutn_type, gen_percent)
@@ -153,11 +149,16 @@ def mutate(configs, net, gen_percent):
 
 def num_mutations(base_mutn_freq, mutn_type, gen_percent):
     # note: mutation should be < 1 OR, if > 1, an INT
-    if (mutn_type == 'static' or base_mutn_freq == 0):  mutn_freq = base_mutn_freq
-    elif (mutn_type == 'dynamic'): mutn_freq = math.ceil(base_mutn_freq - base_mutn_freq*gen_percent)
-    else: print("ERROR in mutation(): unknwon mutation type.")
+    mutn_freq=0
 
-    if (mutn_freq < 1):
+    if (mutn_type == 'static' or base_mutn_freq == 0):  mutn_freq = base_mutn_freq
+    elif (mutn_type == 'dynamic'):
+        mutn_freq = math.ceil(base_mutn_freq - base_mutn_freq*gen_percent)
+        if (mutn_freq<=0): print("WARNING in mutate.num_mutations(): dynamic mutation yield 0 freq.")
+    else: print("ERROR in mutation(): unknown mutation type.")
+
+    if (mutn_freq == 0): return 0
+    elif (mutn_freq < 1):
         if (rd.random() < mutn_freq):
             return 1
         else:
