@@ -94,7 +94,8 @@ def mutate(configs, net, gen_percent):
             sign = rd.randint(0, 1)
             if (sign == 0):     sign = -1
 
-            net.add_edge(node, node2, sign=sign)
+            if (rd.random() < .5): net.add_edge(node, node2, sign=sign)
+            else: net.add_edge(node2, node, sign=sign)
             post_edges = len(net.edges())
             if (post_edges > pre_edges): #check that edge successfully added
                 net.remove_edge(edge[0], edge[1])
