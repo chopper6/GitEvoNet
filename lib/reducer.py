@@ -8,9 +8,11 @@ def reverse_reduction(M, sample_size, T_percentage, advice_sampling_threshold, a
         yield [{},{},0]
     else:      
         for i in range(advice_sampling_threshold):
-            yield [
-                    BDT_calculator_node_both   (M, util.advice_nodes (M, util.sample_p_elements(M.nodes(),sample_size), biased), T_percentage)
-                  ]    
+            if (BD_criteria == 'both'): yield [ BDT_calculator_node_both   (M, util.advice_nodes (M, util.sample_p_elements(M.nodes(),sample_size), biased), T_percentage) ]    
+            elif (BD_criteria == 'source'): yield [ BDT_calculator_node_source   (M, util.advice_nodes (M, util.sample_p_elements(M.nodes(),sample_size), biased), T_percentage) ]
+            elif (BD_criteria == 'target'): yield [ BDT_calculator_node_target   (M, util.advice_nodes (M, util.sample_p_elements(M.nodes(),sample_size), biased), T_percentage) ]
+            else: print("ERROR in reverse(): unknown BD_criteria type: " + str(BD_criteria))
+
 #--------------------------------------------------------------------------------------------------                
 def BDT_calculator_node_both (M, Advice, T_percentage):
     BENEFITS, DAMAGES = {}, {}
