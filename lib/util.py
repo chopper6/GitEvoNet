@@ -18,20 +18,25 @@ def sample_p_elements (elements,p):
     return  random.sample(elements,p)
     #return  random.SystemRandom().sample(elements,p) 
 #--------------------------------------------------------------------------------------------------
-def advice_nodes (M, sample_nodes, biased):
+def advice (M, samples, biased, advice_upon):
     advice = {}
     if not biased:
-        for node in sample_nodes: 
-            advice[node]=flip()
+        for element in samples:
+            advice[element]=flip()
     else:
-        for node in sample_nodes:
-            biased_center       = 0.5 + M.node[node]['conservation_score']
+        for element in samples:
+            if (advice_upon=='nodes'):  biased_center = 0.5 + M.node[element]['conservation_score']
+            elif (advice_upon == 'edges'):  biased_center = 0.5 + M.edge[element]['conservation_score']
+            else:
+                print("ERROR util.advice(): unknown advice_upon: " + str(advice_upon))
+                return
+
             rand                = random.uniform(0,1)
             #rand                = random.SystemRandom().uniform(0,1)
             if rand <= biased_center:
-                advice[node] = 1    #should be promoted (regulation) or conserved (evolution)
+                advice[element] = 1    #should be promoted (regulation) or conserved (evolution)
             else:
-                advice[node] = -1   #should be inhibited (regulation) or deleted (evolution)
+                advice[element] = -1   #should be inhibited (regulation) or deleted (evolution)
     
     return advice
 #--------------------------------------------------------------------------------------------------
