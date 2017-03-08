@@ -112,9 +112,14 @@ def mutate(configs, net, gen_percent):
         pre_edges = post_edges = len(net.edges())
         post_edges = pre_edges + 1
         while (pre_edges != post_edges):
+            edge = rd.sample(net.edges(),1)
+            edge = edge[0]
+
+            '''
             node = rd.sample(net.nodes(),1)  #by node
             node = node[0]
             edges = net.out_edges(node)
+            '''
             count = 0
             if (len(edges) > 0):
                 post_edges = pre_edges + 1

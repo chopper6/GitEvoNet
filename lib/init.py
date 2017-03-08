@@ -48,7 +48,8 @@ def load_simulation_configs (param_file, rank):
     configs['sampling_rounds_nX']  = configs['sampling_rounds']
     configs['sampling_rounds']     = int(''.join([d for d in configs['sampling_rounds'] if d.isdigit()]))
     configs['sampling_rounds_max'] = int (configs['sampling_rounds_max'])      
-    configs['output_directory']    = util.slash (util.slash (configs['output_directory']) +configs['stamp'])
+    configs ['output_directory'] += "/"
+    #configs['output_directory']    = util.slash (util.slash (configs['output_directory']) +configs['stamp'])#
     configs['stats_dir']           = configs['output_directory']+"00_network_stats/" 
     configs['datapoints_dir']      = configs['output_directory']+"02_raw_instances_simulation/data_points/"
     configs['params_save_dir']     = configs['output_directory']+"02_raw_instances_simulation/parameters/"

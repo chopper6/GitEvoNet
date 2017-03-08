@@ -24,7 +24,7 @@ def evolve_master(configs):
 def evolve_from_seed(configs):
     # get configs
     num_workers = int(configs['number_of_workers'])
-    output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/",'')  # no idea where this is coming from
+    output_dir = configs['output_directory']
     survive_percent = float(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
     output_freq = float(configs['output_frequency'])
@@ -33,7 +33,7 @@ def evolve_from_seed(configs):
 
     worker_survive_fraction = float(configs['worker_percent_survive'])/100
 
-    init_type = int(configs['initial_net_type'])
+    init_type = str(configs['initial_net_type'])
     start_size = int(configs['starting_size'])
     end_size = int(configs['ending_size'])
 

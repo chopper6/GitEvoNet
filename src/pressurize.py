@@ -9,6 +9,8 @@ def pressurize(configs, net):
     sampling_rounds = int(configs['sampling_rounds'])
     max_sampling_rounds = int(configs['sampling_rounds_max'])
     knapsack_solver = cdll.LoadLibrary(configs['KP_solver_binary'])
+    num_samples_mult = int(configs['number_of_samples_multiplier'])
+    advice = configs['advice_upon']
 
     leaf_metric = str(configs['leaf_metric'])
     hub_metric = str(configs['hub_metric'])
@@ -17,7 +19,13 @@ def pressurize(configs, net):
     leaf_fitness, hub_fitness, solo_fitness = 0,0,0
 
     num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
-    pressure_relative = int(pressure * len(net.nodes()))
+    num_samples_relative *= num_samples_mult
+    if (advice=='nodes'): pressure_relative = int(pressure * len(net.nodes()))
+    elif (advice=='edges'): pressure_relative = int(pressure * len(net.edges()))
+    else: 
+        print("ERROR in pressurize(): unknown advice_upon: " + str(advice))
+        return
+
     kp_instances = reducer.reverse_reduction(net, pressure_relative, int(tolerance), num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
 
     for kp in kp_instances:

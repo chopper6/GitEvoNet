@@ -28,15 +28,19 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
             target = element
             sources = M.predecessors(target)
         elif (advice_upon=='edges'):
-            sources = [element[0]]
-            target = element[1]
-            print(" DEBUG in reducer.BDT_calc: edges = " + str(element) + ", sources = " + str(sources) + " and target = " + str(target))
+            element = element.replace('(','').replace(')','')
+            element = element.split(",")
+            sources = [int(element[0])]
+            target = int(element[1])
         else:
             print ("ERROR reducer: unknown advice_upon: " + str(advice_upon))
             return
 
         for source in sources:
-            if M[source][target]['sign']==Advice[target]:      #in agreement with the Oracle
+            if (advice_upon=='nodes'): advice = Advice[target]
+            elif (advice_upon=='edges'): advice = Advice["(" + str(source) + ", " + str(target) + ")"]
+
+            if M[source][target]['sign']==advice:      #in agreement with the Oracle
                 if (BD_criteria == 'both' or BD_criteria == 'source'):
                     ######### REWARDING the source node ###########
                     if source in BENEFITS.keys():

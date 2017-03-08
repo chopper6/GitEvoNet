@@ -8,7 +8,7 @@ def scramble_edges(net, percent):
 
     edge_list = net.edges()
     num_scramble = round(percent*len(edge_list))
-    print("perturb(): scrambling " + str(num_scramble) + " edges.")
+    #print("perturb(): scrambling " + str(num_scramble) + " edges.")
 
     signs = [] #could also include sign data in init edge_list but oh well
     for edge in edge_list[:num_scramble]:

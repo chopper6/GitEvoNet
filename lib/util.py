@@ -22,8 +22,11 @@ def advice (M, samples, biased, advice_upon):
     advice = {}
     if not biased:
         for element in samples:
-            advice[element]=flip()
-    else:
+            if (advice_upon=='nodes'): advice[element]=flip()
+            elif (advice_upon=='edges'): 
+                advice[str(element)] = flip()
+
+    else: #TODO match to unbiased above
         for element in samples:
             if (advice_upon=='nodes'):  biased_center = 0.5 + M.node[element]['conservation_score']
             elif (advice_upon == 'edges'):  biased_center = 0.5 + M.edge[element]['conservation_score']
@@ -33,10 +36,22 @@ def advice (M, samples, biased, advice_upon):
 
             rand                = random.uniform(0,1)
             #rand                = random.SystemRandom().uniform(0,1)
-            if rand <= biased_center:
-                advice[element] = 1    #should be promoted (regulation) or conserved (evolution)
-            else:
-                advice[element] = -1   #should be inhibited (regulation) or deleted (evolution)
+
+            if (advice_upon=='nodes'): 
+                if rand <= biased_center:            
+                    advice[element] = 1
+                else:
+                    advice[element] = -1
+
+            elif (advice_upon=='edges'):
+                if element[0] not in advice.keys():
+                    advice[element[0]] = {}
+                if rand <= biased_center:
+                    advice[element[0]][element[1]] = 1
+                else:
+                    advice[element[0]][element[1]] = -1
+
     
     return advice
 #--------------------------------------------------------------------------------------------------
+

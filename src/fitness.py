@@ -15,10 +15,13 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
 
     #LEAF MEASURES
     RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control = 0,0,0,0,0,0
+    max_sum, max_sum_sq, combo_sum, combo_sum_sq = 0,0,0,0
+    anti_corr1, anti_corr2, new_ratio, BDmult, new_ratio_sq = 0,0,0,0,0
 
     #HUB MEASURES
     ETB, ETBv2, ETBv2_insack, dist, dist_sq, effic, effic2 = 0,0,0,0,0,0,0
     all_ben = []
+    all_dmg = []
     soln_size = 1
     solver_time = 0
 
@@ -68,7 +71,18 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
             dist +=  abs(B-D)
             dist_sq += math.pow(B-D,2)
             all_ben.append(B)
+            all_dmg.append(D)
+            max_sum += max(B,D)
+            max_sum_sq += math.pow(max(B,D),2)
+            combo_sum += B+D
+            combo_sum_sq += math.pow(B+D, 2)
+            new_ratio += math.pow(B-D,2)/(1+math.pow(min(B,D),2))
+            new_ratio_sq += math.pow(max(B,D)/(1+min(B,D)),2)
+            BDmult += B*D
 
+        anti_corr1 = 1 - BDmult/(sum(all_ben)*sum(all_dmg))
+        anti_corr2 = (sum(all_ben)*sum(all_dmg))/BDmult
+ 
         max_ben = max(all_ben)
         num_genes = len(ALL_GENES)
         ETB = sum(set(soln_bens))
@@ -93,7 +107,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         ratio_btm_sq /= num_genes
         leaf_control /= num_genes
 
-        leaf_score = pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control)
+        leaf_score = pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, max_sum, max_sum_sq, combo_sum, combo_sum_sq, dist_sq, dist, anti_corr1, anti_corr2, new_ratio, new_ratio_sq)
         hub_score = pick_hub (hub_metric, ETB, ETBv2, ETBv2_insack, dist, dist_sq, effic, effic2, max_ben)
         fitness_score = operate_on_features (leaf_score, hub_score, fitness_operator)
 
@@ -105,13 +119,24 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
     return [RGAllR, ETB, fitness_score]
 
 
-def pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control):
+def pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, max_sum, max_sum_sq, combo_sum, combo_sum_sq, dist_sq, dist, anti_corr1, anti_corr2, new_ratio, new_ratio_sq):
     if (leaf_metric=='RGAR'): return RGAllR
     elif (leaf_metric=='ratio'): return ratio
     elif (leaf_metric == 'one sided ratio'): return ratio_onesided
     elif (leaf_metric == 'ratio sq'): return ratio_sq
     elif (leaf_metric == 'ratio btm sq'): return ratio_btm_sq
     elif (leaf_metric == 'control'): return leaf_control
+
+    #NEW
+    #TODO: change names, rm failures, catch if denom = 0
+    elif (leaf_metric == 'ratio 00'): return max_sum/math.pow(combo_sum_sq,.5)
+    elif (leaf_metric == 'ratio 01'): return max_sum_sq/math.pow(combo_sum,2)
+    elif (leaf_metric == 'ratio 10'): return dist/math.pow(combo_sum_sq,.5)
+    elif (leaf_metric == 'ratio 11'): return dist_sq/math.pow(combo_sum,2)
+    elif (leaf_metric == 'new ratio'): return new_ratio
+    elif (leaf_metric == 'anti corr 1'): return anti_corr1
+    elif (leaf_metric == 'anti corr 2'): return anti_corr2
+    elif (leaf_metric == 'new ratio sq'): return new_ratio_sq
     else: print("ERROR in fitness.pick_leaf(): unknown leaf metric.")
 
 

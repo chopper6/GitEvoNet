@@ -10,13 +10,17 @@ import numpy as np
 def single_run_plots (dirr):
     #plots features_over_time and degree_distrib
     #only uses most fit indiv in population
+    if not os.path.exists(dirr):
+        print("ERROR plot_nets(): given directory not found: " + str(dirr))
+        return
+
+    net_info, titles = parse_info(dirr)
 
     if not os.path.exists(dirr + "/images_by_size/"):
         os.makedirs(dirr + "/images_by_size/")
     if not os.path.exists(dirr + "/images_by_time/"):
         os.makedirs(dirr + "/images_by_time/")
 
-    net_info, titles = parse_info(dirr)
 
     mins, maxs = 0,0
     features_over_size(dirr, net_info, titles, mins, maxs, False)
@@ -106,7 +110,7 @@ def features_over_size(dirr, net_info, titles, mins, maxs, use_lims):
         if (use_lims==True): plt.ylim(mins[i], maxs[i])
         plt.xlabel("Net Size")
         plt.xticks(x_ticks, x_ticks)
-        plt.savefig(img_dirr + str(titles[i]))
+        plt.savefig(img_dirr + str(titles[i]) + ".png")
         plt.clf()
     return
 
@@ -153,12 +157,10 @@ def degree_distrib_change(dirr):
 
     # CHANGE IN IN-DEGREE
     # plot start in degrees
-    plt.loglog(start_in_deg, start_in_deg_freq, basex=10, basey=10, linestyle='', color='cyan', alpha=0.7, markersize=7,
-               marker='o', markeredgecolor='cyan')
+    plt.loglog(start_in_deg, start_in_deg_freq, basex=10, basey=10, linestyle='', color='purple', alpha=0.7, markersize=7, marker='o', markeredgecolor='purple')
 
     # plot end in degrees on same figure
-    plt.loglog(end_in_deg, end_in_deg_freq, basex=10, basey=10, linestyle='', color='green', alpha=0.7, markersize=7,
-               marker='o', markeredgecolor='green')
+    plt.loglog(end_in_deg, end_in_deg_freq, basex=10, basey=10, linestyle='', color='green', alpha=0.7, markersize=7, marker='o', markeredgecolor='green')
 
     ax = matplotlib.pyplot.gca()
     ax.spines["top"].set_visible(False)
@@ -170,7 +172,7 @@ def degree_distrib_change(dirr):
         right='off',  # ticks along the right edge are off
         top='off',  # ticks along the top edge are off
     )
-    in_patch = mpatches.Patch(color='cyan', label='In-degree at Start')
+    in_patch = mpatches.Patch(color='purple', label='In-degree at Start')
     out_patch = mpatches.Patch(color='green', label='In-degree at End')
     plt.legend(loc='upper right', handles=[in_patch, out_patch], frameon=False)
     plt.xlabel('Degree (log) ')
@@ -183,10 +185,8 @@ def degree_distrib_change(dirr):
 
 
     # CHANGE IN OUT DEGREES
-    plt.loglog(start_out_deg, start_out_deg_freq, basex=10, basey=10, linestyle='', color='cyan', alpha=0.7, markersize=7,
-               marker='D', markeredgecolor='cyan')
-    plt.loglog(end_out_deg, end_out_deg_freq, basex=10, basey=10, linestyle='', color='green', alpha=0.7, markersize=7,
-               marker='D', markeredgecolor='green')
+    plt.loglog(start_out_deg, start_out_deg_freq, basex=10, basey=10, linestyle='', color='purple', alpha=0.7, markersize=7, marker='D', markeredgecolor='purple')
+    plt.loglog(end_out_deg, end_out_deg_freq, basex=10, basey=10, linestyle='', color='green', alpha=0.7, markersize=7, marker='D', markeredgecolor='green')
 
     ax = matplotlib.pyplot.gca()
     ax.spines["top"].set_visible(False)
@@ -198,7 +198,7 @@ def degree_distrib_change(dirr):
         right='off',  # ticks along the right edge are off
         top='off',  # ticks along the top edge are off
     )
-    in_patch = mpatches.Patch(color='cyan', label='Out-degree at Start')
+    in_patch = mpatches.Patch(color='purple', label='Out-degree at Start')
     out_patch = mpatches.Patch(color='green', label='Out-degree at End')
     plt.legend(loc='upper right', handles=[in_patch, out_patch], frameon=False)
     plt.xlabel('Degree (log) ')
@@ -230,7 +230,7 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
         if (use_lims == True): plt.ylim(mins[i], maxs[i])
         plt.xlabel("Generation")
         plt.xticks(x_ticks, x_ticks)
-        plt.savefig(img_dirr + str(titles[i]))
+        plt.savefig(img_dirr + str(titles[i]) + ".png")
         plt.clf()
     return
 
