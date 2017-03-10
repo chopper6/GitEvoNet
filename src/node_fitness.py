@@ -33,7 +33,7 @@ def read_in(file, net):
     if (os.path.exists(file)):
         all_lines = [Line.strip() for Line in (open(file,'r')).readlines()]
         for line in all_lines[1:]:
-            line.split(",")
+            line = line.split(",")
             if (len(line) != 4): print("ERROR in node_fitness: file should have 4 entries on each line: B,D,freq,fitness")
             line[-1].replace("\n",'')
             B = int(line[0])

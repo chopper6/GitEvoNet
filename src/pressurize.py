@@ -27,17 +27,22 @@ def pressurize(configs, net, track_node_fitness, node_fitness_file):
         return
 
     kp_instances = reducer.reverse_reduction(net, pressure_relative, int(tolerance), num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
-    if (track_node_fitness == True): node_fitness.write_out(node_fitness_file, None) #overwrite for clean file
+    if (track_node_fitness == True):
+        max_val = len(net.edges())
+        nodeFitness = [[[0, 0] for i in range(max_val)] for j in range(max_val)]
+    else: nodeFitness = None
 
     for kp in kp_instances:
         a_result = solver.solve_knapsack(kp, knapsack_solver)
         #various characteristics of a result
-        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness  = fitness.kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_fitness_file)
+        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness, nodeFitness  = fitness.kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_fitness_file, nodeFitness)
 
 
         leaf_fitness += inst_leaf_fitness
         hub_fitness += inst_hub_fitness
         solo_fitness += inst_solo_fitness
+
+    if (track_node_fitness == True): node_fitness.write_out(node_fitness_file, nodeFitness)
 
     leaf_fitness /= num_samples_relative
     hub_fitness /= num_samples_relative

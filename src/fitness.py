@@ -12,10 +12,7 @@ def eval_fitness(population):
     return population
 
 
-def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_fitness_file):
-
-    if (track_node_fitness == True):
-        node_fitness = node_fitness.read_in(node_fitness_file, net)
+def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_fitness_file, nodeFitness):
 
     #LEAF MEASURES
     RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control = 0,0,0,0,0,0
@@ -86,7 +83,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
             BDmult += B*D
             dual1 += math.pow(B - D, 2) / (B + D)
 
-            if (track_node_fitness==True): node_fitness.append_pair(node_fitness, B,D, leaf_metric, hub_metric, fitness_operator)
+            if (track_node_fitness==True): node_fitness.append_pair(nodeFitness, B,D, leaf_metric, hub_metric, fitness_operator)
 
         anti_corr1 = 1 - BDmult/(sum(all_ben)*sum(all_dmg))
         anti_corr2 = (sum(all_ben)*sum(all_dmg))/BDmult
@@ -123,8 +120,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         print("WARNING in pressurize: no results from oracle advice")
         fitness_score = 0
 
-    if (track_node_fitness == True): node_fitness.write_out(node_fitness_file, node_fitness)
-    return [RGAllR, ETB, fitness_score]
+    return [RGAllR, ETB, fitness_score, nodeFitness]
 
 
 def pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, max_sum, max_sum_sq, combo_sum, combo_sum_sq, dist_sq, dist, anti_corr1, anti_corr2, new_ratio, new_ratio_sq, dual1):

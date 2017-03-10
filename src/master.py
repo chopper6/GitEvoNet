@@ -53,7 +53,8 @@ def evolve_from_seed(configs):
     #init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
     #TODO: for final results, should NOT just use net0
     #instead pass to workers, but w/o any mutation and just for a single gen
-    pressure_results = pressurize.pressurize(configs, population[0].net, True) #True: track node fitness
+    fitness_file = output_dir + "/node_fitness.csv"
+    pressure_results = pressurize.pressurize(configs, population[0].net, True, fitness_file) #True: track node fitness
     population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
     fitness.eval_fitness([population[0]])
     output.deg_change_csv([population[0]], output_dir)
