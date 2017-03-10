@@ -79,8 +79,9 @@ def evolve_from_seed(configs):
             #if first gen, have already pressurized w/net[0]
             fitness_file = output_dir + "/node_fitness.csv"
             if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True, fitness_file)  # True: track node fitness
+            nodeFitness = pressure_results[3]
             plot_name = iter
-            plot_fitness.BD_freq_fitness(output_dir, fitness_file, population[0].net, plot_name)
+            plot_fitness.BD_freq_fitness(output_dir, nodeFitness, population[0].net, plot_name)
 
 
         #debug(population)

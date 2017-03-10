@@ -48,6 +48,6 @@ def pressurize(configs, net, track_node_fitness, node_fitness_file):
     hub_fitness /= num_samples_relative
     solo_fitness /= num_samples_relative
 
-    return [leaf_fitness, hub_fitness, solo_fitness]
+    return [leaf_fitness, hub_fitness, solo_fitness, nodeFitness]
 
 

@@ -4,9 +4,8 @@ import matplotlib.pyplot as plt
 import node_fitness
 
 #TODO: make this more efficient, poss rm some plots
-def BD_freq_fitness(output_dir, node_fitness_file, net, file_name):
+def BD_freq_fitness(output_dir, nodeFitness, net, file_name):
     # might want to normalize by # pressurize rounds
-    node_fitness = node_fitness.read_in(node_fitness_file, net)
 
     check_dirs(output_dir)
 
