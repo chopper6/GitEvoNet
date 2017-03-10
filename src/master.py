@@ -6,7 +6,7 @@ from operator import attrgetter
 from random import SystemRandom as sysRand
 from time import sleep
 import networkx as nx
-import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets
+import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, plot_fitness
 import init
 
 
@@ -27,17 +27,19 @@ def evolve_from_seed(configs):
     output_dir = configs['output_directory']
     survive_percent = float(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
-    output_freq = float(configs['output_frequency'])
-    draw_freq =  float(configs['draw_frequency'])
+    num_output = float(configs['num_output'])
+    num_draw =  float(configs['num_drawings'])
     max_gen = float(configs['max_generations'])
 
     worker_survive_fraction = float(configs['worker_percent_survive'])/100
-
     init_type = str(configs['initial_net_type'])
     start_size = int(configs['starting_size'])
     end_size = int(configs['ending_size'])
 
     draw_layout = str(configs['draw_layout'])
+    num_fitness_plots = int(configs['num_fitness_plots']) #ASSUMES != 0
+    if (num_fitness_plots > max_gen or num_output > max_gen or num_draw > max_gen):
+        print("WARNING master(): more output requested than generations.")
 
     init_dirs(num_workers, output_dir)
     output.init_csv(output_dir, configs)
@@ -51,26 +53,33 @@ def evolve_from_seed(configs):
     #init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
     #TODO: for final results, should NOT just use net0
     #instead pass to workers, but w/o any mutation and just for a single gen
-    pressure_results = pressurize.pressurize(configs, population[0].net)
+    pressure_results = pressurize.pressurize(configs, population[0].net, True) #True: track node fitness
     population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
     fitness.eval_fitness([population[0]])
     output.deg_change_csv([population[0]], output_dir)
 
     total_gens = 0
     size = start_size
-    size_iters = 0
+    iter = 0
     while (size < end_size and total_gens < max_gen):
 
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive)
 
-        if (size_iters % int(1 / output_freq) == 0):
+        if (iter % int(max_gen / num_output) == 0):
             output.to_csv(population, output_dir, total_gens)
             print("Master at gen " + str(total_gens) + ", with net size = " + str(size) + ", " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
             worker_percent_survive = math.ceil(worker_survive_fraction * worker_pop_size)
             print("Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
 
-        if (size_iters % int(1 / draw_freq) == 0):
+        if (iter % int(max_gen / num_draw) == 0 and num_draw != 0 ):
             draw_nets.basic(population, output_dir, total_gens, draw_layout)
+
+        if (iter % int(max_gen/num_fitness_plots) ==0):
+            #if first gen, have already pressurized w/net[0]
+            fitness_file = output_dir + "/node_fitness.csv"
+            if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True, fitness_file)  # True: track node fitness
+            plot_name = iter
+            plot_fitness.BD_freq_fitness(output_dir, fitness_file, population[0].net, plot_name)
 
 
         #debug(population)
@@ -96,7 +105,7 @@ def evolve_from_seed(configs):
         del population
         population = parse_worker_popn(num_workers, output_dir, num_survive)
         size = len(population[0].net.nodes())
-        size_iters += 1
+        iter += 1
         total_gens += worker_gens
 
     output.to_csv(population, output_dir, total_gens)

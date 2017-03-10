@@ -37,7 +37,7 @@ def evolve_minion(worker_file):
             mutate_time += t1-t0
           
             t0 = ptime()
-            pressure_results = pressurize.pressurize(configs, population[p].net)
+            pressure_results = pressurize.pressurize(configs, population[p].net, False, None) #false: don't track node fitness, None: don't need fitness file since don't track
             t1 = ptime()
             pressurize_time += t1-t0
             population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]

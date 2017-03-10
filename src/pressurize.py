@@ -1,8 +1,8 @@
 import math
-import reducer, solver, fitness
+import reducer, solver, fitness, node_fitness
 from ctypes import cdll
 
-def pressurize(configs, net):
+def pressurize(configs, net, track_node_fitness, node_fitness_file):
     # configs:
     pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
     tolerance = configs['PT_pairs_dict'][1][1]
@@ -27,11 +27,14 @@ def pressurize(configs, net):
         return
 
     kp_instances = reducer.reverse_reduction(net, pressure_relative, int(tolerance), num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
+    if (track_node_fitness == True): node_fitness.write_out(node_fitness_file, None) #overwrite for clean file
 
     for kp in kp_instances:
         a_result = solver.solve_knapsack(kp, knapsack_solver)
         #various characteristics of a result
-        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness  = fitness.kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net)
+        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness  = fitness.kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_fitness_file)
+
+
         leaf_fitness += inst_leaf_fitness
         hub_fitness += inst_hub_fitness
         solo_fitness += inst_solo_fitness

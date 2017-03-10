@@ -1,6 +1,7 @@
 import math, random
 from operator import attrgetter
 import networkx as nx
+import node_fitness
 
 def eval_fitness(population):
     #determines fitness of each individual and orders the population by fitness
@@ -11,7 +12,10 @@ def eval_fitness(population):
     return population
 
 
-def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net):
+def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_fitness_file):
+
+    if (track_node_fitness == True):
+        node_fitness = node_fitness.read_in(node_fitness_file, net)
 
     #LEAF MEASURES
     RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control = 0,0,0,0,0,0
@@ -80,7 +84,9 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
             new_ratio += math.pow(B-D,2)/(1+math.pow(min(B,D),2))
             new_ratio_sq += math.pow(max(B,D)/(1+min(B,D)),2)
             BDmult += B*D
-            dual1 += math.pow(B-D,2)/(B+D)
+            dual1 += math.pow(B - D, 2) / (B + D)
+
+            if (track_node_fitness==True): node_fitness.append_pair(node_fitness, B,D, leaf_metric, hub_metric, fitness_operator)
 
         anti_corr1 = 1 - BDmult/(sum(all_ben)*sum(all_dmg))
         anti_corr2 = (sum(all_ben)*sum(all_dmg))/BDmult
@@ -117,7 +123,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         print("WARNING in pressurize: no results from oracle advice")
         fitness_score = 0
 
-
+    if (track_node_fitness == True): node_fitness.write_out(node_fitness_file, node_fitness)
     return [RGAllR, ETB, fitness_score]
 
 
@@ -161,3 +167,4 @@ def operate_on_features (leaf_score, hub_score, fitness_operator):
     elif (fitness_operator=='multiply'): return leaf_score*hub_score
     elif (fitness_operator=='power'): return math.pow(hub_score,leaf_score)
     else: print("ERROR in fitness.operate_on_features(): unknown fitness operator.")
+

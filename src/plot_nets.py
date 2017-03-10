@@ -82,8 +82,8 @@ def degree_distrib(dirr):
             plt.xlabel('Degree (log) ')
             plt.ylabel('Number of nodes with that degree (log)')
             plt.title('Degree Distribution of Most Fit Net at Generation ' + str(gen))
-            plt.xlim(1,1000)
-            plt.ylim(1,1000)
+            plt.xlim(1,100)
+            plt.ylim(1,10000)
             plt.savefig(dirr + "/degree_distribution/" + str(gen) + ".png", dpi=300)
             plt.clf()
             img_index += 1
