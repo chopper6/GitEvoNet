@@ -23,7 +23,7 @@ def advice (M, samples, biased, advice_upon):
     if not biased:
         for element in samples:
             if (advice_upon=='nodes'): advice[element]=flip()
-            elif (advice_upon=='edges'): 
+            elif (advice_upon=='edges'):
                 advice[str(element)] = flip()
 
     else: #TODO match to unbiased above

@@ -28,7 +28,7 @@ def pressurize(configs, net, track_node_fitness, node_fitness_file):
 
     kp_instances = reducer.reverse_reduction(net, pressure_relative, int(tolerance), num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
     if (track_node_fitness == True):
-        max_val = len(net.edges())
+        max_val = 40 #len(net.edges())i TODO: systematically alter max_val
         nodeFitness = [[[0, 0] for i in range(max_val)] for j in range(max_val)]
     else: nodeFitness = None
 
@@ -42,11 +42,13 @@ def pressurize(configs, net, track_node_fitness, node_fitness_file):
         hub_fitness += inst_hub_fitness
         solo_fitness += inst_solo_fitness
 
-    if (track_node_fitness == True): node_fitness.write_out(node_fitness_file, nodeFitness)
+    #if (track_node_fitness == True): node_fitness.write_out(node_fitness_file, nodeFitness)
 
     leaf_fitness /= num_samples_relative
     hub_fitness /= num_samples_relative
     solo_fitness /= num_samples_relative
+
+    if (track_node_fitness == True): nodeFitness = node_fitness.normz(nodeFitness, num_samples_relative*len(net.nodes()))
 
     return [leaf_fitness, hub_fitness, solo_fitness, nodeFitness]
 

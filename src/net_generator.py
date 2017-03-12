@@ -1,6 +1,6 @@
 import networkx as nx
 from random import SystemRandom as sysRand
-import perturb
+import perturb, init
 
 # maybe rename to reduce confusion
 class Net:
@@ -20,7 +20,7 @@ class Net:
         return copy
 
 
-def init_population(init_type, start_size, pop_size):
+def init_population(init_type, start_size, pop_size, configs):
 
     if (init_type == 'shell'):
         population = [Net(nx.DiGraph(), i) for i in range(pop_size)] #change to generate, based on start_size
@@ -47,7 +47,7 @@ def init_population(init_type, start_size, pop_size):
 
 
     elif (init_type == 'scale-free'):  # curr does not work, since can't go to undirected for output
-        population = [Net(nx.scale_free_graph(start_size),i) for i in range(pop_size)]
+        population = [Net(nx.scale_free_graph(start_size, beta=.7, gamma=.15, alpha=.15),i) for i in range(pop_size)]
     elif (init_type == 'barabasi-albert 2'):
         population = [Net(nx.barabasi_albert_graph(start_size, 2),i) for i in range(pop_size)]
         custom_to_directed(population)
@@ -71,6 +71,8 @@ def init_population(init_type, start_size, pop_size):
         for p in population:
             perturb.scramble_edges(p.net, 1)
 
+    elif (init_type == "vinayagam"):
+        population = [Net(init.load_network(configs), i) for i in range(pop_size)]
 
     else:
         print("ERROR in master.gen_init_population(): unknown init_type.")

@@ -6,7 +6,7 @@ from operator import attrgetter
 from random import SystemRandom as sysRand
 from time import sleep
 import networkx as nx
-import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, plot_fitness
+import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, plot_fitness, node_fitness
 import init
 
 
@@ -48,7 +48,7 @@ def evolve_from_seed(configs):
     worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, 10000000)
     print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
 
-    population = net_generator.init_population(init_type, start_size, pop_size)
+    population = net_generator.init_population(init_type, start_size, pop_size, configs)
 
     #init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
     #TODO: for final results, should NOT just use net0
@@ -58,6 +58,8 @@ def evolve_from_seed(configs):
     population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
     fitness.eval_fitness([population[0]])
     output.deg_change_csv([population[0]], output_dir)
+    if not os.path.exists(output_dir + "/node_fitness/"):
+        os.makedirs(output_dir + "/node_fitness/")
 
     total_gens = 0
     size = start_size
@@ -80,6 +82,7 @@ def evolve_from_seed(configs):
             fitness_file = output_dir + "/node_fitness.csv"
             if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True, fitness_file)  # True: track node fitness
             nodeFitness = pressure_results[3]
+            node_fitness.write_out(output_dir + "/node_fitness/" + str(iter) + ".csv", nodeFitness)
             plot_name = iter
             plot_fitness.BD_freq_fitness(output_dir, nodeFitness, population[0].net, plot_name)
 
@@ -113,6 +116,14 @@ def evolve_from_seed(configs):
     output.to_csv(population, output_dir, total_gens)
     output.deg_change_csv(population, output_dir)
     draw_nets.basic(population, output_dir, total_gens, draw_layout)
+
+    fitness_file = output_dir + "/node_fitness/" + str(iter) + ".csv"
+    if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True, fitness_file)  # True: track node fitness
+    nodeFitness = pressure_results[3]
+    node_fitness.write_out(output_dir + "/nodefitness_" + str(iter) + ".csv", nodeFitness)
+    plot_name = iter
+    plot_fitness.BD_freq_fitness(output_dir, nodeFitness, population[0].net, plot_name)
+
 
     print("Evolution finished, generating images.")
     plot_nets.single_run_plots(output_dir)

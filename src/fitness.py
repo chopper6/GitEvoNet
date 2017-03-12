@@ -15,12 +15,12 @@ def eval_fitness(population):
 def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_fitness_file, nodeFitness):
 
     #LEAF MEASURES
-    RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control = 0,0,0,0,0,0
+    RGAllR, RGMG, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control = 0,0,0,0,0,0,0
     max_sum, max_sum_sq, combo_sum, combo_sum_sq = 0,0,0,0
     anti_corr1, anti_corr2, new_ratio, BDmult, new_ratio_sq = 0,0,0,0,0
 
     #HUB MEASURES
-    ETB, ETBv2, ETBv2_insack, dist, dist_sq, effic, effic2 = 0,0,0,0,0,0,0
+    ETB, ETBv2, ETBv2_insack, dist, dist_sq, effic, effic2, effic4 = 0,0,0,0,0,0,0,0
     dual1 = 0
     all_ben = []
     all_dmg = []
@@ -33,6 +33,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         # -------------------------------------------------------------------------------------------------
         soln_bens = []
         soln_bens_sq = []
+        soln_bens_4 = []
         soln_size = len(GENES_in)
         deg_dict, sack_dict = {},{}
 
@@ -40,7 +41,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
             B,D=g[1],g[2]
             soln_bens.append(B)
             soln_bens_sq.append(math.pow(B,2))
-
+            soln_bens_4.append(math.pow(B,4))
             deg = B+D #ASSUMES 100% PRESSURE
 
             if deg in sack_dict:
@@ -83,19 +84,21 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
             BDmult += B*D
             dual1 += math.pow(B - D, 2) / (B + D)
 
-            if (track_node_fitness==True): node_fitness.append_pair(nodeFitness, B,D, leaf_metric, hub_metric, fitness_operator)
+            if (track_node_fitness==True): nodeFitness = node_fitness.append_pair(nodeFitness, B,D, leaf_metric, hub_metric, fitness_operator)
+            #if (track_node_fitness == True): print(nodeFitness)
 
         anti_corr1 = 1 - BDmult/(sum(all_ben)*sum(all_dmg))
         anti_corr2 = (sum(all_ben)*sum(all_dmg))/BDmult
  
         max_ben = max(all_ben)
         num_genes = len(ALL_GENES)
-        ETB = sum(set(soln_bens))
+        ETB = sum(set(soln_bens))/sum(soln_bens)
         if (sum(soln_bens) != 0):
             effic = math.pow(sum(soln_bens_sq),.5)/sum(soln_bens)
             effic2 = sum(soln_bens_sq)/math.pow(sum(soln_bens),2)
+            effic4 = sum(soln_bens_4)/math.pow(sum(soln_bens),4)
         else:
-            effic = effic2 = 0
+            effic = effic2 = effic4 = 0
  
         for deg_set in deg_dict:
             ETBv2 += deg_dict[deg_set][1]/deg_dict[deg_set][0]
@@ -105,6 +108,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         #ETBv2 /= len(deg_dict) #is further normz nec?
 
         RGAllR = (num_green + num_red) / (num_green + num_red + num_grey)
+        RGMG = RGAllR - num_grey/(num_green+num_red+num_grey)
 
         ratio_onesided /= num_genes
         ratio /= num_genes
@@ -112,18 +116,19 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         ratio_btm_sq /= num_genes
         leaf_control /= num_genes
 
-        leaf_score = pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, max_sum, max_sum_sq, combo_sum, combo_sum_sq, dist_sq, dist, anti_corr1, anti_corr2, new_ratio, new_ratio_sq, dual1)
-        hub_score = pick_hub (hub_metric, ETB, ETBv2, ETBv2_insack, dist, dist_sq, effic, effic2, max_ben)
+        leaf_score = pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, max_sum, max_sum_sq, combo_sum, combo_sum_sq, dist_sq, dist, anti_corr1, anti_corr2, new_ratio, new_ratio_sq, dual1, RGMG)
+        hub_score = pick_hub (hub_metric, ETB, ETBv2, ETBv2_insack, dist, dist_sq, effic, effic2, effic4, max_ben)
         fitness_score = operate_on_features (leaf_score, hub_score, fitness_operator)
 
     else:
         print("WARNING in pressurize: no results from oracle advice")
         fitness_score = 0
 
+
     return [RGAllR, ETB, fitness_score, nodeFitness]
 
 
-def pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, max_sum, max_sum_sq, combo_sum, combo_sum_sq, dist_sq, dist, anti_corr1, anti_corr2, new_ratio, new_ratio_sq, dual1):
+def pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, max_sum, max_sum_sq, combo_sum, combo_sum_sq, dist_sq, dist, anti_corr1, anti_corr2, new_ratio, new_ratio_sq, dual1, RGMG):
     if (leaf_metric=='RGAR'): return RGAllR
     elif (leaf_metric=='ratio'): return ratio
     elif (leaf_metric == 'one sided ratio'): return ratio_onesided
@@ -142,17 +147,19 @@ def pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_s
     elif (leaf_metric == 'anti corr 2'): return anti_corr2
     elif (leaf_metric == 'new ratio sq'): return new_ratio_sq
     elif (leaf_metric == 'dual 1'): return dual1
+    elif (leaf_metric == 'RGMG'): return RGMG
     else: print("ERROR in fitness.pick_leaf(): unknown leaf metric.")
 
 
-def pick_hub (hub_metric, ETB, ETBv2, ETBv2_insack, dist, dist_sq, effic, effic2, max_ben):
+def pick_hub (hub_metric, ETB, ETBv2, ETBv2_insack, dist, dist_sq, effic, effic2, effic4, max_ben):
     if (hub_metric=='ETB'): return ETB
     elif (hub_metric=='ETBv2'): return ETBv2
     elif (hub_metric=='ETBv2 in solution'): return ETBv2_insack
     elif(hub_metric=='dist'): return dist
     elif(hub_metric=='dist sq'): return dist_sq
-    elif(hub_metric=='efficiency'): return effic
-    elif(hub_metric=='efficiency 2'): return effic2
+    elif(hub_metric=='effic'): return effic
+    elif(hub_metric=='effic 2'): return effic2
+    elif(hub_metric=='effic 4'): return effic4
     elif(hub_metric=='control'): return max_ben
     else: print("ERROR in fitness.pick_hub(): unknown hub metric.")
 

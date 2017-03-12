@@ -9,20 +9,24 @@ def BD_freq_fitness(output_dir, nodeFitness, net, file_name):
 
     check_dirs(output_dir)
 
-    size = len(node_fitness)
+    size = len(nodeFitness)
 
     fitness, freqFit, freq = [[0 for i in range(size)] for j in range(size)],[[0 for i in range(size)] for j in range(size)],[[0 for i in range(size)] for j in range(size)]
     log_fitness, log_freqFit, log_freq = [[0 for i in range(size)] for j in range(size)], [[0 for i in range(size)] for j in range(size)],[[0 for i in range(size)] for j in range(size)]
     for B in range(size):
         for D in range(size):
-            fitness[B][D] = node_fitness[B][D][1]
-            freq[B][D] = node_fitness[B][D][0]
-            freqFit[B][D] = node_fitness[B][D][0]*node_fitness[B][D][1]
+            fitness[B][D] = nodeFitness[B][D][1]
+            freq[B][D] = nodeFitness[B][D][0]
+            freqFit[B][D] = nodeFitness[B][D][0]*nodeFitness[B][D][1]
 
-            log_fitness[B][D] = math.log(node_fitness[B][D][1], 10)
-            log_freq[B][D] = math.log(node_fitness[B][D][0], 10)
-            log_freqFit[B][D] = math.log(node_fitness[B][D][0] * node_fitness[B][D][1], 10)
+            if (nodeFitness[B][D][1]==0): log_fitness[B][D]=0
+            else: log_fitness[B][D] = math.log(nodeFitness[B][D][1], 10)
 
+            if (nodeFitness[B][D][0]==0): log_freq[B][D]=0
+            else: log_freq[B][D] = math.log(nodeFitness[B][D][0], 10)
+
+            if (nodeFitness[B][D][0] * nodeFitness[B][D][1]==0): log_freqFit[B][D]=0
+            else: log_freqFit[B][D] = math.log(nodeFitness[B][D][0] * nodeFitness[B][D][1], 10)
     #fitness plot
     plt.matshow(fitness, cmap=plt.get_cmap('plasma'))
     plt.ylabel("Benefits")

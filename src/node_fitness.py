@@ -1,28 +1,32 @@
 import math, os, csv
 
-def append_pair (node_fitness, B, D, leaf_metric, hub_metric, fitness_operator):
+def append_pair (nodeFitness, B, D, leaf_metric, hub_metric, fitness_operator):
     # TODO: handle fitness in more elegant manner
     # TODO: currently assumes only leaf_metric as fitness
 
     # node_fitness[B][D] = freq, fitness
-    node_fitness[B][D][0] += 1
-    if (node_fitness[B][D][1] == 0): #ASSUMES matrix is init to 0
+    if (B >= len(nodeFitness) or D >= len(nodeFitness)): 
+        print("Warning node_fitness(): oversized node not included, B = " + str(B) + ", D = " + str(D))
+        return nodeFitness
+
+    nodeFitness[B][D][0] += 1
+    if (nodeFitness[B][D][1] == 0): #ASSUMES matrix is init to 0
         fitness = 0
-        if (leaf_metric == 'RGAR'):
+        if (leaf_metric == 'RGAR' or leaf_metric == 'RGMG'):
             if (B == 0 or D == 0): fitness = 1
             else: fitness = 0
         elif (leaf_metric == 'ratio'):
-            if (B+D > 0): fitness = B/(B+D)
+            if (B+D > 0): fitness = max(B,D)/(B+D)
         elif (leaf_metric == 'ratio sq'):
-            if (B+D>0): fitness = math.pow(B/(B+D), 2)
+            if (B+D>0): fitness = math.pow(max(B,D)/(B+D), 2)
         elif (leaf_metric == 'ratio btm sq'):
-            if (B+D>0): fitness = B/(math.pow(B+D, 2))
+            if (B+D>0): fitness = max(B,D)/(math.pow(B+D, 2))
         elif (leaf_metric == 'dual 1'):
-                return math.pow(B - D, 2) / (B + D)
+            if (B+D>0): fitness = math.pow(B - D, 2) / (B + D)
         else: print("ERROR in node_fitness: Unknown leaf_metric " + str(leaf_metric) + " , maybe add?")
+        nodeFitness[B][D][1] = fitness
 
-        node_fitness[B][D][1] = fitness
-
+    return nodeFitness
 
 def read_in(file, net):
     #TODO: curr assumes net does NOT change size and so initial matrix is sufficient size
@@ -55,3 +59,9 @@ def write_out(file, node_fitness):
             for D in range(len(node_fitness[B])):
                 output.writerow([B,D,node_fitness[B][D][0], node_fitness[B][D][1]])
 
+def normz(nodeFitness, fraction):
+    for B in range(len(nodeFitness)):
+        for D in range(len(nodeFitness[B])):
+            nodeFitness[B][D][0] /= fraction
+
+    return nodeFitness

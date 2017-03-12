@@ -8,7 +8,8 @@ import os
 def basic(population, dirr, iter, layout):
     #draws basic graph of most fit net
     #assumes already sorted by fitness
-
+    return
+    '''
     plt.figure(figsize= (16,16))
     net = population[0].net
     num_edges = len(net.edges())
@@ -43,9 +44,10 @@ def basic(population, dirr, iter, layout):
     plt.savefig(file_name)
     plt.clf()
     plt.close()
-
+    '''
 def init(dirr):
     #merge with output.init() call?
 
     if not os.path.exists(dirr + "/draw/"):
         os.makedirs(dirr + "/draw/")
+    
