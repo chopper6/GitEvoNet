@@ -1,67 +1,77 @@
-import math, os, csv
+import os, csv, math
+import numpy as np
 
-def append_pair (nodeFitness, B, D, leaf_metric, hub_metric, fitness_operator):
-    # TODO: handle fitness in more elegant manner
-    # TODO: currently assumes only leaf_metric as fitness
+def add_instance(node_info, node_info_instance):
+    node_features = {'freq', 'freq in solution', 'leaf', 'hub', 'fitness'}
+    for feature in node_features:
+        for B in range(len(node_info[feature])):
+            for D in range(len(node_info[feature])):
+                node_info[feature][B][D] += node_info_instance [feature][B][D]
 
-    # node_fitness[B][D] = freq, fitness
-    if (B >= len(nodeFitness) or D >= len(nodeFitness)): 
-        print("Warning node_fitness(): oversized node not included, B = " + str(B) + ", D = " + str(D))
-        return nodeFitness
+def gen_node_info(max_val):
+    # init node_info
+    node_features = {'freq', 'freq in solution', 'leaf', 'hub', 'fitness'}
+    node_info = [[[0 for i in range(max_val)] for j in range(max_val)] for k in node_features]
+    return node_info
 
-    nodeFitness[B][D][0] += 1
-    if (nodeFitness[B][D][1] == 0): #ASSUMES matrix is init to 0
-        fitness = 0
-        if (leaf_metric == 'RGAR' or leaf_metric == 'RGMG'):
-            if (B == 0 or D == 0): fitness = 1
-            else: fitness = 0
-        elif (leaf_metric == 'ratio'):
-            if (B+D > 0): fitness = max(B,D)/(B+D)
-        elif (leaf_metric == 'ratio sq'):
-            if (B+D>0): fitness = math.pow(max(B,D)/(B+D), 2)
-        elif (leaf_metric == 'ratio btm sq'):
-            if (B+D>0): fitness = max(B,D)/(math.pow(B+D, 2))
-        elif (leaf_metric == 'dual 1'):
-            if (B+D>0): fitness = math.pow(B - D, 2) / (B + D)
-        else: print("ERROR in node_fitness: Unknown leaf_metric " + str(leaf_metric) + " , maybe add?")
-        nodeFitness[B][D][1] = fitness
+def normz(node_info, fraction, feature):
+    for B in range(len(node_info)):
+        for D in range(len(node_info[B])):
+            node_info[B][D][feature] /= fraction
 
-    return nodeFitness
+    return node_info
 
-def read_in(file, net):
-    #TODO: curr assumes net does NOT change size and so initial matrix is sufficient size
 
-    max_val = len(net.edges())
-    node_fitness = [[[0, 0] for i in range(max_val)] for j in range(max_val)]
+def read_in(dirr):
 
-    if (os.path.exists(file)):
-        all_lines = [Line.strip() for Line in (open(file,'r')).readlines()]
-        for line in all_lines[1:]:
-            line = line.split(",")
-            if (len(line) != 4): print("ERROR in node_fitness: file should have 4 entries on each line: B,D,freq,fitness")
-            line[-1].replace("\n",'')
+    files = os.listdir(dirr)
+    num_in = len(files)
+    num_features, max_B, header = 0, 0, None
+
+    with open(files[0], 'r') as sample:
+        all_lines = [line.strip() for line in sample.readlines()]
+        header = all_lines[0][2:]
+        num_features = len(header)
+        max_B = math.pow(len(all_lines[1:]),.5)
+        assert(max_B%1==0) #ie is int
+        max_B = int(max_B)
+
+    node_info = np.empty((num_in, max_B, max_B, num_features))
+    print("\nin node_fitness.read_in(): node_info shape = " + str(np.shape(node_info)))
+
+    file_num=0
+    iters = []
+    for file in os.listdir(dirr):
+        all_lines = [line.strip() for line in (open(file, 'r')).readlines()]
+        iters.append(int((file).replace(".csv",'')))
+        for line in all_lines:
             B = int(line[0])
             D = int(line[1])
-            freq = int(line[2])
-            fitness = float(line[3])
+            for i in range(2,len(line)):
+                node_info[file_num][B][D][i-2] = float(line[i])
+        file_num+=1
 
-            node_fitness[B][D] = [freq,fitness]
+    return node_info, iters, header
 
-    return node_fitness
 
-def write_out(file, node_fitness):
+def write_out(file, node_info):
+
     with open(file, 'w') as out_file:
 
-        if (node_fitness==None): return #just used to wipe file
+        if (node_info==None): return # just used to wipe file
 
+        max_B = len(node_info['freq'])  # assumes all features have same max B,D
         output = csv.writer(out_file)
-        for B in range(len(node_fitness)):
-            for D in range(len(node_fitness[B])):
-                output.writerow([B,D,node_fitness[B][D][0], node_fitness[B][D][1]])
 
-def normz(nodeFitness, fraction):
-    for B in range(len(nodeFitness)):
-        for D in range(len(nodeFitness[B])):
-            nodeFitness[B][D][0] /= fraction
+        node_features = ['freq', 'freq in solution', 'leaf', 'hub', 'fitness']
+        output.writerow(['B', 'D','Frequency', 'Frequency in Solution', 'Leaf', 'Hub', 'Fitness'])
+        for i in range(len(node_features)):
+            for B in range(max_B):
+                for D in range(max_B):
+                    row = [B, D]
+                    for i in range(len(node_features)):
+                        row.append(node_info[node_features[i]][B][D])
 
-    return nodeFitness
+                    #NOT SURE IF THE FOLLOWING NEC HOLDS
+                    assert(node_info['freq'][B][D] * node_info['leaf'][B][D] + node_info['hub'][B][D] * node_info['freq in solution'][B][D] == node_info['fitness'][B][D])
+                    output.writerow(row)

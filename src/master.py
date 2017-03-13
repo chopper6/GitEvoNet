@@ -12,12 +12,8 @@ import init
 
 def evolve_master(configs):
     protocol = configs['protocol']
-    if (protocol == 'scramble'):
-        scramble_and_evolve(configs)
-    elif (protocol == 'from seed'):
+    if (protocol == 'from seed'):
         evolve_from_seed(configs)
-    elif (protocol == 'control'):
-        control(configs)
     else:
         print("ERROR in master(): unknown protocol " + str(protocol))
 
@@ -53,13 +49,11 @@ def evolve_from_seed(configs):
     #init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
     #TODO: for final results, should NOT just use net0
     #instead pass to workers, but w/o any mutation and just for a single gen
-    fitness_file = output_dir + "/node_fitness.csv"
-    pressure_results = pressurize.pressurize(configs, population[0].net, True, fitness_file) #True: track node fitness
+
+    pressure_results = pressurize.pressurize(configs, population[0].net, True) #True: track node fitness
     population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
     fitness.eval_fitness([population[0]])
     output.deg_change_csv([population[0]], output_dir)
-    if not os.path.exists(output_dir + "/node_fitness/"):
-        os.makedirs(output_dir + "/node_fitness/")
 
     total_gens = 0
     size = start_size
@@ -79,12 +73,9 @@ def evolve_from_seed(configs):
 
         if (iter % int(max_gen/num_fitness_plots) ==0):
             #if first gen, have already pressurized w/net[0]
-            fitness_file = output_dir + "/node_fitness.csv"
-            if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True, fitness_file)  # True: track node fitness
-            nodeFitness = pressure_results[3]
-            node_fitness.write_out(output_dir + "/node_fitness/" + str(iter) + ".csv", nodeFitness)
-            plot_name = iter
-            plot_fitness.BD_freq_fitness(output_dir, nodeFitness, population[0].net, plot_name)
+            if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True)  # True: track node fitness
+            node_info = pressure_results[3]
+            node_fitness.write_out(output_dir + "/node_info/" + str(iter) + ".csv", node_info)
 
 
         #debug(population)
@@ -113,16 +104,19 @@ def evolve_from_seed(configs):
         iter += 1
         total_gens += worker_gens
 
+    #final outputs
+    nx.write_edgelist(population[0].net, output_dir+"/final_fittest_net.edgelist")
+
     output.to_csv(population, output_dir, total_gens)
     output.deg_change_csv(population, output_dir)
     draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
-    fitness_file = output_dir + "/node_fitness/" + str(iter) + ".csv"
-    if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True, fitness_file)  # True: track node fitness
-    nodeFitness = pressure_results[3]
-    node_fitness.write_out(output_dir + "/nodefitness_" + str(iter) + ".csv", nodeFitness)
+    if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True)  # True: track node fitness
+    node_info = pressure_results[3]
+    node_fitness.write_out(output_dir + "/node_info/" + str(iter) + ".csv", node_info)
     plot_name = iter
-    plot_fitness.BD_freq_fitness(output_dir, nodeFitness, population[0].net, plot_name)
+
+    plot_fitness.BD_freq_fitness(output_dir, node_info, population[0].net, plot_name)
 
 
     print("Evolution finished, generating images.")
@@ -133,6 +127,8 @@ def evolve_from_seed(configs):
 def init_dirs(num_workers, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    if not os.path.exists(output_dir + "/node_info/"):
+        os.makedirs(output_dir + "/node_info/")
     for w in range(num_workers):
         dirr = output_dir + "workers/" + str(w)
         if not os.path.exists(dirr):
@@ -180,112 +176,3 @@ def debug(population):
         for q in range(0, p):
             if (p != q): assert (population[p] != population[q])
 
-
-def control(configs):
-    output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/",
-                                                     '')  # no idea where this is coming from
-    init_type = int(configs['initial_net_type'])
-    start_size = int(configs['starting_size'])
-    fitness_type = int(configs['fitness_type'])
-
-    pop_size = 1
-
-    population = net_generator.init_population(init_type, start_size, pop_size)
-    print("Control individual generated, applying pressure.")
-
-    pressure_results = pressurize.pressurize(configs, population[0].net)
-    population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[
-                                                                                                         0], \
-                                                                                                     pressure_results[
-                                                                                                         1], \
-                                                                                                     pressure_results[2]
-    population = fitness.eval_fitness(population)
-    output.to_csv(population, output_dir)
-
-    print("Control run finished.")
-
-
-def scramble_and_evolve(configs):
-    # curr just scramble edges, same num
-    # TODO: merge with evolve_from_seed more elegantly
-
-    # CONFIGS
-    num_workers = int(configs['number_of_workers'])
-    output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/",
-                                                     '')  # no idea where this is coming from
-    survive_percent = float(configs['percent_survive'])
-    survive_fraction = float(survive_percent) / 100
-    output_freq = float(configs['output_frequency'])
-    max_iters = float(configs['max_iterations'])
-    percent_perturb = float(configs['percent_perturb']) / 100
-
-    pop_size = num_workers
-    worker_gens = worker_pop_size = 1
-    num_survive = math.ceil(survive_fraction * pop_size)
-
-    init_dirs(num_workers, output_dir)
-    output.init_csv(output_dir, configs)
-
-    # init, pre scramble
-    vinayagam = net_generator.Net(init.load_network(configs), 0)
-    init_size = (len(vinayagam.net.edges()))
-    pressure_results = pressurize.pressurize(configs, vinayagam.net)
-    vinayagam.fitness_parts[0], vinayagam.fitness_parts[1], vinayagam.fitness_parts[2] = pressure_results[0], \
-                                                                                         pressure_results[1], \
-                                                                                         pressure_results[2]
-    fitness.eval_fitness([vinayagam])
-    output.to_csv([vinayagam], output_dir)
-
-    # scramble
-    perturb.scramble_edges(vinayagam.net, percent_perturb)
-    pressure_results = pressurize.pressurize(configs, vinayagam.net)
-
-    population = []
-    for p in range(pop_size):
-        population.append(vinayagam.copy())
-        population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = \
-        pressure_results[0], pressure_results[1], pressure_results[2]
-    fitness.eval_fitness(population)
-    # output.to_csv([vinayagam], output_dir)
-    assert (init_size == len(population[0].net.edges()))
-    print("Finished scrambling, beginning the return evolution.")
-
-    size_iters = 0
-    while (size_iters < max_iters):
-
-        if (size_iters % int(1 / output_freq) == 0):
-            output.to_csv(population, output_dir)
-            print("Master at gen " + str(size_iters) + ", with net node size = " + str(
-                len(population[0].net.nodes())) + ", and net edge size of " + str(
-                len(population[0].net.edges())) + ",\t " + str(num_survive) + " survive out of " + str(
-                pop_size) + ", with " + str(worker_pop_size) + " nets per worker.")
-
-        # debug(population)
-        pool = mp.Pool(processes=num_workers)
-
-        # distribute workers
-        for w in range(num_workers):
-            dump_file = output_dir + "workers/" + str(w) + "/arg_dump"
-            seed = population[w % num_survive].copy()
-            randSeeds = os.urandom(sysRand().randint(0, 1000000))
-            assert (seed != population[w % num_survive])
-            worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds, configs]
-            with open(dump_file, 'wb') as file:
-                pickle.dump(worker_args, file)
-            pool.map_async(minion.evolve_minion, (dump_file,))
-            sleep(.0001)
-
-        pool.close()
-        pool.join()
-        pool.terminate()
-
-        del population
-        population = parse_worker_popn(num_workers, output_dir, num_survive)
-
-        size_iters += 1
-
-    output.to_csv(population, output_dir)
-
-    print("Evolution finished, generating images.")
-    plot_nets.single_run_plots(output_dir)
-    print("Master finished.")

@@ -1,7 +1,7 @@
 import math, random
 from operator import attrgetter
 import networkx as nx
-import node_fitness
+import hub_fitness, leaf_fitness, node_fitness
 
 def eval_fitness(population):
     #determines fitness of each individual and orders the population by fitness
@@ -12,156 +12,104 @@ def eval_fitness(population):
     return population
 
 
-def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_fitness_file, nodeFitness):
+def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_info):
 
     #LEAF MEASURES
-    RGAllR, RGMG, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control = 0,0,0,0,0,0,0
+    RGAR, RGMG, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, dual1 = 0,0,0,0,0,0,0,0
     max_sum, max_sum_sq, combo_sum, combo_sum_sq = 0,0,0,0
-    anti_corr1, anti_corr2, new_ratio, BDmult, new_ratio_sq = 0,0,0,0,0
+    leaf_score = 0
 
     #HUB MEASURES
-    ETB, ETBv2, ETBv2_insack, dist, dist_sq, effic, effic2, effic4 = 0,0,0,0,0,0,0,0
-    dual1 = 0
-    all_ben = []
-    all_dmg = []
-    soln_size = 1
-    solver_time = 0
+    ETB, dist, dist_sq, effic, effic2, effic4 = 0,0,0,0,0,0
 
     if len(a_result) > 0:
         # -------------------------------------------------------------------------------------------------
         GENES_in, ALL_GENES, num_green, num_red, num_grey, solver_time = a_result[0], a_result[1], a_result[2], a_result[3], a_result[4], a_result[5]
         # -------------------------------------------------------------------------------------------------
+
+
+        # -------------------------------------------------------------------------------------------------
+        # FITNESS BASED ON KP SOLUTION
         soln_bens = []
         soln_bens_sq = []
         soln_bens_4 = []
-        soln_size = len(GENES_in)
-        deg_dict, sack_dict = {},{}
 
         for g in GENES_in:
+            # g[0] gene name, g[1] benefits, g[2] damages, g[3] if in knapsack (binary)
             B,D=g[1],g[2]
             soln_bens.append(B)
             soln_bens_sq.append(math.pow(B,2))
             soln_bens_4.append(math.pow(B,4))
-            deg = B+D #ASSUMES 100% PRESSURE
 
-            if deg in sack_dict:
-                sack_dict[deg][0] += 1
-                sack_dict[deg][1] += B
-            else:
-                sack_dict[deg] = [1,B]
+            if (track_node_fitness == True): node_info['freq in solution'][B][D] += 1
+        if (track_node_fitness == True): node_info = node_fitness.normz(node_info, len(GENES_in), 'freq in solution')
+        # -------------------------------------------------------------------------------------------------
 
-            
-
+        # -------------------------------------------------------------------------------------------------
+        # FITNESS BASED ON ALL GENES
+        all_ben = []
+        all_dmg = []
         for g in ALL_GENES:
             # g[0] gene name, g[1] benefits, g[2] damages, g[3] if in knapsack (binary)
-            # hub score eval pt1
             B,D=g[1],g[2]
-            deg = B+D #ASSUMES 100% PRESSURE
-            if (B+D < 2): leaf_control += 1
+            leaf_score += leaf_fitness.node_score(leaf_metric, B, D)
+            RGAR += leaf_fitness.node_score("RGAR", B, D)
 
-            if deg in deg_dict:
-                deg_dict[deg][0] += 1
-                deg_dict[deg][1] += B
-            else:
-                deg_dict[deg] = [1,B]
-
-            if (B + D != 0): 
-                ratio_onesided += B/(B+D)
-                ratio += max(B,D)/(B+D)
-                ratio_sq += math.pow(max(B,D)/(B+D),2)
-                ratio_btm_sq += max(B,D)/math.pow((B+D),2)
+            all_ben.append(B)
+            all_dmg.append(D)
 
             dist +=  abs(B-D)
             dist_sq += math.pow(B-D,2)
-            all_ben.append(B)
-            all_dmg.append(D)
-            max_sum += max(B,D)
-            max_sum_sq += math.pow(max(B,D),2)
             combo_sum += B+D
             combo_sum_sq += math.pow(B+D, 2)
-            new_ratio += math.pow(B-D,2)/(1+math.pow(min(B,D),2))
-            new_ratio_sq += math.pow(max(B,D)/(1+min(B,D)),2)
-            BDmult += B*D
-            dual1 += math.pow(B - D, 2) / (B + D)
 
-            if (track_node_fitness==True): nodeFitness = node_fitness.append_pair(nodeFitness, B,D, leaf_metric, hub_metric, fitness_operator)
-            #if (track_node_fitness == True): print(nodeFitness)
+            if (track_node_fitness==True): node_info['freq'][B][D] += 1
+        if (track_node_fitness == True): node_info = node_fitness.normz(node_info, len(ALL_GENES), 'freq')
 
-        anti_corr1 = 1 - BDmult/(sum(all_ben)*sum(all_dmg))
-        anti_corr2 = (sum(all_ben)*sum(all_dmg))/BDmult
- 
-        max_ben = max(all_ben)
         num_genes = len(ALL_GENES)
-        ETB = sum(set(soln_bens))/sum(soln_bens)
-        if (sum(soln_bens) != 0):
-            effic = math.pow(sum(soln_bens_sq),.5)/sum(soln_bens)
-            effic2 = sum(soln_bens_sq)/math.pow(sum(soln_bens),2)
-            effic4 = sum(soln_bens_4)/math.pow(sum(soln_bens),4)
-        else:
-            effic = effic2 = effic4 = 0
- 
-        for deg_set in deg_dict:
-            ETBv2 += deg_dict[deg_set][1]/deg_dict[deg_set][0]
 
-        for deg_set in sack_dict:
-            ETBv2 += sack_dict[deg_set][1]/sack_dict[deg_set][0]
-        #ETBv2 /= len(deg_dict) #is further normz nec?
+        # -------------------------------------------------------------------------------------------------
 
-        RGAllR = (num_green + num_red) / (num_green + num_red + num_grey)
-        RGMG = RGAllR - num_grey/(num_green+num_red+num_grey)
+        leaf_denom = leaf_fitness.assign_denom (leaf_metric, num_genes)
+        leaf_score /= leaf_denom #ASSUMES ALL LEAF METRICS ARE CALC'D PER EACH NODE
 
-        ratio_onesided /= num_genes
-        ratio /= num_genes
-        ratio_sq /= num_genes
-        ratio_btm_sq /= num_genes
-        leaf_control /= num_genes
+        hub_score = hub_fitness.assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4)
+        hub_denom = hub_fitness.assign_denom (hub_metric, soln_bens)
+        hub_score /= hub_denom
+        ETB = hub_fitness.assign_numer ("ETB", soln_bens, soln_bens_sq, soln_bens_4)
+        ETB /= hub_fitness.assign_denom ("ETB", soln_bens)
 
-        leaf_score = pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, max_sum, max_sum_sq, combo_sum, combo_sum_sq, dist_sq, dist, anti_corr1, anti_corr2, new_ratio, new_ratio_sq, dual1, RGMG)
-        hub_score = pick_hub (hub_metric, ETB, ETBv2, ETBv2_insack, dist, dist_sq, effic, effic2, effic4, max_ben)
         fitness_score = operate_on_features (leaf_score, hub_score, fitness_operator)
+
+
+        if (track_node_fitness==True):
+            node_info = calc_node_fitness(node_info, leaf_metric, hub_metric, fitness_operator, soln_bens, num_genes)
+
 
     else:
         print("WARNING in pressurize: no results from oracle advice")
         fitness_score = 0
 
 
-    return [RGAllR, ETB, fitness_score, nodeFitness]
+    return [RGAR, ETB, fitness_score, node_info]
 
 
-def pick_leaf (leaf_metric, RGAllR, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, max_sum, max_sum_sq, combo_sum, combo_sum_sq, dist_sq, dist, anti_corr1, anti_corr2, new_ratio, new_ratio_sq, dual1, RGMG):
-    if (leaf_metric=='RGAR'): return RGAllR
-    elif (leaf_metric=='ratio'): return ratio
-    elif (leaf_metric == 'one sided ratio'): return ratio_onesided
-    elif (leaf_metric == 'ratio sq'): return ratio_sq
-    elif (leaf_metric == 'ratio btm sq'): return ratio_btm_sq
-    elif (leaf_metric == 'control'): return leaf_control
+def calc_node_fitness(node_info, leaf_metric, hub_metric, fitness_operator, soln_bens, num_genes):
+    max_size = len(node_info)
+    for B in range(max_size):
+        for D in range(max_size):
+            node_leaf = leaf_fitness.node_score(leaf_metric, B, D)
+            node_leaf /= leaf_fitness.assign_denom(leaf_metric, num_genes)
 
-    #NEW
-    #TODO: change names, rm failures, catch if denom = 0
-    elif (leaf_metric == 'ratio 00'): return max_sum/math.pow(combo_sum_sq,.5)
-    elif (leaf_metric == 'ratio 01'): return max_sum_sq/math.pow(combo_sum,2)
-    elif (leaf_metric == 'ratio 10'): return dist/math.pow(combo_sum_sq,.5)
-    elif (leaf_metric == 'ratio 11'): return dist_sq/math.pow(combo_sum,2)
-    elif (leaf_metric == 'new ratio'): return new_ratio
-    elif (leaf_metric == 'anti corr 1'): return anti_corr1
-    elif (leaf_metric == 'anti corr 2'): return anti_corr2
-    elif (leaf_metric == 'new ratio sq'): return new_ratio_sq
-    elif (leaf_metric == 'dual 1'): return dual1
-    elif (leaf_metric == 'RGMG'): return RGMG
-    else: print("ERROR in fitness.pick_leaf(): unknown leaf metric.")
+            node_hub = hub_fitness.node_score(hub_metric, B, D, soln_bens)
+            node_hub /= hub_fitness.assign_denom (hub_metric, soln_bens)
 
+            node_info['leaf'][B][D] = node_leaf
+            node_info['hub'][B][D] = node_hub #assumes in solution
+            node_info['fitness'][B][D] = operate_on_features(node_leaf, node_hub, fitness_operator)
 
-def pick_hub (hub_metric, ETB, ETBv2, ETBv2_insack, dist, dist_sq, effic, effic2, effic4, max_ben):
-    if (hub_metric=='ETB'): return ETB
-    elif (hub_metric=='ETBv2'): return ETBv2
-    elif (hub_metric=='ETBv2 in solution'): return ETBv2_insack
-    elif(hub_metric=='dist'): return dist
-    elif(hub_metric=='dist sq'): return dist_sq
-    elif(hub_metric=='effic'): return effic
-    elif(hub_metric=='effic 2'): return effic2
-    elif(hub_metric=='effic 4'): return effic4
-    elif(hub_metric=='control'): return max_ben
-    else: print("ERROR in fitness.pick_hub(): unknown hub metric.")
+    return node_info
+
 
 def operate_on_features (leaf_score, hub_score, fitness_operator):
     if (fitness_operator=='leaf'): return leaf_score

@@ -2,7 +2,7 @@ import math
 import reducer, solver, fitness, node_fitness
 from ctypes import cdll
 
-def pressurize(configs, net, track_node_fitness, node_fitness_file):
+def pressurize(configs, net, track_node_fitness):
     # configs:
     pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
     tolerance = configs['PT_pairs_dict'][1][1]
@@ -28,15 +28,16 @@ def pressurize(configs, net, track_node_fitness, node_fitness_file):
 
     kp_instances = reducer.reverse_reduction(net, pressure_relative, int(tolerance), num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
     if (track_node_fitness == True):
-        max_val = 40 #len(net.edges())i TODO: systematically alter max_val
-        nodeFitness = [[[0, 0] for i in range(max_val)] for j in range(max_val)]
-    else: nodeFitness = None
+        node_info = node_fitness.gen_node_info(40)
+        print("in pressurize init node_info=" + str(node_info))
+    else: node_info = None
 
     for kp in kp_instances:
         a_result = solver.solve_knapsack(kp, knapsack_solver)
         #various characteristics of a result
-        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness, nodeFitness  = fitness.kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_fitness_file, nodeFitness)
-
+        node_info_instance = node_fitness.gen_node_info(40)
+        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness, node_info_instance  = fitness.kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_info)
+        if (track_node_fitness==True): node_info = node_fitness.add_instance(node_info, node_info_instance)
 
         leaf_fitness += inst_leaf_fitness
         hub_fitness += inst_hub_fitness
@@ -48,8 +49,10 @@ def pressurize(configs, net, track_node_fitness, node_fitness_file):
     hub_fitness /= num_samples_relative
     solo_fitness /= num_samples_relative
 
-    if (track_node_fitness == True): nodeFitness = node_fitness.normz(nodeFitness, num_samples_relative*len(net.nodes()))
+    if (track_node_fitness == True):
+        node_info = node_fitness.normz(node_info, num_samples_relative)
+        print("in pressurize output node_info=" + str(node_info))
 
-    return [leaf_fitness, hub_fitness, solo_fitness, nodeFitness]
+    return [leaf_fitness, hub_fitness, solo_fitness, node_info]
 
 

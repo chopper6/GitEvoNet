@@ -2,87 +2,102 @@ import matplotlib, os, math
 matplotlib.use('Agg') # This must be done before importing matplotlib.pyplot
 import matplotlib.pyplot as plt
 import node_fitness
+import numpy as np
 
-#TODO: make this more efficient, poss rm some plots
-def BD_freq_fitness(output_dir, nodeFitness, net, file_name):
+def BD_freq_fitness(output_dir):
     # might want to normalize by # pressurize rounds
 
     check_dirs(output_dir)
+    node_info, iters, header = node_fitness.read_in(output_dir)
 
-    size = len(nodeFitness)
+    num_files = len(node_info)
+    max_B = len(node_info[0])
+    num_features = len(header)
 
-    fitness, freqFit, freq = [[0 for i in range(size)] for j in range(size)],[[0 for i in range(size)] for j in range(size)],[[0 for i in range(size)] for j in range(size)]
-    log_fitness, log_freqFit, log_freq = [[0 for i in range(size)] for j in range(size)], [[0 for i in range(size)] for j in range(size)],[[0 for i in range(size)] for j in range(size)]
-    for B in range(size):
-        for D in range(size):
-            fitness[B][D] = nodeFitness[B][D][1]
-            freq[B][D] = nodeFitness[B][D][0]
-            freqFit[B][D] = nodeFitness[B][D][0]*nodeFitness[B][D][1]
+    # single feature plots
+    for feature in range(num_features):
+        dirr = output_dir + "/node_plots/" + str(header[feature]) + "/"
+        zmax = max(node_info[:][:][:][feature])
+        zmin = min(node_info[:][:][:][feature])
+        for file in range(num_files):
+            xydata = node_info[file][:][:][feature]
 
-            if (nodeFitness[B][D][1]==0): log_fitness[B][D]=0
-            else: log_fitness[B][D] = math.log(nodeFitness[B][D][1], 10)
+            plt.matshow(xydata, cmap=plt.get_cmap('plasma'), origin="lower", norm=matplotlib.colors.LogNorm(vmin=zmin, vmax=zmax), vmin=zmin, vmax=zmax)
+            plt.ylabel("Benefits")
+            plt.xlabel("Damages")
+            plt.title(str(header[feature]) + " of Each BD Pair")
+            plt.colorbar()
+            plt.savefig(dirr + str(iters[file]) + ".png")
+            plt.clf()
+            plt.cla()
 
-            if (nodeFitness[B][D][0]==0): log_freq[B][D]=0
-            else: log_freq[B][D] = math.log(nodeFitness[B][D][0], 10)
+    # FOLLOWING PLOTS ARE DEPENDENT ON PARTICULAR FEATURES & THEIR POSITIONS
+    # ['freq', 'freq in solution', 'leaf', 'hub', 'fitness']
 
-            if (nodeFitness[B][D][0] * nodeFitness[B][D][1]==0): log_freqFit[B][D]=0
-            else: log_freqFit[B][D] = math.log(nodeFitness[B][D][0] * nodeFitness[B][D][1], 10)
-    #fitness plot
-    plt.matshow(fitness, cmap=plt.get_cmap('plasma'))
-    plt.ylabel("Benefits")
-    plt.xlabel("Damages")
-    plt.title("Fitness Each BD Pair")
-    plt.colorbar()
-    plt.savefig(output_dir + "/node_plots/fitness/" + str(file_name) + ".png")
-    plt.clf()
+    # leaf*freq
+    dirr = output_dir + "/node_plots/LeafContrib/"
+    zmax = max(node_info[:][:][:][0]*node_info[:][:][:][2])
+    zmin = min(node_info[:][:][:][0]*node_info[:][:][:][2])
 
-    #freq plot
-    plt.matshow(freq, cmap=plt.get_cmap('plasma'))
-    plt.ylabel("Benefits")
-    plt.xlabel("Damages")
-    plt.title("Frequency Each BD Pair")
-    plt.colorbar()
-    plt.savefig(output_dir + "/node_plots/freq/" + str(file_name) + ".png")
-    plt.clf()
+    for file in range(num_files):
+        xydata = node_info[file][:][:][0]*node_info[file][:][:][2]
 
-    #fitness*freq plot
-    plt.matshow(freqFit, cmap=plt.get_cmap('plasma'))
-    plt.ylabel("Benefits")
-    plt.xlabel("Damages")
-    plt.title("Fitness*Frequency of Each BD Pair")
-    plt.colorbar()
-    plt.savefig(output_dir + "/node_plots/freqFitness/" + str(file_name) + ".png")
-    plt.clf()
+        plt.matshow(xydata, cmap=plt.get_cmap('plasma'), origin="lower", norm=matplotlib.colors.LogNorm(vmin=zmin, vmax=zmax), vmin=zmin, vmax=zmax)
+        plt.ylabel("Benefits")
+        plt.xlabel("Damages")
+        plt.title("Contribution to Leaf Fitness of Each BD Pair")
+        plt.colorbar()
+        plt.savefig(dirr + str(iters[file]) + ".png")
+        plt.clf()
+        plt.cla()
 
-    #log fitness plot
-    plt.matshow(log_fitness, cmap=plt.get_cmap('plasma'))
-    plt.ylabel("Benefits")
-    plt.xlabel("Damages")
-    plt.title("Log-Scaled Fitness Each BD Pair")
-    plt.colorbar()
-    plt.savefig(output_dir + "/node_plots/log_fitness/" + str(file_name) + ".png")
-    plt.clf()
 
-    #log freq plot
-    plt.matshow(log_freq, cmap=plt.get_cmap('plasma'))
-    plt.ylabel("Benefits")
-    plt.xlabel("Damages")
-    plt.title("Log-Scaled Frequency Each BD Pair")
-    plt.colorbar()
-    plt.savefig(output_dir + "/node_plots/log_freq/" + str(file_name) + ".png")
-    plt.clf()
+    # hub*freq_in_soln
+    dirr = output_dir + "/node_plots/HubContrib/"
+    zmax = max(node_info[:][:][:][1] * node_info[:][:][:][3])
+    zmin = min(node_info[:][:][:][1] * node_info[:][:][:][3])
 
-    #log fitness_freq plot
-    plt.matshow(log_freqFit, cmap=plt.get_cmap('plasma'))
-    plt.ylabel("Benefits")
-    plt.xlabel("Damages")
-    plt.title("Log-Scaled Fitness*Frequency Each BD Pair")
-    plt.colorbar()
-    plt.savefig(output_dir + "/node_plots/log_freqFitness/" + str(file_name) + ".png")
-    plt.clf()
+    for file in range(num_files):
+        xydata = node_info[file][:][:][1] * node_info[file][:][:][3]
+
+        plt.matshow(xydata, cmap=plt.get_cmap('plasma'), origin="lower",norm=matplotlib.colors.LogNorm(vmin=zmin, vmax=zmax), vmin=zmin, vmax=zmax)
+        plt.ylabel("Benefits")
+        plt.xlabel("Damages")
+        plt.title("Contribution to Hub Fitness of Each BD Pair")
+        plt.colorbar()
+        plt.savefig(dirr + str(iters[file]) + ".png")
+        plt.clf()
+        plt.cla()
+
+
+    # leaf*freq + hub*freq_in_soln
+    dirr = output_dir + "/node_plots/Fitness_Frequency/"
+    zmax = max(node_info[:][:][:][0] * node_info[:][:][:][2] + node_info[:][:][:][1] * node_info[:][:][:][3])
+    zmin = min(node_info[:][:][:][0] * node_info[:][:][:][2] + node_info[:][:][:][1] * node_info[:][:][:][3])
+
+    for file in range(num_files):
+        xydata = (node_info[:][:][:][0] * node_info[:][:][:][2] + node_info[:][:][:][1] * node_info[:][:][:][3])
+
+        plt.matshow(xydata, cmap=plt.get_cmap('plasma'), origin="lower",norm=matplotlib.colors.LogNorm(vmin=zmin, vmax=zmax), vmin=zmin, vmax=zmax)
+        plt.ylabel("Benefits")
+        plt.xlabel("Damages")
+        plt.title("Contribution to Fitness of Each BD Pair")
+        plt.colorbar()
+        plt.savefig(dirr + str(iters[file]) + ".png")
+        plt.clf()
+        plt.cla()
+
+
+
+
+
 
 
 def check_dirs(dirr):
+    if not os.path.exists(dirr + "/node_info/"):
+        print("ERROR in plot_fitness: no directory to read in from, missing /node_info/.")
+        return 1
+
     if not os.path.exists(dirr + "/node_plots/"):
         os.makedirs(dirr + "/node_plots/")
 
@@ -92,11 +107,4 @@ def check_dirs(dirr):
         os.makedirs(dirr + "/node_plots/fitness")
     if not os.path.exists(dirr + "/node_plots/freqFitness"):
         os.makedirs(dirr + "/node_plots/freqFitness")
-
-    if not os.path.exists(dirr + "/node_plots/log_freq"):
-        os.makedirs(dirr + "/node_plots/log_freq")
-    if not os.path.exists(dirr + "/node_plots/log_fitness"):
-        os.makedirs(dirr + "/node_plots/log_fitness")
-    if not os.path.exists(dirr + "/node_plots/log_freqFitness"):
-        os.makedirs(dirr + "/node_plots/log_freqFitness")
 

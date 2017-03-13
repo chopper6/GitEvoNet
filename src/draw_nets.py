@@ -8,7 +8,6 @@ import os
 def basic(population, dirr, iter, layout):
     #draws basic graph of most fit net
     #assumes already sorted by fitness
-    return
     '''
     plt.figure(figsize= (16,16))
     net = population[0].net
@@ -45,6 +44,9 @@ def basic(population, dirr, iter, layout):
     plt.clf()
     plt.close()
     '''
+
+    return
+
 def init(dirr):
     #merge with output.init() call?
 
