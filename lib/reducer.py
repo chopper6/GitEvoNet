@@ -27,58 +27,100 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
         if (advice_upon=='nodes'):
             target = element
             sources = M.predecessors(target)
+
+            for source in sources:
+                advice = Advice[target]
+
+                if M[source][target]['sign']==advice:      #in agreement with the Oracle
+                    if (BD_criteria == 'both' or BD_criteria == 'source'):
+                        ######### REWARDING the source node ###########
+                        if source in BENEFITS.keys():
+                            BENEFITS[source]+=1
+                        else:
+                            BENEFITS[source]=1
+                            if source not in DAMAGES.keys():
+                                DAMAGES[source]=0
+
+                    if (BD_criteria == 'both' or BD_criteria == 'target'):
+                        ######### REWARDING the target node ###########
+                        if target in BENEFITS.keys():
+                            BENEFITS[target]+=1
+                        else:
+                            BENEFITS[target]=1
+                            if target not in DAMAGES.keys():
+                                DAMAGES[target]=0
+
+                ###############################################
+                else:                                              #in disagreement with the Oracle
+                    if (BD_criteria == 'both' or BD_criteria == 'source'):
+                        ######### PENALIZING the source node ##########
+                        if source in DAMAGES.keys():
+                            DAMAGES[source]+=1
+                        else:
+                            DAMAGES[source]=1
+                            if source not in BENEFITS.keys():
+                                BENEFITS[source]=0
+
+                    if (BD_criteria == 'both' or BD_criteria == 'target'):
+                        ######### PENALIZING the target node ##########
+                        if target in DAMAGES.keys():
+                            DAMAGES[target]+=1
+                        else:
+                            DAMAGES[target]=1
+                            if target not in BENEFITS.keys():
+                                BENEFITS[target]=0
+                    ###############################################
+
         elif (advice_upon=='edges'):
+            advice = Advice(element)
             element = element.replace('(','').replace(')','')
             element = element.split(",")
-            sources = [int(element[0])]
+            source = int(element[0])
             target = int(element[1])
-        else:
-            print ("ERROR reducer: unknown advice_upon: " + str(advice_upon))
-            return
 
-        for source in sources:
-            if (advice_upon=='nodes'): advice = Advice[target]
-            elif (advice_upon=='edges'): advice = Advice["(" + str(source) + ", " + str(target) + ")"]
-
-            if M[source][target]['sign']==advice:      #in agreement with the Oracle
+            if M[source][target]['sign'] == advice:  # in agreement with the Oracle
                 if (BD_criteria == 'both' or BD_criteria == 'source'):
                     ######### REWARDING the source node ###########
                     if source in BENEFITS.keys():
-                        BENEFITS[source]+=1
+                        BENEFITS[source] += 1
                     else:
-                        BENEFITS[source]=1
+                        BENEFITS[source] = 1
                         if source not in DAMAGES.keys():
-                            DAMAGES[source]=0
+                            DAMAGES[source] = 0
 
                 if (BD_criteria == 'both' or BD_criteria == 'target'):
                     ######### REWARDING the target node ###########
                     if target in BENEFITS.keys():
-                        BENEFITS[target]+=1
+                        BENEFITS[target] += 1
                     else:
-                        BENEFITS[target]=1
+                        BENEFITS[target] = 1
                         if target not in DAMAGES.keys():
-                            DAMAGES[target]=0
+                            DAMAGES[target] = 0
 
             ###############################################
-            else:                                              #in disagreement with the Oracle
+            else:  # in disagreement with the Oracle
                 if (BD_criteria == 'both' or BD_criteria == 'source'):
                     ######### PENALIZING the source node ##########
                     if source in DAMAGES.keys():
-                        DAMAGES[source]+=1
+                        DAMAGES[source] += 1
                     else:
-                        DAMAGES[source]=1
+                        DAMAGES[source] = 1
                         if source not in BENEFITS.keys():
-                            BENEFITS[source]=0
+                            BENEFITS[source] = 0
 
                 if (BD_criteria == 'both' or BD_criteria == 'target'):
                     ######### PENALIZING the target node ##########
                     if target in DAMAGES.keys():
-                        DAMAGES[target]+=1
+                        DAMAGES[target] += 1
                     else:
-                        DAMAGES[target]=1
+                        DAMAGES[target] = 1
                         if target not in BENEFITS.keys():
-                            BENEFITS[target]=0
-                ###############################################
+                            BENEFITS[target] = 0
+                            ###############################################
+
+        else:
+            print ("ERROR reducer: unknown advice_upon: " + str(advice_upon))
+            return
 
     T_edges = round (max (1, math.ceil (sum(DAMAGES.values())*(T_percentage/100))))
 
