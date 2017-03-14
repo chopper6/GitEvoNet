@@ -77,6 +77,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
 
         leaf_denom = leaf_fitness.assign_denom (leaf_metric, num_genes)
         leaf_score /= leaf_denom #ASSUMES ALL LEAF METRICS ARE CALC'D PER EACH NODE
+        RGAR /= leaf_fitness.assign_denom ("RGAR", num_genes)
 
         hub_score = hub_fitness.assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4)
         hub_denom = hub_fitness.assign_denom (hub_metric, soln_bens)

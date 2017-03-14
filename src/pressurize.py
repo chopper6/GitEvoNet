@@ -36,7 +36,7 @@ def pressurize(configs, net, track_node_fitness):
         a_result = solver.solve_knapsack(kp, knapsack_solver)
         #various characteristics of a result
         node_info_instance = node_fitness.gen_node_info(max_B_plot)
-        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness, node_info_instance  = fitness.kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_info)
+        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness, node_info_instance  = fitness.kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_info_instance)
         if (track_node_fitness==True): node_info = node_fitness.add_instance(node_info, node_info_instance)
 
         leaf_fitness += inst_leaf_fitness

@@ -118,7 +118,7 @@ def evolve_from_seed(configs):
     node_fitness.write_out(output_dir + "/node_info/" + str(iter) + ".csv", node_info)
     plot_name = iter
 
-    plot_fitness.BD_freq_fitness(output_dir)
+    plot_fitness.BD_pairs(output_dir)
 
 
     print("Evolution finished, generating images.")

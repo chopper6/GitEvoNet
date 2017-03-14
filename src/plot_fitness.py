@@ -1,10 +1,10 @@
-import matplotlib, os, math
+import matplotlib, os, math, sys
 matplotlib.use('Agg') # This must be done before importing matplotlib.pyplot
 import matplotlib.pyplot as plt
 import node_fitness
 import numpy as np
 
-def BD_freq_fitness(output_dir):
+def BD_pairs(output_dir):
     # might want to normalize by # pressurize rounds
     if not os.path.exists(output_dir + "/node_info/"):
         print("ERROR in plot_fitness: no directory to read in from, missing /node_info/.")
@@ -110,3 +110,18 @@ def check_dirs(dirr, header):
     if not os.path.exists(dirr + "/node_plots/Fitness_Frequency/"):
         os.makedirs(dirr + "/node_plots/Fitness_Frequency/")
 
+
+
+if __name__ == "__main__":
+    #first bash arg should be parent directory, then each child directory
+    dirr_base = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
+    dirr_parent = sys.argv[1]
+    dirr_base += dirr_parent
+
+    for arg in sys.argv[2:]:
+        print("Plotting dirr " + str(arg))
+        dirr_addon = arg
+        dirr= dirr_base + dirr_addon + "/"
+        BD_pairs(dirr)
+
+    print("Finished plotting BD pairs.")
