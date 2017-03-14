@@ -68,6 +68,8 @@ def evolve_from_seed(configs):
             worker_percent_survive = math.ceil(worker_survive_fraction * worker_pop_size)
             print("Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
 
+            nx.write_edgelist(population[0].net, output_dir+"/fittest_net.edgelist")
+
         if (iter % int(max_gen / num_draw) == 0 and num_draw != 0 ):
             draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
@@ -105,7 +107,7 @@ def evolve_from_seed(configs):
         total_gens += worker_gens
 
     #final outputs
-    nx.write_edgelist(population[0].net, output_dir+"/final_fittest_net.edgelist")
+    nx.write_edgelist(population[0].net, output_dir+"/fittest_net.edgelist")
 
     output.to_csv(population, output_dir, total_gens)
     output.deg_change_csv(population, output_dir)
@@ -116,7 +118,7 @@ def evolve_from_seed(configs):
     node_fitness.write_out(output_dir + "/node_info/" + str(iter) + ".csv", node_info)
     plot_name = iter
 
-    plot_fitness.BD_freq_fitness(output_dir, node_info, population[0].net, plot_name)
+    plot_fitness.BD_freq_fitness(output_dir)
 
 
     print("Evolution finished, generating images.")

@@ -3,9 +3,13 @@ import numpy as np
 
 def node_score (hub_metric, B, D, soln_bens):
     # ASSUMES HUB IN SOLUTION
-    freq = np.bincount(np.array(soln_bens))
+    if (B not in soln_bens): return 0
 
-    if (hub_metric == 'ETB'): return (B/freq[B])
+    freq = np.bincount(np.array(soln_bens))  
+
+    if (hub_metric == 'ETB'): 
+        if (freq[B]==0): return 0
+        return (B/freq[B])
     elif (hub_metric == 'effic'): return math.pow(B,2) #no good way to capture
     elif (hub_metric == 'effic 2'): return math.pow(B,2)
     elif (hub_metric == 'effic 4'): return math.pow(B,4)

@@ -18,6 +18,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
     RGAR, RGMG, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, dual1 = 0,0,0,0,0,0,0,0
     max_sum, max_sum_sq, combo_sum, combo_sum_sq = 0,0,0,0
     leaf_score = 0
+    if (track_node_fitness == True): Bmax = len(node_info['freq'])
 
     #HUB MEASURES
     ETB, dist, dist_sq, effic, effic2, effic4 = 0,0,0,0,0,0
@@ -41,7 +42,9 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
             soln_bens_sq.append(math.pow(B,2))
             soln_bens_4.append(math.pow(B,4))
 
-            if (track_node_fitness == True): node_info['freq in solution'][B][D] += 1
+            if (track_node_fitness == True): 
+                if (B > Bmax or D > Bmax): print("WARNING fitness(): B = " + str(B) + ", D = " + str(D) + " not included in node_info.")
+                else: node_info['freq in solution'][B][D] += 1
         if (track_node_fitness == True): node_info = node_fitness.normz(node_info, len(GENES_in), 'freq in solution')
         # -------------------------------------------------------------------------------------------------
 
@@ -63,7 +66,9 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
             combo_sum += B+D
             combo_sum_sq += math.pow(B+D, 2)
 
-            if (track_node_fitness==True): node_info['freq'][B][D] += 1
+            if (track_node_fitness==True):
+                if (B > Bmax or D > Bmax): print("WARNING fitness(): B = " + str(B) + ", D = " + str(D) + " not included in node_info.")
+                else: node_info['freq'][B][D] += 1
         if (track_node_fitness == True): node_info = node_fitness.normz(node_info, len(ALL_GENES), 'freq')
 
         num_genes = len(ALL_GENES)
@@ -83,7 +88,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
 
 
         if (track_node_fitness==True):
-            node_info = calc_node_fitness(node_info, leaf_metric, hub_metric, fitness_operator, soln_bens, num_genes)
+            node_info = node_fitness.calc(node_info, leaf_metric, hub_metric, fitness_operator, soln_bens, num_genes)
 
 
     else:
@@ -93,22 +98,6 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
 
     return [RGAR, ETB, fitness_score, node_info]
 
-
-def calc_node_fitness(node_info, leaf_metric, hub_metric, fitness_operator, soln_bens, num_genes):
-    max_size = len(node_info)
-    for B in range(max_size):
-        for D in range(max_size):
-            node_leaf = leaf_fitness.node_score(leaf_metric, B, D)
-            node_leaf /= leaf_fitness.assign_denom(leaf_metric, num_genes)
-
-            node_hub = hub_fitness.node_score(hub_metric, B, D, soln_bens)
-            node_hub /= hub_fitness.assign_denom (hub_metric, soln_bens)
-
-            node_info['leaf'][B][D] = node_leaf
-            node_info['hub'][B][D] = node_hub #assumes in solution
-            node_info['fitness'][B][D] = operate_on_features(node_leaf, node_hub, fitness_operator)
-
-    return node_info
 
 
 def operate_on_features (leaf_score, hub_score, fitness_operator):

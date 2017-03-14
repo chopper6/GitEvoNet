@@ -11,6 +11,7 @@ def pressurize(configs, net, track_node_fitness):
     knapsack_solver = cdll.LoadLibrary(configs['KP_solver_binary'])
     num_samples_mult = int(configs['number_of_samples_multiplier'])
     advice = configs['advice_upon']
+    max_B_plot = int(configs['max_B_plot'])
 
     leaf_metric = str(configs['leaf_metric'])
     hub_metric = str(configs['hub_metric'])
@@ -28,14 +29,13 @@ def pressurize(configs, net, track_node_fitness):
 
     kp_instances = reducer.reverse_reduction(net, pressure_relative, int(tolerance), num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
     if (track_node_fitness == True):
-        node_info = node_fitness.gen_node_info(40)
-        print("in pressurize init node_info=" + str(node_info))
+        node_info = node_fitness.gen_node_info(max_B_plot)
     else: node_info = None
 
     for kp in kp_instances:
         a_result = solver.solve_knapsack(kp, knapsack_solver)
         #various characteristics of a result
-        node_info_instance = node_fitness.gen_node_info(40)
+        node_info_instance = node_fitness.gen_node_info(max_B_plot)
         inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness, node_info_instance  = fitness.kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_info)
         if (track_node_fitness==True): node_info = node_fitness.add_instance(node_info, node_info_instance)
 
@@ -50,8 +50,7 @@ def pressurize(configs, net, track_node_fitness):
     solo_fitness /= num_samples_relative
 
     if (track_node_fitness == True):
-        node_info = node_fitness.normz(node_info, num_samples_relative)
-        print("in pressurize output node_info=" + str(node_info))
+        node_info = node_fitness.normz(node_info, num_samples_relative, 'all')
 
     return [leaf_fitness, hub_fitness, solo_fitness, node_info]
 
