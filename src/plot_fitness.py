@@ -27,7 +27,7 @@ def BD_pairs(output_dir):
             #plt.autoscale()
             plt.ylabel("Benefits")
             plt.xlabel("Damages")
-            plt.title(str(header[feature]) + " of Each BD Pair")
+            plt.title(str(header[feature]))
             plt.colorbar()
             plt.savefig(dirr + str(iters[file]) + ".png")
             plt.clf()
@@ -73,7 +73,7 @@ def BD_pairs(output_dir):
         plt.close()
 
     # leaf*freq + hub*freq_in_soln
-    dirr = output_dir + "node_plots/Fitness_Frequency/"
+    dirr = output_dir + "node_plots/FitnessContrib/"
     zmax = np.ndarray.max(node_info[:,:,:,0] * node_info[:,:,:,2] + node_info[:,:,:,1] * node_info[:,:,:,3])
     zmin = np.ndarray.min(node_info[:,:,:,0] * node_info[:,:,:,2] + node_info[:,:,:,1] * node_info[:,:,:,3])
 
@@ -107,8 +107,8 @@ def check_dirs(dirr, header):
         os.makedirs(dirr + "/node_plots/LeafContrib/")
     if not os.path.exists(dirr + "/node_plots/HubContrib/"):
         os.makedirs(dirr + "/node_plots/HubContrib/")
-    if not os.path.exists(dirr + "/node_plots/Fitness_Frequency/"):
-        os.makedirs(dirr + "/node_plots/Fitness_Frequency/")
+    if not os.path.exists(dirr + "/node_plots/FitnessContrib/"):
+        os.makedirs(dirr + "/node_plots/FitnessContrib/")
 
 
 

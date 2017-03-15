@@ -72,7 +72,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
                     ###############################################
 
         elif (advice_upon=='edges'):
-            advice = Advice(element)
+            advice = Advice[element]
             element = element.replace('(','').replace(')','')
             element = element.split(",")
             source = int(element[0])

@@ -18,7 +18,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
     RGAR, RGMG, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, dual1 = 0,0,0,0,0,0,0,0
     max_sum, max_sum_sq, combo_sum, combo_sum_sq = 0,0,0,0
     leaf_score = 0
-    if (track_node_fitness == True): Bmax = len(node_info['freq'])
+    if (track_node_fitness == True): Bmax = len(node_info['freq'])-1
 
     #HUB MEASURES
     ETB, dist, dist_sq, effic, effic2, effic4 = 0,0,0,0,0,0

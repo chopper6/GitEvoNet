@@ -32,7 +32,7 @@ def add_instance(node_info, node_info_instance):
 def gen_node_info(max_val):
     # init node_info
     node_features = ['freq', 'freq in solution', 'leaf', 'hub', 'fitness']
-    node_feature_info =  [[[0 for k in range(max_val)] for i in range(max_val)] for j in range(len(node_features))]
+    node_feature_info =  [[[0 for k in range(max_val+1)] for i in range(max_val+1)] for j in range(len(node_features))]
     node_info = {node_features[i] : node_feature_info[i] for i in range(len(node_features))}
     return node_info
 
