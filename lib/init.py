@@ -98,14 +98,14 @@ def load_network (configs):
     for e in edges_file: 
         interaction = e.split()
         assert len(interaction)>=2
-        source, target = str(interaction[0]), str(interaction[1])
+        source, target = str(interaction[0]).strip().replace("'",''), str(interaction[1]).strip().replace("'",'')
         if (len(interaction) >2):
             if (str(interaction[2]) == '+'):
                 Ijk=1
             elif  (str(interaction[2]) == '-'):
                 Ijk=-1
             else:
-                print ("Error: bad interaction sign in file "+network_edge_file+"\nExiting...")
+                print ("Error: bad interaction sign in file "+str(edges_file)+"\nExiting...")
                 sys.exit()
         else:
             Ijk=util.flip()     

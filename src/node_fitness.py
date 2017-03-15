@@ -52,6 +52,9 @@ def normz(node_info, fraction, feature):
 
     return node_info
 
+
+
+
 def read_in(dirr):
 
     files = os.listdir(dirr)
@@ -80,8 +83,6 @@ def read_in(dirr):
             B = int(line[0])
             D = int(line[1])
             for i in range(2,len(line)):
-                #precn = len(line[i]) #stupid that this has to be done
-                #node_info[file_num][B][D][i-2] = round(float(line[i]), 4)
                 node_info[file_num][B][D][i-2] = float(line[i])
         file_num+=1
 

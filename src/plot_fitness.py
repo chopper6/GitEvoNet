@@ -1,16 +1,24 @@
 import matplotlib, os, math, sys
 matplotlib.use('Agg') # This must be done before importing matplotlib.pyplot
 import matplotlib.pyplot as plt
-import node_fitness
+import node_fitness, slices_helper, bar2d
 import numpy as np
 
-def BD_pairs(output_dir):
+
+def all_fitness_plots(output_dir):
     # might want to normalize by # pressurize rounds
     if not os.path.exists(output_dir + "/node_info/"):
         print("ERROR in plot_fitness: no directory to read in from, missing /node_info/.")
         return 1
     node_info, iters, header = node_fitness.read_in(output_dir + "/node_info/")
     # [file, B, D, features]
+
+    BD_pairs(output_dir, node_info, iters, header)
+    bar2d_plots(output_dir, node_info)
+
+
+
+def BD_pairs(output_dir, node_info, iters, header):
     node_info = log_scale(node_info)
 
     check_dirs(output_dir, header)
@@ -95,6 +103,10 @@ def BD_pairs(output_dir):
 
 
 
+def bar2d_plots(output_dir, node_info):
+    slices = slices_helper(node_info)
+    bar2d.plot_bar2d(slices)
+
 
 
 def check_dirs(dirr, header):
@@ -124,25 +136,19 @@ def log_scale (node_info):
         for j in range(len(node_info[i])):
             for k in range(len(node_info[i][j])):
                 for l in range(len(node_info[i][j][k])):
-                    if (i==10 and j==0 and k==1 and l==2): print("log_scale(): leaf 0,1 in file 10 = " + str(node_info[i,j,k,l]))
-                    if (i==0 and j==0 and k==1 and l==2): print("log_scale(): leaf 0,1 in file 0 = " + str(node_info[i,j,k,l]))
-                    if (node_info[i,j,k,l] != 0): 
-                        node_info[i,j,k,l] = math.log10(node_info[i,j,k,l])
-                    if (i==10 and j==0 and k==1 and l==2): print("log_scale(): leaf 0,1 in file 10 = " + str(node_info[i,j,k,l]))
-                    if (i==0 and j==0 and k==1 and l==2): print("log_scale(): leaf 0,1 in file 0 = " + str(node_info[i,j,k,l]))
+                    if (node_info[i, j, k, l] != 0): node_info[i,j,k,l] = math.log10(node_info[i,j,k,l])
+
     mins = [None for i in range(num_features)]
     for feature in range(num_features):
-        mins[feature] = np.ndarray.min(node_info[:,:,:,feature])
+        mins[feature] = np.ndarray.min(node_info[:, :, :, feature])
         if (mins[feature] > 0): print ("WARNING: plot_fitness.log_scale(): min is > 0 after scaling: min= " + str(mins[feature]))
-        if (feature==2): print("log_scale(): leaf min = " + str(mins[feature]))
 
     for i in range(len(node_info)):
         for j in range(len(node_info[i])):
             for k in range(len(node_info[i][j])):
                 for l in range(len(node_info[i][j][k])):
-                   if (node_info[i,j,k,l] != 0): node_info[i, j, k, l] += -1*(mins[l])
-                   if (i==10 and j==0 and k==1 and l==2): print("log_scale(): leaf 0,1 in file 10 = " + str(node_info[i,j,k,l]))
-                   if (i==0 and j==0 and k==1 and l==2): print("log_scale(): leaf 0,1 in file 0 = " + str(node_info[i,j,k,l]))
+                    if (node_info[i, j, k, l] != 0): node_info[i, j, k, l] += -1*(mins[l])
+
     return node_info
 
 

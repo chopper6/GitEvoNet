@@ -1,21 +1,75 @@
-#######################################################################################
-slices = {    'interval':10,
-              'segments':{
-                            1  :{'label':'100:0', 'range':(100,0)},                                                           
-                            2  :{'label':'90:10', 'range':(90,10)},
-                            3  :{'label':'80:20', 'range':(80,20)},
-                            4  :{'label':'70:30', 'range':(70,30)},
-                            5  :{'label':'60:40', 'range':(60,40)},
-                            6  :{'label':'50:50', 'range':(50,50)},                                                           
-                            7  :{'label':'40:60', 'range':(40,60)},
-                            8  :{'label':'30:70', 'range':(30,70)},
-                            9  :{'label':'20:80', 'range':(20,80)},
-                            10 :{'label':'10:90', 'range':(10,90)}, 
-                            11 :{'label':'0:100', 'range':(0,100)},                                                         
-                            12 :{'label':'0:0',   'range':(0,0)}
-                }
-            }
-#######################################################################################
+# degree_frequency = {degree:frequency}
+# 'slices' needs to be populated with the average frequency of given nodes of degree x to belong to a slice (a,b)
+def fill_slices(node_info):
+    slice_freq = gen_slice_freq(node_info)
+
+    # [slice][deg] = freq
+    slices = {    'interval':10,
+                             'segments':{
+                                     1  :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'100:0', 'range':(100,0)},
+                                     2  :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'90:10', 'range':(90,10)},
+                                     3  :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'80:20', 'range':(80,20)},
+                                     4  :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'70:30', 'range':(70,30)},
+                                     5  :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'60:40', 'range':(60,40)},
+                                     6  :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'50:50', 'range':(50,50)},
+                                     7  :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'40:60', 'range':(40,60)},
+                                     8  :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'30:70', 'range':(30,70)},
+                                     9  :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'20:80', 'range':(20,80)},
+                                     10 :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'10:90', 'range':(10,90)},
+                                     11 :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'0:100', 'range':(0,100)},
+                                     12 :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'0:0',   'range':(0,0)}
+                                    }
+    }
+    #i think this is how: [0 as segment][slice#][0 as degree_freq]
+    for slice in range(len(slice_freq)):
+        for deg in range(len(slice_freq[slice])):
+            slices[1][slice[0]][0] = {deg:slice_freq[slice][deg]}
+
+    return slices
+
+##################################################################
+def assign_slice_num(B,D):
+    #assumes intervals of 10
+    # returns (B inteval, D interval)
+    if (D==0):
+        if (B==0): slice_num, srange = 12, (0,0)
+        else: slice_num, srange = 1, (100,0)
+
+    else:
+        fraction = float(B/D)
+        if (fraction<.05): slice_num, srange = 11, (0,100)
+        elif (fraction<.15): slice_num, srange = 10, (10,90)
+        elif (fraction < .25): slice_num, srange = 9, (20,80)
+        elif (fraction < .35): slice_num, srange = 8, (30,70)
+        elif (fraction < .45): slice_num, srange = 7, (40,60)
+        elif (fraction < .55): slice_num, srange = 6, (50,50)
+        elif (fraction < .65): slice_num, srange = 5, (60,40)
+        elif (fraction < .75): slice_num, srange = 4, (70,30)
+        elif (fraction < .85): slice_num, srange = 3, (8,20)
+        elif (fraction < .95): slice_num, srange = 2, (90,10)
+        else: slice_num, srange = 1, (100,0)
+
+    return slice_num, srange
+
+
+def gen_slice_freq(node_info):
+    #node_info: np obj w/ # [file, B, D, features]
+    #frequency = feature 0
+
+    maxDeg = len(node_info[-1])
+    slice_freq = [[0 for i in range(12)] for j in range(maxDeg)]
+    # [slice][deg] = freq
+
+    for B in range(len(node_info[-1])):
+        for D in range(len(node_info[-1][B])):
+            slice_num, srange = assign_slice_num(B,D)
+            slice_freq[slice_num][B+D] += node_info[-1,B,D,0]
+
+    return slice_freq
+
+
+
+
 def assign_range(slices, b, d):
     right_key, b2d_ratio, d2b_ratio = 0,0,0
     if b==0 and d==0:
@@ -34,7 +88,3 @@ def assign_range(slices, b, d):
     return right_key[0]
 #######################################################################################
 
-for b in range(10,1,-1):
-    for d in range (10-b+1, 1, -1):
-        print(str(b)+':'+str(d)+' == > '+str(slices['segments'][assign_range(slices, b, d)]['label']))
-#######################################################################################
