@@ -4,7 +4,9 @@ def fill_slices(node_info):
     slice_freq = gen_slice_freq(node_info)
 
     # [slice][deg] = freq
-    slices = {    'interval':10,
+    slices = [None for i in range(2)]
+    for i in range(2):
+        slices[i] = {    'interval':10,
                              'segments':{
                                      1  :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'100:0', 'range':(100,0)},
                                      2  :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'90:10', 'range':(90,10)},
@@ -19,11 +21,15 @@ def fill_slices(node_info):
                                      11 :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'0:100', 'range':(0,100)},
                                      12 :{'degree_freq':{},  'color':None, 'avg':0, 'std':0, 'label':'0:0',   'range':(0,0)}
                                     }
-    }
-    #i think this is how: [0 as segment][slice#][0 as degree_freq]
-    for slice in range(len(slice_freq)):
-        for deg in range(len(slice_freq[slice])):
-            slices[1][slice[0]][0] = {deg:slice_freq[slice][deg]}
+        }
+        #i think this is how: [0 as segment][slice#][0 as degree_freq]
+    
+        for slice_num in range(1,len(slice_freq[i])):
+            for deg in range(len(slice_freq[i][slice_num])):
+                if deg in slices[i]['segments'][slice_num]['degree_freq'].keys():
+                    slices[i]['segments'][slice_num]['degree_freq'][deg] += slice_freq[i][slice_num][deg]
+                else:
+                    slices[i]['segments'][slice_num]['degree_freq'][deg] = slice_freq[i][slice_num][deg]
 
     return slices
 
@@ -55,15 +61,24 @@ def assign_slice_num(B,D):
 def gen_slice_freq(node_info):
     #node_info: np obj w/ # [file, B, D, features]
     #frequency = feature 0
-
-    maxDeg = len(node_info[-1])
-    slice_freq = [[0 for i in range(12)] for j in range(maxDeg)]
+    maxDeg = len(node_info[0])
+    slice_freq = [[[0 for i in range(maxDeg*2)] for j in range(13)] for k in range(2)]
     # [slice][deg] = freq
 
+    #print(len(slice_freq), len(slice_freq[0]))
+    for B in range(len(node_info[0])):
+        for D in range(len(node_info[0][B])):
+            slice_num, srange = assign_slice_num(B,D)
+            #print(slice_num, B+D, B, D)
+            slice_freq[0][slice_num][B+D] += node_info[0,B,D,0]
+
+
+    #print(len(slice_freq), len(slice_freq[0]))
     for B in range(len(node_info[-1])):
         for D in range(len(node_info[-1][B])):
             slice_num, srange = assign_slice_num(B,D)
-            slice_freq[slice_num][B+D] += node_info[-1,B,D,0]
+            #print(slice_num, B+D, B, D)
+            slice_freq[1][slice_num][B+D] += node_info[-1,B,D,0]
 
     return slice_freq
 

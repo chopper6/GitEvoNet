@@ -55,6 +55,8 @@ def evolve_from_seed(configs):
     fitness.eval_fitness([population[0]])
     output.deg_change_csv([population[0]], output_dir)
 
+    print("for vinayagam, master(): net size = " + str(len(population[0].net.nodes())))
+
     total_gens = 0
     size = start_size
     iter = 0
@@ -118,7 +120,7 @@ def evolve_from_seed(configs):
     node_fitness.write_out(output_dir + "/node_info/" + str(iter) + ".csv", node_info)
     plot_name = iter
 
-    plot_fitness.BD_pairs(output_dir)
+    plot_fitness.all_fitness_plots(output_dir)
 
 
     print("Evolution finished, generating images.")

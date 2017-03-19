@@ -114,7 +114,7 @@ def normalize(slices):
     for slice_id in slices.keys():
         total = sum(slices[slice_id].values())
         for degree in slices[slice_id].keys():
-            slices[slice_id][degree] = (slices[slice_id][degree]/total)*100
+            if (total != 0): slices[slice_id][degree] = (slices[slice_id][degree]/total)*100
 ##################################################################  
 def extract_stats(slices):
     slices2 = {}
@@ -127,7 +127,7 @@ def extract_stats(slices):
         group_labels.append(slices['segments'][slice_id]['label'])
     for slice_id in slices2.keys():
         for degree in sorted(slices['segments'][slice_id]['degree_freq'].keys()):
-            freq = slices['segments'][slice_id]['degree_freq'][degree]['avg_so_far']
+            freq = slices['segments'][slice_id]['degree_freq'][degree] #['avg_so_far']
             slices2[slice_id][degree] =  freq
             all_degrees.append(degree)
     all_degrees = sorted(list(set(all_degrees)), reverse=True)
@@ -147,10 +147,10 @@ def customize_bar2d(ax, xlabels, xlabels_loc, title):
     ax.set_ylim([0,100]) # it matters where this line is, (it has to be before ticking is done i think)
 
     #TODO: add this back?
-    #ax.yaxis.set_major_formatter(ticker.FuncFormatter(LogYformatter))
+    #ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(LogYformatter))
     return ax
 ##################################################################  
-def plot_bar2d(output_dir, slices):
+def plot_bar2d(output_dir, name, slices):
     update_rcParams_bar2d()
     fig = plt.figure(figsize=(4,4))
     ax = fig.add_axes([.1,.1,.9,.9])
@@ -166,19 +166,20 @@ def plot_bar2d(output_dir, slices):
     bottom = [0]*N
     #ax.set_xticklabels(group_labels)
     for deg in sorted(all_degrees, reverse=True): #all_degrees are increasingly sorted, this makes a nice log-scale bar
-        next_stack     = []
-        for slice_id in sorted(DegFreqBySlice.keys()):        
-            if deg in DegFreqBySlice[slice_id].keys():
-                next_stack.append(DegFreqBySlice[slice_id][deg])
-            else:
-                next_stack.append(0)
-        ax.bar(tickloc, next_stack, width, color=palette[deg], align='center', alpha=.9, edgecolor='white',linewidth=0.1, bottom=bottom)#, yerr=womenStd)
-        bottom = [b+m for b,m in zip(bottom, next_stack)]
+        if (deg != 0):
+            next_stack     = []
+            for slice_id in sorted(DegFreqBySlice.keys()):        
+                if deg in DegFreqBySlice[slice_id].keys():
+                    next_stack.append(DegFreqBySlice[slice_id][deg])
+                else:
+                    next_stack.append(0)
+            ax.bar(tickloc, next_stack, width, color=palette[deg], align='center', alpha=.9, edgecolor='white',linewidth=0.1, bottom=bottom)#, yerr=womenStd)
+            bottom = [b+m for b,m in zip(bottom, next_stack)]
     
     #ax.plot([0., max(tickloc)+(width/2.)], [25, 25], "--", color='black', linewidth=1) # linestyle='-/--/-./:'   
     ax   = customize_bar2d(ax, group_labels, tickloc, "the title") # IMPORTANT: should be called after ax.bar is done
     legend = ax.legend(handles=patches, loc=(1.03,0.1), title='degree:') # http://matplotlib.org/api/legend_api.html#matplotlib.legend.Legend 
     legend.get_title().set_fontsize(5) # this is a must, can't do this thru rcParams
 
-    plt.savefig(output_dir + "/node_plots/barz.png")
+    plt.savefig(output_dir + "node_plots/" + "degree_percent_" + str(name) + ".png")
 ##################################################################  
