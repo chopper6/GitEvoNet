@@ -2,14 +2,13 @@ import math
 import reducer, solver, fitness, node_fitness
 from ctypes import cdll
 
-def pressurize(configs, net, track_node_fitness):
+def pressurize(configs, net, track_node_fitness, instance_file_name):
     # configs:
     pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
     tolerance = configs['PT_pairs_dict'][1][1]
     sampling_rounds = int(configs['sampling_rounds'])
     max_sampling_rounds = int(configs['sampling_rounds_max'])
     knapsack_solver = cdll.LoadLibrary(configs['KP_solver_binary'])
-    num_samples_mult = int(configs['number_of_samples_multiplier'])
     advice = configs['advice_upon']
     max_B_plot = int(configs['max_B_plot'])
 
@@ -20,7 +19,6 @@ def pressurize(configs, net, track_node_fitness):
     leaf_fitness, hub_fitness, solo_fitness = 0,0,0
 
     num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
-    num_samples_relative *= num_samples_mult
     if (advice=='nodes'): pressure_relative = int(pressure * len(net.nodes()))
     elif (advice=='edges'): pressure_relative = int(pressure * len(net.edges()))
     else: 
@@ -36,7 +34,7 @@ def pressurize(configs, net, track_node_fitness):
         a_result = solver.solve_knapsack(kp, knapsack_solver)
         #various characteristics of a result
         node_info_instance = node_fitness.gen_node_info(max_B_plot)
-        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness, node_info_instance  = fitness.kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_info_instance)
+        inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness, node_info_instance  = fitness.kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_info_instance, instance_file_name)
         if (track_node_fitness==True): node_info = node_fitness.add_instance(node_info, node_info_instance)
 
         leaf_fitness += inst_leaf_fitness

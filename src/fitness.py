@@ -12,7 +12,7 @@ def eval_fitness(population):
     return population
 
 
-def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_info):
+def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_info, instance_file_name):
 
     #LEAF MEASURES
     RGAR, RGMG, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, dual1 = 0,0,0,0,0,0,0,0
@@ -22,6 +22,8 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
 
     #HUB MEASURES
     ETB, dist, dist_sq, effic, effic2, effic4 = 0,0,0,0,0,0
+
+    if (instance_file_name != None): lines = [None for i in range(5)]
 
     if len(a_result) > 0:
         # -------------------------------------------------------------------------------------------------
@@ -66,6 +68,16 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
             combo_sum += B+D
             combo_sum_sq += math.pow(B+D, 2)
 
+
+            if (instance_file_name != None):
+                indeg = net.in_degree(g[0])
+                outdeg = net.out_degree(g[0])
+                lines[0] += str(g[0]) + '$' + str(indeg) + '$' + str(outdeg) + ' '
+                lines[1] += str(B) + ' '
+                lines[2] += str(D) + ' '
+                lines[3] += str(g[3]) + ' '
+
+
             if (track_node_fitness==True):
                 if (B > Bmax or D > Bmax): print("WARNING fitness(): B = " + str(B) + ", D = " + str(D) + " not included in node_info.")
                 else: node_info['freq'][B][D] += 1
@@ -96,6 +108,10 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         print("WARNING in pressurize: no results from oracle advice")
         fitness_score = 0
 
+    if (instance_file_name != None):
+        with open(instance_file_name, 'a') as file_out:
+            for line in lines:
+                file_out.write(line + "\n")
 
     return [RGAR, ETB, fitness_score, node_info]
 

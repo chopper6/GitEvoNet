@@ -37,7 +37,7 @@ def evolve_minion(worker_file):
             mutate_time += t1-t0
           
             t0 = ptime()
-            pressure_results = pressurize.pressurize(configs, population[p].net, False) #false: don't track node fitness
+            pressure_results = pressurize.pressurize(configs, population[p].net, False, False) #false: don't track node fitness, false: don't write instances to file
             t1 = ptime()
             pressurize_time += t1-t0
             population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
@@ -52,7 +52,7 @@ def evolve_minion(worker_file):
     
     # some output
     if (worker_ID == 0):
-        orig_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
+        orig_dir = configs['output_directory'] #.replace("v4nu_minknap_1X_both_reverse/", '')
         end_size = len(population[0].net.nodes())
         growth = end_size - start_size
         output.minion_csv(orig_dir, pressurize_time, growth, end_size)

@@ -13,9 +13,11 @@ def node_score (leaf_metric, B, D):
 
     elif (leaf_metric == 'ratio 11'): return math.pow(B-D,2)
     elif (leaf_metric == 'dual 1'): return math.pow(B - D, 2) / (B + D)
-    elif (leaf_metric == 'RGMG'):
-        if (B==0 and D > 0 or D==0 and B > 0): return 1
-        else: return -1
+    elif (leaf_metric == 'RGmG'):
+        if (B==0 and D > 0 or D==0 and B > 0): return 1 #GREEN|RED
+        if (D != 0):
+            if (B/float(D) < .55 and B/float(D) > .45): return -1 #GREY
+        return 0
     else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric.")
 
 
