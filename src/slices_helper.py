@@ -37,23 +37,24 @@ def fill_slices(node_info):
 def assign_slice_num(B,D):
     #assumes intervals of 10
     # returns (B inteval, D interval)
-    if (D==0):
-        if (B==0): slice_num, srange = 12, (0,0)
+    if (B==0):
+        if (D==0): slice_num, srange = 12, (0,0)
         else: slice_num, srange = 1, (100,0)
 
     else:
-        fraction = float(B/D)
-        if (fraction<.05): slice_num, srange = 11, (0,100)
-        elif (fraction<.15): slice_num, srange = 10, (10,90)
-        elif (fraction < .25): slice_num, srange = 9, (20,80)
-        elif (fraction < .35): slice_num, srange = 8, (30,70)
-        elif (fraction < .45): slice_num, srange = 7, (40,60)
-        elif (fraction < .55): slice_num, srange = 6, (50,50)
-        elif (fraction < .65): slice_num, srange = 5, (60,40)
-        elif (fraction < .75): slice_num, srange = 4, (70,30)
-        elif (fraction < .85): slice_num, srange = 3, (8,20)
-        elif (fraction < .95): slice_num, srange = 2, (90,10)
+        fraction = round((float(B)/float(B+D))*100, 12)
+        if (fraction< 5): slice_num, srange = 11, (0,100)
+        elif (fraction< 15): slice_num, srange = 10, (10,90)
+        elif (fraction < 25): slice_num, srange = 9, (20,80)
+        elif (fraction < 35): slice_num, srange = 8, (30,70)
+        elif (fraction < 45): slice_num, srange = 7, (40,60)
+        elif (fraction < 55): slice_num, srange = 6, (50,50)
+        elif (fraction < 65): slice_num, srange = 5, (60,40)
+        elif (fraction < 75): slice_num, srange = 4, (70,30)
+        elif (fraction < 85): slice_num, srange = 3, (8,20)
+        elif (fraction < 95): slice_num, srange = 2, (90,10)
         else: slice_num, srange = 1, (100,0)
+
 
     return slice_num, srange
 

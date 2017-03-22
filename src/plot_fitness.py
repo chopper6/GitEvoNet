@@ -11,6 +11,7 @@ def all_fitness_plots(output_dir):
         print("ERROR in plot_fitness: no directory to read in from, missing /node_info/.")
     node_info, iters, header = node_fitness.read_in(output_dir + "node_info/")
     # [file, B, D, features]
+    check_dirs(output_dir, header)
 
     #bar2d_plots(output_dir, node_info)
     BD_pairs(output_dir, node_info, iters, header)  #MUST COME 2nd SINCE NORMLZ NODE_INFO VALS
@@ -25,12 +26,13 @@ def just_for_hubfreqcontrib(node_info):
                 
     return node_info
 
+
+
 def BD_pairs(output_dir, node_info, iters, header):
-    node_info = just_for_hubfreqcontrib(node_info)
+    #node_info = just_for_hubfreqcontrib(node_info)
     num_features = len(header)
     node_info = fraction_normz(node_info)
-    #node_info = log_scale(node_info_fractions)
-    check_dirs(output_dir, header)
+    node_info = log_scale(node_info)
 
     num_files = len(node_info)
     max_B = len(node_info[0])

@@ -16,8 +16,10 @@ def node_score (leaf_metric, B, D):
     elif (leaf_metric == 'RGmG'):
         if (B==0 and D > 0 or D==0 and B > 0): return 1 #GREEN|RED
         if (D != 0):
-            if (B/float(D) < .55 and B/float(D) > .45): return -1 #GREY
-        return 0
+            slice = round((float(B)/float(B+D))*100, 12)
+            if (slice < 55 and slice > 45): return -1 #GREY
+        return 0      
+
     else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric.")
 
 

@@ -22,15 +22,14 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
 
     #HUB MEASURES
     ETB, dist, dist_sq, effic, effic2, effic4 = 0,0,0,0,0,0
-
-    if (instance_file_name != None): lines = [None for i in range(5)]
+    if (instance_file_name != None): lines = ['' for i in range(5)]
 
     if len(a_result) > 0:
         # -------------------------------------------------------------------------------------------------
         GENES_in, ALL_GENES, num_green, num_red, num_grey, solver_time = a_result[0], a_result[1], a_result[2], a_result[3], a_result[4], a_result[5]
         # -------------------------------------------------------------------------------------------------
 
-
+        if (instance_file_name != None): lines[4] += str(solver_time) + ' '
         # -------------------------------------------------------------------------------------------------
         # FITNESS BASED ON KP SOLUTION
         soln_bens = []
@@ -67,7 +66,6 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
             dist_sq += math.pow(B-D,2)
             combo_sum += B+D
             combo_sum_sq += math.pow(B+D, 2)
-
 
             if (instance_file_name != None):
                 indeg = net.in_degree(g[0])

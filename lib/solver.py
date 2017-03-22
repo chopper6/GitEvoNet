@@ -19,10 +19,10 @@ def solve_knapsack (kp_instance, knapsack_solver):
                 i += 1
             elif (B_dict[key]>0 and D_dict[key]==0):
                 green_genes.append(key)
-                GENES_in.append((key, B_dict[key], D_dict[key]))
+                GENES_in.append((key, B_dict[key], D_dict[key], 1))
             elif (B_dict[key]==0):
                 red_genes.append(key)
-                GENES_out.append((key, B_dict[key], D_dict[key]))
+                GENES_out.append((key, B_dict[key], D_dict[key], 0))
 
         assert (len(grey_genes)+len(green_genes)+len(red_genes)) == len (B_dict.keys())
         N = len (grey_genes)
@@ -37,10 +37,9 @@ def solve_knapsack (kp_instance, knapsack_solver):
         
         for g in range (0, N):
             if F[g] == 1:
-                GENES_in.append ((G[g], B[g], D[g]))
-            
+                GENES_in.append ((G[g], B[g], D[g], F[g]))
             else:
-                GENES_out.append ((G[g], B[g], D[g]))
+                GENES_out.append ((G[g], B[g], D[g], F[g]))
 
         ALL_GENES = GENES_in+GENES_out
         assert(len(ALL_GENES)==len(GENES_in) + len(GENES_out)) 

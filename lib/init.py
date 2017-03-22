@@ -40,16 +40,24 @@ def load_simulation_configs (param_file, rank):
     bORu = 'u'
     if configs['biased']:
         bORu = 'b'
-    configs['KP_solver_name']      = configs['KP_solver_binary'].split('/')[-1].split('.')[0]  
-    configs['stamp']               = configs['version']+configs['advice_upon'][0]+bORu+'_'+ configs['KP_solver_name']+'_'+configs['sampling_rounds']+'_'+ configs['BD_criteria']+'_'+configs['reduction_mode'] 
+
+    if (configs['fitness_operation'] == 'leaf'): fitness_def = configs['leaf_metric']
+    elif (configs['fitness_operation'] == 'hub'): fitness_def = configs['hub_metric']
+    else: fitness_def = configs['leaf_metric'] + configs['fitness_operation'] + configs['hub_metric']
+
+    configs['KP_solver_name']      = configs['KP_solver_binary'].split('/')[-1].split('.')[0]
     configs['timestamp']           = time.strftime("%B-%d-%Y-h%Hm%Ms%S")
+    configs['stamp']               = fitness_def + "_RAW_INSTANCES_p" +configs['pressure'] + "_t" + configs['tolerance'] + '_' + configs['version']+configs['advice_upon'][0]+bORu+'_'+ configs['KP_solver_name']+ '_' +configs['sampling_rounds']+'_'+ configs['BD_criteria']+'_'+configs['reduction_mode']+'_alpha'+configs['alpha']+'.'+configs['timestamp']
+
     configs['pressure']            = [float(p) for p in configs['pressure'].split(',') ]        
     configs['tolerance']           = [float(t) for t in configs['tolerance'].split(',') ]    
     configs['sampling_rounds_nX']  = configs['sampling_rounds']
     configs['sampling_rounds']     = int(''.join([d for d in configs['sampling_rounds'] if d.isdigit()]))
     configs['sampling_rounds_max'] = int (configs['sampling_rounds_max'])      
     configs ['output_directory'] += "/"
-    #configs['output_directory']    = util.slash (util.slash (configs['output_directory']) +configs['stamp'])#
+
+    configs['instance_file']    = (util.slash (configs['output_directory']) + "instances/" +configs['stamp'])
+    print("\nIn lib/init(): instance_file: " + str(configs['instance_file']))
     configs['stats_dir']           = configs['output_directory']+"00_network_stats/" 
     configs['datapoints_dir']      = configs['output_directory']+"02_raw_instances_simulation/data_points/"
     configs['params_save_dir']     = configs['output_directory']+"02_raw_instances_simulation/parameters/"

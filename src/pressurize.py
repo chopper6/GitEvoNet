@@ -30,6 +30,8 @@ def pressurize(configs, net, track_node_fitness, instance_file_name):
         node_info = node_fitness.gen_node_info(max_B_plot)
     else: node_info = None
 
+    if (instance_file_name != None): open(instance_file_name, 'w')
+
     for kp in kp_instances:
         a_result = solver.solve_knapsack(kp, knapsack_solver)
         #various characteristics of a result

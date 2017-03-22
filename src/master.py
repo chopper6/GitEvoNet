@@ -52,12 +52,10 @@ def evolve_from_seed(configs):
     #TODO: for final results, should NOT just use net0
     #instead pass to workers, but w/o any mutation and just for a single gen
 
-    pressure_results = pressurize.pressurize(configs, population[0].net, True, False) #True: track node fitness
+    pressure_results = pressurize.pressurize(configs, population[0].net, True, instance_file+"Xiter0.csv") #True: track node fitness
     population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
     fitness.eval_fitness([population[0]])
     output.deg_change_csv([population[0]], output_dir)
-
-    print("for vinayagam, master(): net size = " + str(len(population[0].net.nodes())))
 
     total_gens = 0
     size = start_size
@@ -117,7 +115,7 @@ def evolve_from_seed(configs):
     output.deg_change_csv(population, output_dir)
     draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
-    if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True)  # True: track node fitness
+    if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True, instance_file+"Xiter"+str(iter)+".csv")  # True: track node fitness
     node_info = pressure_results[3]
     node_fitness.write_out(output_dir + "/node_info/" + str(iter) + ".csv", node_info)
     plot_name = iter
@@ -135,6 +133,8 @@ def init_dirs(num_workers, output_dir):
         os.makedirs(output_dir)
     if not os.path.exists(output_dir + "/node_info/"):
         os.makedirs(output_dir + "/node_info/")
+    if not os.path.exists(output_dir + "/instances/"):
+        os.makedirs(output_dir + "/instances/")
     for w in range(num_workers):
         dirr = output_dir + "workers/" + str(w)
         if not os.path.exists(dirr):
