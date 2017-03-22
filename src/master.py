@@ -7,7 +7,7 @@ from random import SystemRandom as sysRand
 from time import sleep
 import networkx as nx
 import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, plot_fitness, node_fitness
-import init
+import instances
 
 
 def evolve_master(configs):
@@ -118,13 +118,10 @@ def evolve_from_seed(configs):
     if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True, instance_file+"Xiter"+str(iter)+".csv")  # True: track node fitness
     node_info = pressure_results[3]
     node_fitness.write_out(output_dir + "/node_info/" + str(iter) + ".csv", node_info)
-    plot_name = iter
-
-    plot_fitness.all_fitness_plots(output_dir)
-
 
     print("Evolution finished, generating images.")
     plot_nets.single_run_plots(output_dir)
+    instances.analyze(output_dir + "/instances/")
     print("Master finished.")
 
 

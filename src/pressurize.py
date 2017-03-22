@@ -5,7 +5,9 @@ from ctypes import cdll
 def pressurize(configs, net, track_node_fitness, instance_file_name):
     # configs:
     pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
-    tolerance = configs['PT_pairs_dict'][1][1]
+
+    #NOTE THAT T IS NOW A %
+    tolerance = math.ceil((float(configs['PT_pairs_dict'][1][1]) / 100.0))
     sampling_rounds = int(configs['sampling_rounds'])
     max_sampling_rounds = int(configs['sampling_rounds_max'])
     knapsack_solver = cdll.LoadLibrary(configs['KP_solver_binary'])

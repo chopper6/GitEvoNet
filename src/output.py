@@ -22,8 +22,10 @@ def init_csv(out_dir, configs):
     out_configs = out_dir + "/configs_used.csv"
 
     with open(out_configs, 'w') as outConfigs:
-        for config in configs:
-            outConfigs.write(config + "," + str(configs[config]) + "\n")
+        keys = configs.keys()
+        keys.sort()
+        for key in keys:
+            outConfigs.write(key + "," + str(configs[key]) + "\n")
 
     out_time = out_dir + "/timing.csv"
     with open(out_time, 'w') as out_timing:
