@@ -1,6 +1,8 @@
 # master process, and functions used only by master
 
-import math, os, pickle
+import math, os, pickle, sys
+os.environ['analysis'] = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib/analysis"
+sys.path.insert(0, os.getenv('analysis'))
 import multiprocessing as mp
 from operator import attrgetter
 from random import SystemRandom as sysRand
