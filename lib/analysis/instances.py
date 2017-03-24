@@ -11,9 +11,9 @@ def analyze(output_dir):
     # 'benefit' = [file#] [node#]
 
     freq, maxBD = extract_freq(node_info)
-    # freq [file#] [B] [D]
 
     Pr = BD_probability(maxBD)
+    print("Instances.analyze(): Pr = " + str(Pr))
     # Pr [B] [D]
 
     BD_leaf_fitness = calc_BD_leaf_fitness(leaf_metric, maxBD) #derive leaf metric from file name?
@@ -46,24 +46,28 @@ def analyze(output_dir):
 def derive_ETB(node_info, maxBD):
 
     num_files = len(node_info['benefits'])
-    num_nodes = len(node_info['benefits'][-1])
+    num_instances = len(node_info['benefits'][-1])
+    num_nodes = len(node_info['benefits'][-1][0])
     ETB_score = np.zeros((num_files, maxBD, maxBD))
 
     for i in range(num_files):
         solnB, solnD = [], []
-        for j in range(num_nodes):
-            if (node_info['solution'][i][j] == 1):
-                solnB.append(node_info['benefits'][i][j])
-                solnD.append(node_info['damages'][i][j])
+        for j in range(num_instances):
+            for k in range(num_nodes):
+                if (node_info['solution'][i][j][k] == 1):
+                    solnB.append(node_info['benefits'][i][j][k])
+                    solnD.append(node_info['damages'][i][j][k])
 
-        soln_freq = np.bincount(np.array(solnB))
-        denom = sum(solnB)
+            soln_freq = np.bincount(np.array(solnB))
+            denom = sum(solnB)
 
-        for j in range(len(solnB)):
-            B = solnB[j]
-            D = solnD[j]
-            node_contrib = (B / soln_freq[B])/denom
-            ETB_score[i][B][D] += node_contrib
+            for k in range(len(solnB)):
+                B = solnB[k]
+                D = solnD[k]
+                node_contrib = (B / soln_freq[B])/denom
+                ETB_score[i][B][D] += node_contrib
+
+        np.divide(ETB_score[i], num_instances)
 
     return ETB_score
 
@@ -87,7 +91,7 @@ def BD_probability(maxBD):
                 Pr[B][D] = 0
             else:
                 pr = math.pow(.5, B+D)
-                div = B+D
+                div = float(B+D)
                 combos = math.factorial(B+D)/math.factorial(B)*math.factorial(D)
                 Pr[B][D] = pr*combos/div
 
@@ -105,14 +109,17 @@ def extract_freq(node_info):
     freq = np.zeros((num_files, maxBD, maxBD))
 
     for i in range(num_files):
-        num_nodes = len(node_info['benefits'][i])
+        num_instances = len(node_info['benefits'][i])
+        num_nodes = len(node_info['benefits'][i][0])
 
-        for j in range(num_nodes):
-            B = node_info['benefits'][i][j]
-            D = node_info['damages'][i][j]
-            freq[i][B][D] += 1
+        for j in range(num_instances):
+            for k in range(num_nodes):
+                B = node_info['benefits'][i][j][k]
+                D = node_info['damages'][i][j][k]
+                freq[i][B][D] += 1
 
-        if (num_nodes != 0): np.divide(freq[i], num_nodes)
+        if (num_nodes != 0 and num_instances != 0):
+            np.divide(freq[i], num_nodes*num_instances)
 
     print("Instances.extract_freq(): Max BD freq = " + str(np.max(freq)))
     return freq, maxBD
@@ -126,6 +133,10 @@ def read_in(dirr):
     with open(dirr + files[-1], 'r') as sample:
         #assumes last file has largest number of nodes
         all_lines = [line.strip() for line in sample.readlines()]
+        num_instances = len(all_lines)/5
+        if (num_instances % 1 != 0): print("ERROR: Instances.read_in(): num lines not evenly div by 5.\n")
+        num_instances = int(num_instances)
+
         line = all_lines[0].split(' ')
         num_nodes = len(line)
         title = files[-1].split("_")
@@ -142,11 +153,11 @@ def read_in(dirr):
 
 
 
-    names = np.zeros((num_iters, num_nodes), dtype=np.int)
-    deg = np.zeros((num_iters, num_nodes), dtype=np.int)
-    B = np.zeros((num_iters, num_nodes), dtype=np.int)
-    D = np.zeros((num_iters, num_nodes), dtype=np.int)
-    soln = np.zeros((num_iters, num_nodes), dtype=np.int)
+    names = np.zeros((num_iters, num_instances, num_nodes), dtype=np.int)
+    deg = np.zeros((num_iters, num_instances, num_nodes), dtype=np.int)
+    B = np.zeros((num_iters, num_instances, num_nodes), dtype=np.int)
+    D = np.zeros((num_iters, num_instances, num_nodes), dtype=np.int)
+    soln = np.zeros((num_iters, num_instances, num_nodes), dtype=np.int)
 
 
     file_num=0
@@ -159,6 +170,7 @@ def read_in(dirr):
         line_num = 0
         for line in all_lines:
             line = line.split(' ')
+            instance_num = math.floor(line_num/5)
 
             #name & degree
             if (line_num % 5 == 0):
@@ -168,8 +180,8 @@ def read_in(dirr):
                     name = node[0]
                     degree = int(node[1]) + int(node[2])
 
-                    names[file_num][node_num] = name
-                    deg [file_num][node_num] = degree
+                    names[file_num][instance_num][node_num] = name
+                    deg [file_num][instance_num][node_num] = degree
 
                     node_num += 1
 
@@ -177,21 +189,21 @@ def read_in(dirr):
             elif (line_num % 5 == 1):
                 node_num = 0
                 for node in line:
-                    B[file_num][node_num] = int(node)
+                    B[file_num][instance_num][node_num] = int(node)
                     node_num += 1
 
             #damages
             elif (line_num % 5 == 2):
                 node_num = 0
                 for node in line:
-                    D[file_num][node_num] = int(node)
+                    D[file_num][instance_num][node_num] = int(node)
                     node_num += 1
 
             #solution
             elif (line_num % 5 == 3):
                 node_num = 0
                 for node in line:
-                    soln[file_num][node_num] = int(node)
+                    soln[file_num][instance_num][node_num] = int(node)
                     node_num += 1
 
             #don't track last line, curr holds exe time

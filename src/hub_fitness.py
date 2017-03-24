@@ -22,7 +22,7 @@ def node_score (hub_metric, B, D, soln_bens):
 def assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4):
     if (sum(soln_bens) == 0): return 0
 
-    if (hub_metric=='ETB'): return math.pow(sum(set(soln_bens)),.5)
+    if (hub_metric=='ETB'): return math.pow(sum(set(soln_bens)),1) #CHANGE POW FOR GROWTH
     elif(hub_metric=='effic'): return math.pow(sum(soln_bens_sq), .5)
     elif(hub_metric=='effic 2'): return sum(soln_bens_sq)
     elif(hub_metric=='effic 4'): return sum(soln_bens_4)
@@ -33,7 +33,7 @@ def assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4):
 def assign_denom (hub_metric, soln_bens):
     if (sum(soln_bens) == 0): return 1
 
-    if (hub_metric=='ETB'): return math.pow(sum(soln_bens),.5)
+    if (hub_metric=='ETB'): return math.pow(sum(soln_bens),1) #CHANGE POW FOR GROWTH
     elif(hub_metric=='effic'): return sum(soln_bens)
     elif(hub_metric=='effic 2'): return math.pow(sum(soln_bens), 2)
     elif(hub_metric=='effic 4'): return math.pow(sum(soln_bens), 4)
