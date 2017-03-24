@@ -12,8 +12,9 @@ def mutate(configs, net, gen_percent):
     shrink_freq = float(configs['shrink_mutation_frequency'])
 
     mutn_type = str(configs['mutation_type'])
+
     # --------- MUTATIONS ------------- #
-    # GROW (ADD NODE + 2 edges)
+    # GROW (ADD NODE)
     # starts unconnected
     num_grow = num_mutations(grow_freq, mutn_type, gen_percent)
     for i in range(num_grow):
@@ -25,23 +26,11 @@ def mutate(configs, net, gen_percent):
             net.add_node(node_num)
             post_size = len(net.nodes())
 
-        #ADD 2 EDGES
-        for j in range(2):
-            pre_size = post_size = len(net.edges())
-            while (pre_size == post_size):  # ensure that net adds
-                node = rd.sample(net.nodes(), 1)
-                node = node2 = node[0]
-                while (node2 == node):
-                    node2 = rd.sample(net.nodes(), 1)
-                    node2 = node2[0]
-
-                sign = rd.randint(0, 1)
-                if (sign == 0):     sign = -1
-                net.add_edge(node, node2, sign=sign)
-                post_size = len(net.edges())
+        #MAINTAIN NODE_EDGE RATIO
+        add_edges(net, 2)
 
 
-    # SHRINK (REMOVE NODE + 2 EDGES)
+    # SHRINK (REMOVE NODE)
     num_shrink = num_mutations(shrink_freq, mutn_type, gen_percent)
     pre_size = len(net.nodes())
     for i in range(num_shrink):
@@ -49,22 +38,21 @@ def mutate(configs, net, gen_percent):
         #REMOVE NODE
         node = rd.sample(net.nodes(), 1)
         node = node[0]
+
+        num_edges_lost = net.edges(node)
+        change_in_edges = 2-num_edges_lost
+
         net.remove_node(node)
         post_size = len(net.nodes())
         if (pre_size == post_size): print("MUTATE SHRINK() ERR: node not removed.")
 
-        # REMOVE 2 EDGES
-        for j in range(2):
-            pre_size = post_size = len(net.edges())
-            while (pre_size == post_size):
-                edge = rd.sample(net.edges(),1)
-                edge = edge[0]
-                net.remove_edge(edge[0], edge[1])
-                post_size = len(net.edges())
-                if (post_size == pre_size): print("WARNING: mutate remove edge failed, trying again.")
+        # MAINTAIN NODE:EDGE RATIO
+        if (change_in_edges > 0): rm_edges(net,change_in_edges)
+        else: add_edges(net, -1*change_in_edges)
 
 
     # REWIRE EDGE
+    # TODO: try changing to rm, then add
     num_rewire = num_mutations(rewire_freq, mutn_type, gen_percent)
     for i in range(num_rewire):
         pre_edges = len(net.edges())
@@ -129,3 +117,31 @@ def num_mutations(base_mutn_freq, mutn_type, gen_percent):
     else:
         return rd.randint(0, mutn_freq)
 
+
+
+def add_edges(net, num_add):
+
+    for j in range(num_add):
+        pre_size = post_size = len(net.edges())
+        while (pre_size == post_size):  # ensure that net adds
+            node = rd.sample(net.nodes(), 1)
+            node = node2 = node[0]
+            while (node2 == node):
+                node2 = rd.sample(net.nodes(), 1)
+                node2 = node2[0]
+
+            sign = rd.randint(0, 1)
+            if (sign == 0):     sign = -1
+            net.add_edge(node, node2, sign=sign)
+            post_size = len(net.edges())
+
+def rm_edges(net, num_rm):
+
+    for j in range(num_rm):
+        pre_size = post_size = len(net.edges())
+        while (pre_size == post_size):
+            edge = rd.sample(net.edges(), 1)
+            edge = edge[0]
+            net.remove_edge(edge[0], edge[1])
+            post_size = len(net.edges())
+            if (post_size == pre_size): print("WARNING: mutate remove edge failed, trying again.")
