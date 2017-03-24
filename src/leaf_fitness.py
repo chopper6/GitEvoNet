@@ -25,5 +25,5 @@ def node_score (leaf_metric, B, D):
 
 def assign_denom(leaf_metric, num_genes):
     #if (leaf_metric == 'ratio 11'): return math.pow(combo_sum,2)
-    return num_genes
+    return 1 #num_genes
 

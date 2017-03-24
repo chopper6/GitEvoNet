@@ -5,7 +5,6 @@ import networkx as nx
 
 def mutate(configs, net, gen_percent):
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
-    print(len(net.nodes()),len(net.edges()))
     rewire_freq = float(configs['rewire_mutation_frequency'])
     sign_freq = float(configs['sign_mutation_frequency'])
     grow_freq = float(configs['grow_mutation_frequency'])
@@ -39,7 +38,7 @@ def mutate(configs, net, gen_percent):
         node = rd.sample(net.nodes(), 1)
         node = node[0]
 
-        num_edges_lost = net.edges(node)
+        num_edges_lost = len(net.in_edges(node)+net.out_edges(node)) #ASSUmeS directional reduction
         change_in_edges = 2-num_edges_lost
 
         net.remove_node(node)

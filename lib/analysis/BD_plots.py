@@ -9,15 +9,16 @@ def freq(dirr, freq, iters):
     num_files = len(freq)
     multiplier = 1000
     zmin = 0 #np.min(freq[:,:,:])
-    zmax = multiplier
+    zmax = np.max(freq[:,:,:])
     np.multiply(freq, multiplier)
     np.round(freq)
 
     for i in range(num_files):
+
         xydata = freq[i]
 
         #TODO: log normalize
-        plt.matshow(xydata, cmap=plt.get_cmap('plasma'), origin="lower", vmin=zmin,vmax=zmax)  # , norm=matplotlib.colors.LogNorm())
+        plt.matshow(xydata, cmap=plt.get_cmap('plasma'), origin="lower") #, vmin=zmin,vmax=zmax)  # , norm=matplotlib.colors.LogNorm())
 
         plt.ylabel("Benefits", fontsize=15)
         plt.xlabel("Damages", fontsize=15)
@@ -29,7 +30,7 @@ def freq(dirr, freq, iters):
         # maxx =  math.ceil(np.ndarray.max(freq[:,:,:]))
         # cbar.set_ticklabels([0,maxx/1000, maxx/100, maxx/10, maxx])
         # plt.xaxis.set_ticks_position('bottom')
-        plt.savefig(dirr + "freq_ + " + str(iters[i]) + ".png")
+        plt.savefig(dirr + "freq_" + str(iters[i]) + ".png")
         plt.clf()
         plt.cla()
         plt.close()
@@ -97,7 +98,7 @@ def ETB(dirr, ETB_score, iters):
     num_files = len(ETB_score)
     multiplier = 1000
     zmin = 0
-    zmax = np.max[ETB_score[:,:,:]]
+    zmax = np.max(ETB_score[:,:,:])
 
     for i in range(num_files):
         xydata = ETB_score[i]

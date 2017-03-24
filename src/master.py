@@ -68,7 +68,7 @@ def evolve_from_seed(configs):
 
         if (iter % int(max_gen / num_output) == 0):
             output.to_csv(population, output_dir, total_gens)
-            print("Master at gen " + str(total_gens) + ", with net size = " + str(size) + ", " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
+            print("Master at gen " + str(total_gens) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
             worker_percent_survive = math.ceil(worker_survive_fraction * worker_pop_size)
             print("Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
 
@@ -123,7 +123,7 @@ def evolve_from_seed(configs):
 
     print("Evolution finished, generating images.")
     plot_nets.single_run_plots(output_dir)
-    instances.analyze(output_dir + "/instances/")
+    #instances.analyze(output_dir)
     print("Master finished.")
 
 

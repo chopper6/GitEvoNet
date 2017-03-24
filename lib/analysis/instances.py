@@ -3,7 +3,8 @@ import numpy as np
 import leaf_fitness, BD_plots, slice_plots
 
 
-def analyze(dirr):
+def analyze(output_dir):
+    dirr = output_dir + "instances/"
 
     node_info, iters, leaf_metric = read_in(dirr)
     # node_info = {'id':names, 'degree':deg, 'benefit':B, 'damage':D, 'solution':soln}
@@ -23,14 +24,20 @@ def analyze(dirr):
 
 
     ####PLOTS####
-    plot_dir = dirr + "/BD_plots/"
+    if not os.path.exists(output_dir + "/BD_plots/"):
+        os.makedirs(output_dir + "/BD_plots/")
+    if not os.path.exists(output_dir + "/slice_plots/"):
+        os.makedirs(output_dir + "/slice_plots/")
+
+
+    plot_dir = output_dir + "BD_plots/"
     BD_plots.freq(plot_dir, freq, iters)
     BD_plots.probability(plot_dir, Pr)
     BD_plots.leaf_fitness(plot_dir, BD_leaf_fitness)
     BD_plots.Pr_leaf_fitness(plot_dir, Pr, BD_leaf_fitness)
     BD_plots.ETB(plot_dir, ETB_score, iters)
 
-    plot_dir = dirr + "/slice_plots/"
+    plot_dir = output_dir + "slice_plots/"
     slice_plots.leaf_fitness(plot_dir, Pr, BD_leaf_fitness)
     slice_plots.ETB(plot_dir, ETB_score, iters)
 
@@ -88,10 +95,12 @@ def BD_probability(maxBD):
 
 
 def extract_freq(node_info):
-    maxBD = max(np.max(node_info['benefits']), np.max(node_info['damages']))
+    maxBD = (max(np.max(node_info['benefits']), np.max(node_info['damages'])))
+    maxBD = int(maxBD)+1
     num_files = len(node_info['benefits'])
 
     print("Instances.extract_freq(): maxBD = " + str(maxBD) + ", num files = " + str(num_files))
+    print("Instances.extract_freq(): len node_info['ben'][0] = " + str(len(node_info['benefits'][0])))
 
     freq = np.zeros((num_files, maxBD, maxBD))
 
@@ -118,21 +127,26 @@ def read_in(dirr):
         #assumes last file has largest number of nodes
         all_lines = [line.strip() for line in sample.readlines()]
         line = all_lines[0].split(' ')
-        num_nodes = len(line[0])
+        num_nodes = len(line)
         title = files[-1].split("_")
-        leaf_metric = files[-1][0].split("multiply")
+        leaf_metric = title[0].split("multiply")
         leaf_metric = leaf_metric[0]
 
-        print("Instances.read_in(): num nodes = " + str(num_nodes) + ", leaf metric = " + str(leaf_metric))
+    for file in os.listdir(dirr):
+        all_lines = [line.strip() for line in (open(dirr + file, 'r')).readlines()]
+        for line in all_lines:
+            line = line.split(' ')
+            num_nodes = max(len(line), num_nodes)
+
+    print("Instances.read_in(): num nodes = " + str(num_nodes) + ", leaf metric = " + str(leaf_metric))
 
 
 
-    names = np.empty((num_iters, num_nodes))
-    deg = np.empty((num_iters, num_nodes))
-    B = np.empty((num_iters, num_nodes))
-    D = np.empty((num_iters, num_nodes))
-    soln = np.empty((num_iters, num_nodes))
-    print("Instances.read_in(): deg shape = " + str(np.shape(deg)))
+    names = np.zeros((num_iters, num_nodes), dtype=np.int)
+    deg = np.zeros((num_iters, num_nodes), dtype=np.int)
+    B = np.zeros((num_iters, num_nodes), dtype=np.int)
+    D = np.zeros((num_iters, num_nodes), dtype=np.int)
+    soln = np.zeros((num_iters, num_nodes), dtype=np.int)
 
 
     file_num=0
@@ -140,8 +154,7 @@ def read_in(dirr):
     for file in os.listdir(dirr):
         all_lines = [line.strip() for line in (open(dirr + file, 'r')).readlines()]
         iter = file.split("X")
-        iters.append(int((iter).replace(".csv", '')))
-        if (file_num==0): print("Instances.read_in(): first file's iteration = " + str(iters[-1]))
+        iters.append(int(iter[2].replace(".csv", '').replace('iter','')))
 
         line_num = 0
         for line in all_lines:
@@ -186,5 +199,5 @@ def read_in(dirr):
             line_num+=1
         file_num+=1
 
-    node_info = {'id':names, 'degree':deg, 'benefit':B, 'damage':D, 'solution':soln}
+    node_info = {'id':names, 'degree':deg, 'benefits':B, 'damages':D, 'solution':soln}
     return node_info, iters, leaf_metric
