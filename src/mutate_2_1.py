@@ -5,7 +5,7 @@ import networkx as nx
 
 def mutate(configs, net, gen_percent):
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
-
+    print(len(net.nodes()),len(net.edges()))
     rewire_freq = float(configs['rewire_mutation_frequency'])
     sign_freq = float(configs['sign_mutation_frequency'])
     grow_freq = float(configs['grow_mutation_frequency'])
@@ -26,7 +26,7 @@ def mutate(configs, net, gen_percent):
             post_size = len(net.nodes())
 
         #ADD 2 EDGES
-        for i in range(2):
+        for j in range(2):
             pre_size = post_size = len(net.edges())
             while (pre_size == post_size):  # ensure that net adds
                 node = rd.sample(net.nodes(), 1)
@@ -54,12 +54,13 @@ def mutate(configs, net, gen_percent):
         if (pre_size == post_size): print("MUTATE SHRINK() ERR: node not removed.")
 
         # REMOVE 2 EDGES
-        for i in range(2):
+        for j in range(2):
             pre_size = post_size = len(net.edges())
             while (pre_size == post_size):
                 edge = rd.sample(net.edges(),1)
                 edge = edge[0]
                 net.remove_edge(edge[0], edge[1])
+                post_size = len(net.edges())
                 if (post_size == pre_size): print("WARNING: mutate remove edge failed, trying again.")
 
 
