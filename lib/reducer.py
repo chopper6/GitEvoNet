@@ -22,7 +22,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
 
     if (BD_criteria != 'both' and BD_criteria != 'source' and BD_criteria != 'target'):
         print("ERROR in reducer.BDT_calc_node: unknown BD_criteria: " + str(BD_criteria))
-
+    
     for element in Advice.keys():
         if (advice_upon=='nodes'):
             target = element
@@ -73,11 +73,10 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
 
         elif (advice_upon=='edges'):
             advice = Advice[element]
-            element = element.replace('(','').replace(')','').replace("'",'')
+            element = element.replace('(','').replace(')','').replace("'",'').replace(' ','')
             element = element.split(",")
             source = int(element[0])
             target = int(element[1])
-
             if M[source][target]['sign'] == advice:  # in agreement with the Oracle
                 if (BD_criteria == 'both' or BD_criteria == 'source'):
                     ######### REWARDING the source node ###########

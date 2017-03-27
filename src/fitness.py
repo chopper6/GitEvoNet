@@ -44,7 +44,9 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
             soln_bens_4.append(math.pow(B,4))
 
             if (track_node_fitness == True): 
-                if (B > Bmax or D > Bmax): print("WARNING fitness(): B = " + str(B) + ", D = " + str(D) + " not included in node_info.")
+                if (B > Bmax or D > Bmax):
+                    xadfdas=3 
+                    #print("WARNING fitness(): B = " + str(B) + ", D = " + str(D) + " not included in node_info.")
                 else: node_info['freq in solution'][B][D] += 1
         if (track_node_fitness == True): node_info = node_fitness.normz(node_info, len(GENES_in), 'freq in solution')
         # -------------------------------------------------------------------------------------------------
@@ -77,7 +79,9 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
 
 
             if (track_node_fitness==True):
-                if (B > Bmax or D > Bmax): print("WARNING fitness(): B = " + str(B) + ", D = " + str(D) + " not included in node_info.")
+                if (B > Bmax or D > Bmax): 
+                    xadsf=3
+                    #print("WARNING fitness(): B = " + str(B) + ", D = " + str(D) + " not included in node_info.")
                 else: node_info['freq'][B][D] += 1
         if (track_node_fitness == True): node_info = node_fitness.normz(node_info, len(ALL_GENES), 'freq')
 
@@ -110,7 +114,6 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         with open(instance_file_name, 'a') as file_out:
             for line in lines:
                 file_out.write(line + "\n")
-
     return [RGAR, ETB, fitness_score, node_info]
 
 

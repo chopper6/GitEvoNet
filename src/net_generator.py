@@ -74,6 +74,9 @@ def init_population(init_type, start_size, pop_size, configs):
     elif (init_type == "vinayagam"):
         population = [Net(init.load_network(configs), i) for i in range(pop_size)]
 
+    elif (init_type == "load"):
+        population = [Net(nx.read_edgelist(configs['network_file'], nodetype=int,create_using=nx.DiGraph()), i) for i in range(pop_size)]
+
     else:
         print("ERROR in master.gen_init_population(): unknown init_type.")
         return

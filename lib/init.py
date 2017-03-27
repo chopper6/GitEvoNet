@@ -106,7 +106,7 @@ def load_network (configs):
     for e in edges_file: 
         interaction = e.split()
         assert len(interaction)>=2
-        source, target = str(interaction[0]).strip().replace("'",''), str(interaction[1]).strip().replace("'",'')
+        source, target = str(interaction[0]).strip().replace("'",'').replace('(','').replace(')',''), str(interaction[1]).strip().replace("'",'').replace('(','').replace(')','')
         if (len(interaction) >2):
             if (str(interaction[2]) == '+'):
                 Ijk=1

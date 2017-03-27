@@ -1,27 +1,40 @@
-import os, math
+import os, math, sys
 import numpy as np
 import leaf_fitness, BD_plots, slice_plots
-
+from time import process_time as ptime
 
 def analyze(output_dir):
     dirr = output_dir + "instances/"
 
+    t0 = ptime()
     node_info, iters, leaf_metric = read_in(dirr)
     # node_info = {'id':names, 'degree':deg, 'benefit':B, 'damage':D, 'solution':soln}
     # 'benefit' = [file#] [node#]
+    t1 = ptime()
+    print("\nRead_in took " + str(t1-t0))
 
+    t0 = ptime()
     freq, maxBD = extract_freq(node_info)
+    t1 = ptime()
+    print("\nExtract_freq took " + str(t1-t0))
 
+    t0 = ptime()
     Pr = BD_probability(maxBD)
-    print("Instances.analyze(): Pr = " + str(Pr))
+    t1 = ptime()
+    print("\nProbability took " + str(t1-t0))
     # Pr [B] [D]
 
+    t0 = ptime()
     BD_leaf_fitness = calc_BD_leaf_fitness(leaf_metric, maxBD) #derive leaf metric from file name?
     # BD_leaf_fitness [B] [D]
+    t1 = ptime()
+    print("\nCalc_leaf_fitness took " + str(t1-t0))
 
-    ETB_score = derive_ETB(node_info, maxBD)
+    t0 = ptime()
+    #ETB_score = derive_ETB(node_info, maxBD)
     # ETB_score [file#] [B] [D]
-
+    t1 = ptime()
+    print("\nDerive_ETB took " + str(t1-t0))
 
     ####PLOTS####
     if not os.path.exists(output_dir + "/BD_plots/"):
@@ -29,7 +42,7 @@ def analyze(output_dir):
     if not os.path.exists(output_dir + "/slice_plots/"):
         os.makedirs(output_dir + "/slice_plots/")
 
-
+    t0 = ptime()
     plot_dir = output_dir + "BD_plots/"
     BD_plots.freq(plot_dir, freq, iters)
     BD_plots.probability(plot_dir, Pr)
@@ -41,6 +54,8 @@ def analyze(output_dir):
     slice_plots.leaf_fitness(plot_dir, Pr, BD_leaf_fitness)
     slice_plots.ETB(plot_dir, ETB_score, iters)
 
+    t1 = ptime()
+    print("\nPlots took " + str(t1-t0))
 
 
 def derive_ETB(node_info, maxBD):
@@ -50,25 +65,43 @@ def derive_ETB(node_info, maxBD):
     num_nodes = len(node_info['benefits'][-1][0])
     ETB_score = np.zeros((num_files, maxBD, maxBD))
 
+    ct, ft, dt, ft = 0,0,0,0
+
     for i in range(num_files):
         solnB, solnD = [], []
         for j in range(num_instances):
+            t0 = ptime()
             for k in range(num_nodes):
                 if (node_info['solution'][i][j][k] == 1):
                     solnB.append(node_info['benefits'][i][j][k])
                     solnD.append(node_info['damages'][i][j][k])
+            t1=ptime()
+            ct += t1-t0
 
+            t0 = ptime()
             soln_freq = np.bincount(np.array(solnB))
             denom = sum(solnB)
+            t1 = ptime()
+            ft += t1-t0
 
+            t0 = ptime()
             for k in range(len(solnB)):
                 B = solnB[k]
                 D = solnD[k]
                 node_contrib = (B / soln_freq[B])/denom
                 ETB_score[i][B][D] += node_contrib
+            t1 = ptime()
+            dt += t1-t0
+        
+        t0=ptime()
+        for j in range(maxBD):
+            for k in range(maxBD):
+                if (ETB_score[i][j][k] != 0): ETB_score[i][j][k] /= num_instances 
+        t1=ptime()
+        ft += t1-t0
 
-        np.divide(ETB_score[i], num_instances)
-
+  
+    print("\nTime to collect solution = " + str(ct) + "\nTime to get greq in solution = " + str(ft) + "\nTime to get hub contrib = " + str(ct) + "\nTime to fill ETB_score = " + str(ft))
     return ETB_score
 
 
@@ -91,10 +124,8 @@ def BD_probability(maxBD):
                 Pr[B][D] = 0
             else:
                 pr = math.pow(.5, B+D)
-                div = float(B+D)
-                combos = math.factorial(B+D)/math.factorial(B)*math.factorial(D)
-                Pr[B][D] = pr*combos/div
-
+                combos = math.factorial(B+D)/(math.factorial(B)*math.factorial(D))
+                Pr[B][D] = pr*combos
     return Pr
 
 
@@ -118,8 +149,10 @@ def extract_freq(node_info):
                 D = node_info['damages'][i][j][k]
                 freq[i][B][D] += 1
 
-        if (num_nodes != 0 and num_instances != 0):
-            np.divide(freq[i], num_nodes*num_instances)
+        if (num_instances != 0 and num_nodes !=0):
+            for B in range(maxBD):
+                for D in range(maxBD):
+                    freq[i][B][D] /= num_instances*num_nodes
 
     print("Instances.extract_freq(): Max BD freq = " + str(np.max(freq)))
     return freq, maxBD
@@ -130,7 +163,7 @@ def read_in(dirr):
     files = os.listdir(dirr)
     num_iters = len(files)
 
-    with open(dirr + files[-1], 'r') as sample:
+    with open(dirr + files[0], 'r') as sample:
         #assumes last file has largest number of nodes
         all_lines = [line.strip() for line in sample.readlines()]
         num_instances = len(all_lines)/5
@@ -149,7 +182,7 @@ def read_in(dirr):
             line = line.split(' ')
             num_nodes = max(len(line), num_nodes)
 
-    print("Instances.read_in(): num nodes = " + str(num_nodes) + ", leaf metric = " + str(leaf_metric))
+    print("Instances.read_in(): num nodes = " + str(num_nodes) + ", leaf metric = " + str(leaf_metric) + ", num instances = " + str(num_instances))
 
 
 
@@ -213,3 +246,20 @@ def read_in(dirr):
 
     node_info = {'id':names, 'degree':deg, 'benefits':B, 'damages':D, 'solution':soln}
     return node_info, iters, leaf_metric
+
+
+
+if __name__ == "__main__":
+    #first bash arg should be parent directory, then each child directory
+    dirr_base = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
+
+    dirr_parent = sys.argv[1]
+    dirr_base += dirr_parent
+
+    for arg in sys.argv[2:]:
+        print("Plotting dirr " + str(arg))
+        dirr_addon = arg
+        dirr= dirr_base + dirr_addon + "/"
+        analyze(dirr)
+
+    print("Finished analyzing instances.")
