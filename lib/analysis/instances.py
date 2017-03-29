@@ -19,7 +19,7 @@ def analyze(output_dir):
     print("\nExtract_freq took " + str(t1-t0))
 
     t0 = ptime()
-    Pr = BD_probability(maxBD)
+    Pr = BD_probability(11)
     t1 = ptime()
     print("\nProbability took " + str(t1-t0))
     # Pr [B] [D]
@@ -48,11 +48,11 @@ def analyze(output_dir):
     BD_plots.probability(plot_dir, Pr)
     BD_plots.leaf_fitness(plot_dir, BD_leaf_fitness)
     BD_plots.Pr_leaf_fitness(plot_dir, Pr, BD_leaf_fitness)
-    BD_plots.ETB(plot_dir, ETB_score, iters)
+    #BD_plots.ETB(plot_dir, ETB_score, iters)
 
     plot_dir = output_dir + "slice_plots/"
     slice_plots.leaf_fitness(plot_dir, Pr, BD_leaf_fitness)
-    slice_plots.ETB(plot_dir, ETB_score, iters)
+    #slice_plots.ETB(plot_dir, ETB_score, iters)
 
     t1 = ptime()
     print("\nPlots took " + str(t1-t0))
@@ -213,7 +213,7 @@ def read_in(dirr):
                     name = node[0]
                     degree = int(node[1]) + int(node[2])
 
-                    names[file_num][instance_num][node_num] = name
+                    #names[file_num][instance_num][node_num] = 0 #name
                     deg [file_num][instance_num][node_num] = degree
 
                     node_num += 1
@@ -251,7 +251,7 @@ def read_in(dirr):
 
 if __name__ == "__main__":
     #first bash arg should be parent directory, then each child directory
-    dirr_base = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
+    dirr_base = "C:/Users/Crbn/Desktop/McGWinter17/EvoNet/server_output/"
 
     dirr_parent = sys.argv[1]
     dirr_base += dirr_parent

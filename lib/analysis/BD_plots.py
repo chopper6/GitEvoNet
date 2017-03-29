@@ -4,12 +4,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-def freq(dirr, freq, iters):
+def freq(dirr, freq_orig, iters):
 
-    num_files = len(freq)
-    maxBD = min(17,len(freq[0]))
+    num_files = len(freq_orig)
+    orig_maxBD = len(freq_orig[0])
+    maxBD = min(21,6976796) #len(freq[0]))
 
-    multiplier = 100
+    freq = np.zeros((num_files, maxBD, maxBD))
+    for i in range(num_files):
+        for B in range(maxBD):
+            for D in range(maxBD):
+                if (B < orig_maxBD and D < orig_maxBD): freq[i][B][D] = freq_orig[i][B][D]
+
+    multiplier = 10000
 
     for i in range(num_files):
         for B in range(maxBD):
@@ -17,7 +24,8 @@ def freq(dirr, freq, iters):
                 freq [i][B][D] *= multiplier
                 freq[i][B][D] = round(freq[i][B][D])
 
-    zmin = 1 #np.min(freq[:,:,:])
+    zmin = 1      #np.min(freq[np.nonzero(freq)])
+    print("BD_plots(): freq min = " + str(zmin))
     zmax = multiplier #np.max(freq[:,:,:])
 
     for i in range(num_files):
@@ -34,14 +42,12 @@ def freq(dirr, freq, iters):
         ax.set_xlabel("Damages", fontsize=12)
         ax.xaxis.set_label_position('bottom')
  
-        plt.title("Frequency of BD Pairs", fontsize=15)
-        cbar = plt.colorbar(label=str("frequency"))
+        plt.title("Node Frequency", fontsize=15)
+        cbar = plt.colorbar(label=str("Percent of nodes"))
 
         #TODO: add cbar log normz'd labels
-        # cbar.set_ticks([0,.1, 1, 10,100 , 1000])
-        # maxx =  math.ceil(np.ndarray.max(freq[:,:,:]))
-        # cbar.set_ticklabels([0,maxx/1000, maxx/100, maxx/10, maxx])
-        # plt.xaxis.set_ticks_position('bottom')
+        cbar.set_ticks([1, zmax/1000, zmax/100, zmax/10 , zmax])
+        cbar.set_ticklabels(["$0$","$10^{-2}$","$10^{-1}$","$10^1$","$10^2$"])
         plt.savefig(dirr + "freq_" + str(iters[i]) + ".png")
         plt.clf()
         plt.cla()
@@ -121,7 +127,7 @@ def Pr_leaf_fitness(dirr, Pr, leaf_fitness):
 
 def ETB(dirr, ETB_score, iters):
     num_files = len(ETB_score)
-    multiplier = 1000
+    #multiplier = 1000
     zmin = 0
     zmax = np.max(ETB_score[:,:,:])
 
@@ -137,14 +143,10 @@ def ETB(dirr, ETB_score, iters):
         ax.set_xlabel("Damages", fontsize=12)
         ax.xaxis.set_label_position('bottom')
 
-        plt.title("ETB of BD Pairs", fontsize=15)
-        cbar = plt.colorbar(label=str("ETB"))
+        plt.title("Hub Fitness", fontsize=15)
+        cbar = plt.colorbar(label=str("Average Contribution"))
+        cbar.ax.tick_params(labelsize=10)
 
-        #TODO: add cbar log normz'd labels
-        # cbar.set_ticks([0,.1, 1, 10,100 , 1000])
-        # maxx =  math.ceil(np.ndarray.max(freq[:,:,:]))
-        # cbar.set_ticklabels([0,maxx/1000, maxx/100, maxx/10, maxx])
-        # plt.xaxis.set_ticks_position('bottom')
         plt.savefig(dirr + "ETB_" + str(iters[i]) + ".png")
         plt.clf()
         plt.cla()
