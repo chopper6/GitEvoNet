@@ -27,6 +27,27 @@ def assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4):
     elif(hub_metric=='effic 2'): return sum(soln_bens_sq)
     elif(hub_metric=='effic 4'): return sum(soln_bens_4)
     elif(hub_metric=='control'): return max(soln_bens)
+
+    #NEW
+    elif(hub_metric=='1'):
+        powB = 0
+        for B in soln_bens:
+            powB += math.pow(B,2)
+        return powB
+
+    elif(hub_metric=='2'):
+        powB = 0
+        for B in soln_bens:
+            powB += math.pow(B,10)
+        return powB
+
+    elif(hub_metric=='3'):
+        powB = 0
+        for B in soln_bens:
+            powB *= math.pow(B,2)
+        return powB
+
+
     else: print("ERROR in fitness.assign_hub_numer(): unknown hub metric.")
 
 
@@ -38,4 +59,18 @@ def assign_denom (hub_metric, soln_bens):
     elif(hub_metric=='effic 2'): return math.pow(sum(soln_bens), 2)
     elif(hub_metric=='effic 4'): return math.pow(sum(soln_bens), 4)
     elif(hub_metric=='control'): return sum(soln_bens)
+
+    #NEW
+    elif (hub_metric == '1'):
+        return math.pow(2,sum(soln_bens))
+
+    elif (hub_metric == '2'):
+        return math.pow(10,sum(soln_bens))
+
+    elif (hub_metric == '3'):
+        powB = 0
+        for B in soln_bens:
+            powB *= B
+        return math.pow(2,powB)
+
     else: print("ERROR in fitness.assign_hub_denom(): unknown hub metric.")

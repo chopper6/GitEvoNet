@@ -18,7 +18,36 @@ def node_score (leaf_metric, B, D):
         if (D != 0):
             slice = round((float(B)/float(B+D))*100, 12)
             if (slice < 55 and slice > 45): return -1 #GREY
-        return 0      
+        return 0
+
+    #NEW
+    elif (leaf_metric == 'grey45'):
+        if (B+D != 0):
+            slice = round((float(B)/float(B+D))*100, 12)
+            if (slice < 55 and slice > 45): return -1 #GREY
+        return 0
+    elif (leaf_metric == 'grey30'):
+        if (B+D != 0):
+            slice = round((float(B)/float(B+D))*100, 12)
+            if (slice < 70 and slice > 30): return -1 #GREY
+        return 0
+    elif (leaf_metric == 'grey10'):
+        if (B+D != 0):
+            slice = round((float(B)/float(B+D))*100, 12)
+            if (slice < 90 and slice > 10): return -1 #GREY
+        return 0
+
+    elif (leaf_metric == 'old1'):
+        if (B+D == 0): return 0
+        return abs(B-D)/(B+D)
+    elif (leaf_metric == 'old2'):
+        if (B+D == 0): return 0
+        return math.pow(B-D,2)/(B+D)
+
+    elif (leaf_metric == 'expo1'):
+        if (B+D == 0): return 0
+        return math.pow(2,abs(B-D)/(B+D))
+
 
     else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric.")
 

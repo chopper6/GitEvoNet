@@ -1,6 +1,6 @@
 import os, math, sys
 import numpy as np
-import leaf_fitness, BD_plots, slice_plots
+import leaf_fitness_analysis, BD_plots, slice_plots
 from time import process_time as ptime
 
 def analyze(output_dir):
