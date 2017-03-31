@@ -1,6 +1,7 @@
 import networkx as nx
 from random import SystemRandom as sysRand
 import perturb, init
+import pickle
 
 # maybe rename to reduce confusion
 class Net:
@@ -21,6 +22,8 @@ class Net:
 
 
 def init_population(init_type, start_size, pop_size, configs):
+
+    sign_edges_needed = True
 
     if (init_type == 'shell'):
         population = [Net(nx.DiGraph(), i) for i in range(pop_size)] #change to generate, based on start_size
@@ -77,11 +80,26 @@ def init_population(init_type, start_size, pop_size, configs):
     elif (init_type == "load"):
         population = [Net(nx.read_edgelist(configs['network_file'], nodetype=int,create_using=nx.DiGraph()), i) for i in range(pop_size)]
 
+    elif (init_type == "pickle load"):
+        pickled_net = pickle.load(configs['network_file'])
+        population = [Net(pickled_net.copy(), i) for i in range(pop_size)]
+        sign_edges_needed=False
+
+    elif (init_type == 'All Leaves'):
+        population = [Net(nx.configuration_model([1 for e in range(start_size)]),i) for i in range(pop_size)]
+
+    elif (init_type == 'All 2s'):
+        population = [Net(nx.configuration_model([2 for e in range(start_size)]),i) for i in range(pop_size)]
+
+    elif (init_type == 'All 3s'):
+        population = [Net(nx.configuration_model([3 for e in range(start_size)]),i) for i in range(pop_size)]
+
+
     else:
         print("ERROR in master.gen_init_population(): unknown init_type.")
         return
 
-    sign_edges(population)
+    if (sign_edges_needed==True): sign_edges(population)
 
     return population
 

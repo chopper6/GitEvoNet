@@ -1,7 +1,7 @@
 import math, random
 from operator import attrgetter
 import networkx as nx
-import hub_fitness, leaf_fitness, node_fitness
+import hub_fitness, leaf_fitness, node_fitness, unambig_fitness
 
 def eval_fitness(population):
     #determines fitness of each individual and orders the population by fitness
@@ -101,7 +101,9 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         ETB = hub_fitness.assign_numer ("ETB", soln_bens, soln_bens_sq, soln_bens_4)
         ETB /= float(hub_fitness.assign_denom ("ETB", soln_bens))
 
-        fitness_score = operate_on_features (leaf_score, hub_score, fitness_operator)
+        if (fitness_operator == "unambig"): #TODO: temp handling of unambig fitness
+            fitness_score = unambig_fitness.unambiguity_fitness_score(net)
+        else: fitness_score = operate_on_features (leaf_score, hub_score, fitness_operator)
 
 
         if (track_node_fitness==True):
