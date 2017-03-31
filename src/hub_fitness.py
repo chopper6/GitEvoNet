@@ -13,10 +13,11 @@ def node_score (hub_metric, B, D, soln_bens):
     elif (hub_metric == 'effic'): return math.pow(B,2) #no good way to capture
     elif (hub_metric == 'effic 2'): return math.pow(B,2)
     elif (hub_metric == 'effic 4'): return math.pow(B,4)
+    elif (hub_metric == 'effic .5'): return math.pow(B,.5)
     elif (hub_metric == 'control'):
         if (B == max(soln_bens)): return 1
         else: return 0
-    else: print("ERROR in fitness.node_hub_score(): unknown hub metric.")
+    else: return 1 #print("ERROR in fitness.node_hub_score(): unknown hub metric.")
 
 
 def assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4):
@@ -26,6 +27,12 @@ def assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4):
     elif(hub_metric=='effic'): return math.pow(sum(soln_bens_sq), .5)
     elif(hub_metric=='effic 2'): return sum(soln_bens_sq)
     elif(hub_metric=='effic 4'): return sum(soln_bens_4)
+    elif (hub_metric == 'effic sqrt'): 
+        soln_rt = 0
+        for B in soln_bens:
+            soln_rt += math.pow(B,.5)
+        return soln_rt
+
     elif(hub_metric=='control'): return max(soln_bens)
 
     #NEW
@@ -47,6 +54,9 @@ def assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4):
             powB *= math.pow(B,2)
         return powB
 
+    elif(hub_metric=='ln'):
+        
+        return -1*math.log(sum(soln_bens))
 
     else: print("ERROR in fitness.assign_hub_numer(): unknown hub metric.")
 
@@ -58,6 +68,7 @@ def assign_denom (hub_metric, soln_bens):
     elif(hub_metric=='effic'): return sum(soln_bens)
     elif(hub_metric=='effic 2'): return math.pow(sum(soln_bens), 2)
     elif(hub_metric=='effic 4'): return math.pow(sum(soln_bens), 4)
+    elif(hub_metric == 'effic sqrt'): return math.pow(sum(soln_bens), .5)
     elif(hub_metric=='control'): return sum(soln_bens)
 
     #NEW
@@ -73,4 +84,10 @@ def assign_denom (hub_metric, soln_bens):
             powB *= B
         return math.pow(2,powB)
 
-    else: print("ERROR in fitness.assign_hub_denom(): unknown hub metric.")
+    elif(hub_metric=='ln'):
+        logB = 0
+        for B in soln_bens:
+            logB += math.log(B)
+        return logB
+
+    else: print("ERROR in fitness.assign_hub_denom(): unknown hub metric:" + str(hub_metric))

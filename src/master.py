@@ -123,7 +123,7 @@ def evolve_from_seed(configs):
 
     print("Evolution finished, generating images.")
     plot_nets.single_run_plots(output_dir)
-    instances.analyze(output_dir)
+    #instances.analyze(output_dir)
     print("Master finished.")
 
 

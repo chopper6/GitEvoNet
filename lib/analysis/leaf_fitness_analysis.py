@@ -46,10 +46,25 @@ def node_score (leaf_metric, B, D):
 
     elif (leaf_metric == 'expo1'):
         if (B+D == 0): return 0
-        return math.pow(2,abs(B-D)/(B+D))
+        return math.pow(2,abs(B-D)/float(B+D))
 
+    elif (leaf_metric == 'ln1'):
+        if (B+D==0 or B-D==0): return 0
+        return math.log(abs(B-D)/float(B+D))
 
-    else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric.")
+    elif (leaf_metric == 'ln2'):
+        if (B+D==0): return 0
+        return math.log(max(B,D)/float(B+D))
+
+    elif (leaf_metric == 'sqrt1'):
+        if (B+D==0): return 0
+        return math.pow(abs(B-D)/float(B+D),.5)
+
+    elif (leaf_metric == 'sqrt2'):
+        if (B+D==0): return 0
+        return math.pow(max(B,D)/float(B+D),.5)
+
+    else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric: " + str(leaf_metric))
 
 
 def assign_denom(leaf_metric, num_genes):

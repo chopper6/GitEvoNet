@@ -95,9 +95,11 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
 
         hub_score = hub_fitness.assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4)
         hub_denom = hub_fitness.assign_denom (hub_metric, soln_bens)
-        hub_score /= hub_denom
+        #print("\nFitness(): hub score = " + str(hub_score) + ", hub denom = " + str(hub_denom) + ".")
+        hub_score /= float(hub_denom)
+        #print("Fitness(): hub fitness = " + str(hub_score) + ".\n")
         ETB = hub_fitness.assign_numer ("ETB", soln_bens, soln_bens_sq, soln_bens_4)
-        ETB /= hub_fitness.assign_denom ("ETB", soln_bens)
+        ETB /= float(hub_fitness.assign_denom ("ETB", soln_bens))
 
         fitness_score = operate_on_features (leaf_score, hub_score, fitness_operator)
 

@@ -8,7 +8,7 @@ def freq(dirr, freq_orig, iters):
 
     num_files = len(freq_orig)
     orig_maxBD = len(freq_orig[0])
-    maxBD = min(21,6976796) #len(freq[0]))
+    maxBD = min(21, len(freq_orig[0]))
 
     freq = np.zeros((num_files, maxBD, maxBD))
     for i in range(num_files):

@@ -1,6 +1,7 @@
 import os, math, sys
 import numpy as np
-import leaf_fitness_analysis, BD_plots, slice_plots
+import leaf_fitness_analysis as leaf_fitness
+import BD_plots, slice_plots
 from time import process_time as ptime
 
 def analyze(output_dir):
@@ -13,13 +14,16 @@ def analyze(output_dir):
     t1 = ptime()
     print("\nRead_in took " + str(t1-t0))
 
+    #TEMP FOR HUBS:
+    leaf_metric = "RGAR"
+
     t0 = ptime()
     freq, maxBD = extract_freq(node_info)
     t1 = ptime()
     print("\nExtract_freq took " + str(t1-t0))
 
     t0 = ptime()
-    Pr = BD_probability(11)
+    Pr = BD_probability(maxBD)
     t1 = ptime()
     print("\nProbability took " + str(t1-t0))
     # Pr [B] [D]
@@ -251,8 +255,7 @@ def read_in(dirr):
 
 if __name__ == "__main__":
     #first bash arg should be parent directory, then each child directory
-    dirr_base = "C:/Users/Crbn/Desktop/McGWinter17/EvoNet/server_output/"
-
+    dirr_base = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
     dirr_parent = sys.argv[1]
     dirr_base += dirr_parent
 
