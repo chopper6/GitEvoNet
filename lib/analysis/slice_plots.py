@@ -15,10 +15,10 @@ def leaf_fitness(dirr, Pr, BD_leaf_fitness):
         for D in range (maxBD):
             if (B+D < maxBD): Pr_fitness[B+D] += Pr[B][D]*BD_leaf_fitness[B][D]*100
 
-    index = [i for i in range(maxBD)]
+    index = [i for i in range(1,maxBD)]
 
-    plt.bar(index, Pr_fitness)
-    plt.yscale('log')
+    plt.loglog(index,Pr_fitness)
+    #plt.yscale('log')
 
     ax = plt.gca()
 
