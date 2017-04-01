@@ -15,7 +15,7 @@ def analyze(output_dir):
     print("\nRead_in took " + str(t1-t0))
 
     #TEMP FOR HUBS:
-    leaf_metric = "RGAR"
+    #leaf_metric = "RGAR"
 
     t0 = ptime()
     freq, maxBD = extract_freq(node_info)
