@@ -128,5 +128,7 @@ def operate_on_features (leaf_score, hub_score, fitness_operator):
     elif (fitness_operator=='add'): return leaf_score+hub_score
     elif (fitness_operator=='multiply'): return leaf_score*hub_score
     elif (fitness_operator=='power'): return math.pow(hub_score,leaf_score)
-    else: print("ERROR in fitness.operate_on_features(): unknown fitness operator.")
+
+    elif(fitness_operator == 'unambig'): return leaf_score*hub_score
+    else: print("ERROR in fitness.operate_on_features(): unknown fitness operator: " + str(fitness_operator))
 

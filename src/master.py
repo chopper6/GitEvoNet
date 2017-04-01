@@ -155,9 +155,9 @@ def parse_worker_popn (num_workers, output_dir, num_survive):
 def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_survive):
 
 
-    worker_pop_size = math.floor(end_size/size)
+    worker_pop_size = 3*math.floor(end_size/size)
 
-    worker_gens = worker_pop_size
+    worker_gens = 1 #worker_pop_size
     # ISLAND #
     # percent_size = float(size) / float(end_size)
     # math.ceil(10 * math.pow(math.e, -4 * percent_size))
