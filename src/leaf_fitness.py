@@ -64,6 +64,10 @@ def node_score (leaf_metric, B, D):
         if (B+D==0): return 0
         return math.pow(max(B,D)/float(B+D),.5)
 
+    elif (leaf_metric == 'unambig'):
+        if (B+D==0): return 0
+        val = .5**B * .5**D
+
     else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric: " + str(leaf_metric))
 
 

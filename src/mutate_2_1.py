@@ -59,6 +59,12 @@ def mutate(configs, net, gen_percent):
         while (rewire_success==False):  # ensure sucessful rewire
             edge = rd.sample(net.edges(), 1)
             edge = edge[0]
+
+            #TODO: TEMP don't allow 0 deg edges
+            while((net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1) or (net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1)):
+                edge = rd.sample(net.edges(), 1)
+                edge = edge[0]
+
             #sign = net[edge[0]][edge[1]]['sign']
 
             node = rd.sample(net.nodes(), 1)

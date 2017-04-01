@@ -21,7 +21,7 @@ def unambiguity_fitness_score(G): # G is a networkx DiGraph (one of your populat
         unambiguity = []
         for k in range(0,d+1,1):
             #dCk          = nchoosek(d,k,exact=True)
-            dCk = math.factorial(d)/(math.factorial(k)*math.factorial(d-k))
+            dCk = math.factorial(d)/float(math.factorial(k)*math.factorial(d-k))
             count        = dCk   *   p**k   *   q**(d-k)
             unambiguity.append(n2e*(count**(e2n*log10(d)))) # winner
         fitness.append(np.average(unambiguity))

@@ -55,7 +55,7 @@ def analyze(output_dir):
     #BD_plots.ETB(plot_dir, ETB_score, iters)
 
     plot_dir = output_dir + "slice_plots/"
-    slice_plots.leaf_fitness(plot_dir, Pr, BD_leaf_fitness)
+    slice_plots.leaf_fitness(plot_dir, Pr, BD_leaf_fitness, None)
     #slice_plots.ETB(plot_dir, ETB_score, iters)
 
     t1 = ptime()
@@ -256,13 +256,26 @@ def read_in(dirr):
 if __name__ == "__main__":
     #first bash arg should be parent directory, then each child directory
     dirr_base = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
-    dirr_parent = sys.argv[1]
-    dirr_base += dirr_parent
 
-    for arg in sys.argv[2:]:
-        print("Plotting dirr " + str(arg))
-        dirr_addon = arg
-        dirr= dirr_base + dirr_addon + "/"
-        analyze(dirr)
+    if (sys.argv[1] == 'degreeFitness'):
+        if not os.path.exists(dirr_base + "/degree_fitness/"):
+            os.makedirs(dirr_base + "/degree_fitness/")
+        for arg in sys.argv[2:]:
+            leaf_metric = arg
+            Pr = BD_probability(maxBD=20)
+            BD_leaf_fitness = calc_BD_leaf_fitness(leaf_metric, maxBD=20)
+            slice_plots.leaf_fitness(dirr_base+"/degree_fitness/", Pr, BD_leaf_fitness, leaf_metric)
 
-    print("Finished analyzing instances.")
+
+
+    else:
+        dirr_parent = sys.argv[1]
+        dirr_base += dirr_parent
+
+        for arg in sys.argv[2:]:
+            print("Plotting dirr " + str(arg))
+            dirr_addon = arg
+            dirr= dirr_base + dirr_addon + "/"
+            analyze(dirr)
+
+        print("Finished analyzing instances.")
