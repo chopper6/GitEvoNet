@@ -45,7 +45,8 @@ def unambig_fitness(dirr, Pr):
 
     for B in range(maxBD):
         for D in range (maxBD):
-            if (B+D < maxBD): Pr_fitness[B+D] += .5*Pr[B][D]**(2*math.log10(B+D))
+            if (B+D==0): Pr_fitness[B+D] = 0
+            elif (B+D < maxBD): Pr_fitness[B+D] += .5*Pr[B][D]**(2*math.log10(B+D))
 
     index = [i for i in range(1,maxBD+1)]
 

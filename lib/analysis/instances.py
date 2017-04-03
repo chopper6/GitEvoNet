@@ -252,7 +252,6 @@ def read_in(dirr):
     return node_info, iters, leaf_metric
 
 
-
 if __name__ == "__main__":
     #first bash arg should be parent directory, then each child directory
     dirr_base = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
@@ -279,3 +278,4 @@ if __name__ == "__main__":
             analyze(dirr)
 
         print("Finished analyzing instances.")
+

@@ -54,18 +54,23 @@ def mutate(configs, net, gen_percent):
     # TODO: try changing to rm, then add
     num_rewire = num_mutations(rewire_freq, mutn_type, gen_percent)
     for i in range(num_rewire):
+        #print("rewire(): before.")
         pre_edges = len(net.edges())
         rewire_success = False
+        net_undir = net.to_undirected()
+        num_cc = nx.number_connected_components(net_undir)
+        if (num_cc > 1): print("mutation(): ERROR: multiple components!")
+
         while (rewire_success==False):  # ensure sucessful rewire
             edge = rd.sample(net.edges(), 1)
             edge = edge[0]
-
+            #print("rewire(): during.")
             #TODO: TEMP don't allow 0 deg edges
             while((net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1) or (net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1)):
                 edge = rd.sample(net.edges(), 1)
                 edge = edge[0]
 
-            #sign = net[edge[0]][edge[1]]['sign']
+            sign_orig = net[edge[0]][edge[1]]['sign']
 
             node = rd.sample(net.nodes(), 1)
             node = node[0]
@@ -76,17 +81,31 @@ def mutate(configs, net, gen_percent):
             sign = rd.randint(0, 1)
             if (sign == 0):     sign = -1
 
-            if (rd.random() < .5): net.add_edge(node, node2, sign=sign)
-            else: net.add_edge(node2, node, sign=sign)
+            net.add_edge(node, node2, sign=sign)
+            #else: net.add_edge(node2, node, sign=sign)
             post_edges = len(net.edges())
             if (post_edges > pre_edges): #check that edge successfully added
                 net.remove_edge(edge[0], edge[1])
-                post_edges = len(net.edges())
-                if (post_edges==pre_edges): #check that edge successfully removed
-                    rewire_success = True
+                net_undir = net.to_undirected()
+                num_cc = nx.number_connected_components(net_undir)
+                #print("rewire(): mid.")
+
+                #UNDO REWIRE:
+                if (num_cc > 1): 
+                    net.add_edge(edge[0], edge[1], sign = sign_orig)
+                    net.remove_edge(node, node2)
+                    post_edges = len(net.edges())
+                    net_undir = net.to_undirected()
+                    num_cc = nx.number_connected_components(net_undir)
+                    if (num_cc > 1): print("ERROR rewire(): undo failed to restore to single component")
+                    if (post_edges != pre_edges): print("\nMUTATE() ERROR: undo rewire failed.") 
                 else:
-                    print("ERROR IN REWIRE: num edges not kept constant")
-                    return
+                    post_edges = len(net.edges())
+                    if (post_edges==pre_edges): #check that edge successfully removed
+                        rewire_success = True
+                    else:
+                        print("ERROR IN REWIRE: num edges not kept constant")
+                        return
 
 
     # CHANGE EDGE SIGN

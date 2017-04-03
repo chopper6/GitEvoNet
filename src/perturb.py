@@ -11,10 +11,12 @@ def scramble_edges(net, percent):
     #print("perturb(): scrambling " + str(num_scramble) + " edges.")
 
     signs = [] #could also include sign data in init edge_list but oh well
+    
     for edge in edge_list[:num_scramble]:
         signs.append(net[edge[0]][edge[1]]['sign'])
         net.remove_edge(edge[0], edge[1])
-
+    
+    '''
     #TODO: TEMP straight from mutate
     for i in range(len(net.edges())*100):
         pre_edges = len(net.edges())
@@ -66,7 +68,7 @@ def scramble_edges(net, percent):
             net.add_edge(node, node2, sign=orig_sign)
             post_size = len(net.edges())
         i+=1
-    '''
+    
 
 
 def num_edges(net, multiplier):
