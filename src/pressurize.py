@@ -6,8 +6,7 @@ def pressurize(configs, net, track_node_fitness, instance_file_name):
     # configs:
     pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
 
-    #NOTE THAT T IS NOW A %
-    tolerance = ((float(configs['PT_pairs_dict'][1][1]) / 100.0))
+    tolerance = int(configs['PT_pairs_dict'][1][1])
     sampling_rounds = int(configs['sampling_rounds'])
     max_sampling_rounds = int(configs['sampling_rounds_max'])
     knapsack_solver = cdll.LoadLibrary(configs['KP_solver_binary'])
@@ -23,15 +22,13 @@ def pressurize(configs, net, track_node_fitness, instance_file_name):
     num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
     if (advice=='nodes'):
         pressure_relative = int(pressure * len(net.nodes()))
-        tolerance_relative = int(tolerance * len(net.nodes()))
     elif (advice=='edges'):
         pressure_relative = int(pressure * len(net.edges()))
-        tolerance_relative = int(tolerance * len(net.edges()))
     else: 
         print("ERROR in pressurize(): unknown advice_upon: " + str(advice))
         return
 
-    kp_instances = reducer.reverse_reduction(net, pressure_relative, tolerance_relative, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
+    kp_instances = reducer.reverse_reduction(net, pressure_relative, tolerance, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
     if (track_node_fitness == True):
         node_info = node_fitness.gen_node_info(max_B_plot)
     else: node_info = None

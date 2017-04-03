@@ -1,6 +1,7 @@
 import networkx as nx
 from random import SystemRandom as sysRand
 import perturb, init
+import mutate_2_1 as mutate
 import pickle
 
 # maybe rename to reduce confusion
@@ -68,11 +69,15 @@ def init_population(init_type, start_size, pop_size, configs):
         double_edges(population)
 
     elif (init_type == 'exponential'): #may be a bit slow
-        population = [Net(nx.cycle_graph(start_size, create_using=nx.DiGraph()), i) for i in range(pop_size)]
-        double_edges(population)
-        sign_edges(population)
-        for p in population:
-            perturb.scramble_edges(p.net, 1)
+        init_net = nx.cycle_graph(start_size, create_using=nx.DiGraph())
+        double_edges([init_net])
+        sign_edges([init_net])
+        sign_edges_needed = False
+        num_rewire = start_size*10
+        mutate.rewire(init_net, num_rewire)
+
+        population = [Net(init_net.copy(), i) for i in range(pop_size)]
+        assert(population[0] != population[1] and population[0].net != population[1].net)
 
     elif (init_type == "vinayagam"):
         population = [Net(init.load_network(configs), i) for i in range(pop_size)]
