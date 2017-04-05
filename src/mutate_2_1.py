@@ -53,7 +53,7 @@ def mutate(configs, net, gen_percent):
     # REWIRE EDGE
     # TODO: try changing to rm, then add
     num_rewire = num_mutations(rewire_freq, mutn_type, gen_percent)
-    rewire(net, nnum_rewire)
+    rewire(net, num_rewire)
 
 
     # CHANGE EDGE SIGN

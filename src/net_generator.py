@@ -69,14 +69,14 @@ def init_population(init_type, start_size, pop_size, configs):
         double_edges(population)
 
     elif (init_type == 'exponential'): #may be a bit slow
-        init_net = nx.cycle_graph(start_size, create_using=nx.DiGraph())
+        init_net = Net(nx.cycle_graph(start_size, create_using=nx.DiGraph()),0)
         double_edges([init_net])
         sign_edges([init_net])
         sign_edges_needed = False
         num_rewire = start_size*10
-        mutate.rewire(init_net, num_rewire)
+        mutate.rewire(init_net.net, num_rewire)
 
-        population = [Net(init_net.copy(), i) for i in range(pop_size)]
+        population = [Net(init_net.net.copy(), i) for i in range(pop_size)]
         assert(population[0] != population[1] and population[0].net != population[1].net)
 
     elif (init_type == "vinayagam"):
