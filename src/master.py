@@ -28,6 +28,7 @@ def evolve_from_seed(configs):
     num_output = float(configs['num_output'])
     num_draw =  float(configs['num_drawings'])
     max_gen = float(configs['max_generations'])
+    debug = float(configs['debug'])
 
     worker_survive_fraction = float(configs['worker_percent_survive'])/100
     init_type = str(configs['initial_net_type'])
@@ -88,23 +89,38 @@ def evolve_from_seed(configs):
         pool = mp.Pool(processes=num_workers)
 
         # distribute workers
-        for w in range(num_workers):
-            dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
+        if (debug == True):
+            dump_file = output_dir + "workers/" + str(w) + "/arg_dump"
             seed = population[w % num_survive].copy()
-            randSeeds = os.urandom(sysRand().randint(0,1000000))
-            assert(seed != population[w % num_survive])
-            worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, total_gens, configs]
+            randSeeds = os.urandom(sysRand().randint(0, 1000000))
+            assert (seed != population[w % num_survive])
+            worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds,
+                           total_gens, configs]
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
-            pool.map_async(minion.evolve_minion, (dump_file,))
-            #minion.evolve_minion(dump_file)
+            #pool.map_async(minion.evolve_minion, (dump_file,))
+            minion.evolve_minion(dump_file)
             sleep(.0001)
+
+        else:
+            for w in range(num_workers):
+                dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
+                seed = population[w % num_survive].copy()
+                randSeeds = os.urandom(sysRand().randint(0,1000000))
+                assert(seed != population[w % num_survive])
+                worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, total_gens, configs]
+                with open(dump_file, 'wb') as file:
+                    pickle.dump(worker_args, file)
+                pool.map_async(minion.evolve_minion, (dump_file,))
+                #minion.evolve_minion(dump_file)
+                sleep(.0001)
 
         pool.close()
         pool.join()
         pool.terminate()
 
         del population
+        if (debug == True): num_worker = 1
         population = parse_worker_popn(num_workers, output_dir, num_survive)
         size = len(population[0].net.nodes())
         iter += 1

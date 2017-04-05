@@ -5,6 +5,7 @@ import output, fitness, pressurize
 import mutate_2_1 as mutate
 from time import process_time as ptime
 import random
+import control_fitness
 
 def evolve_minion(worker_file):
     with open(str(worker_file), 'rb') as file:
@@ -16,6 +17,7 @@ def evolve_minion(worker_file):
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
     output_dir += str(worker_ID)
     max_gen = int(configs['max_generations'])
+    control = configs['control']
 
     random.seed(randSeed)
     population = gen_population_from_seed(seed, pop_size)
@@ -38,11 +40,23 @@ def evolve_minion(worker_file):
             mutate_time += t1-t0
           
             t0 = ptime()
-            pressure_results = pressurize.pressurize(configs, population[p].net, False, None) #false: don't track node fitness, None: don't write instances to file
-            t1 = ptime()
-            pressurize_time += t1-t0
-            population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-       
+            if (control == None):
+                pressure_results = pressurize.pressurize(configs, population[p].net, False, None) #false: don't track node fitness, None: don't write instances to file
+                t1 = ptime()
+                pressurize_time += t1-t0
+                population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
+
+            elif (control == 'unambig'):
+                population[p].fitness_parts[0] = control_fitness.unambig(population[p].net)
+                population[p].fitness_parts[1], population[p].fitness_parts[2] = 1,1
+
+            elif (control == 'deg 1'):
+                population[p].fitness_parts[0] = control_fitness.deg1(population[p].net)
+                population[p].fitness_parts[1], population[p].fitness_parts[2] = 1,1
+
+
+
+
         old_popn = population
         population = fitness.eval_fitness(old_popn)
         del old_popn
