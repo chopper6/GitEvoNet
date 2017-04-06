@@ -26,6 +26,7 @@ def evolve_from_seed(configs):
     survive_percent = float(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
     num_output = float(configs['num_output'])
+    num_net_output = float(configs['num_net_output'])
     num_draw =  float(configs['num_drawings'])
     max_gen = float(configs['max_generations'])
     debug = (configs['debug'])
@@ -85,6 +86,8 @@ def evolve_from_seed(configs):
             node_info = pressure_results[3]
             node_fitness.write_out(output_dir + "/node_info/" + str(iter) + ".csv", node_info)
 
+        if (iter % int(max_gen/num_net_output) ==0):
+            nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(iter))
 
         #debug(population)
         pool = mp.Pool(processes=num_workers)
@@ -128,7 +131,7 @@ def evolve_from_seed(configs):
         total_gens += worker_gens
 
     #final outputs
-    nx.write_edgelist(population[0].net, output_dir+"/fittest_net.edgelist")
+    nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(iter))
 
     output.to_csv(population, output_dir, total_gens)
     output.deg_change_csv(population, output_dir)
@@ -151,6 +154,8 @@ def init_dirs(num_workers, output_dir):
         os.makedirs(output_dir + "/node_info/")
     if not os.path.exists(output_dir + "/instances/"):
         os.makedirs(output_dir + "/instances/")
+    if not os.path.exists(output_dir + "/nets/"):
+        os.makedirs(output_dir + "/nets/")
     for w in range(num_workers):
         dirr = output_dir + "workers/" + str(w)
         if not os.path.exists(dirr):
