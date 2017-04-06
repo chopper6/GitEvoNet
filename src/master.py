@@ -28,7 +28,7 @@ def evolve_from_seed(configs):
     num_output = float(configs['num_output'])
     num_draw =  float(configs['num_drawings'])
     max_gen = float(configs['max_generations'])
-    debug = float(configs['debug'])
+    debug = (configs['debug'])
 
     worker_survive_fraction = float(configs['worker_percent_survive'])/100
     init_type = str(configs['initial_net_type'])
@@ -55,6 +55,7 @@ def evolve_from_seed(configs):
     #TODO: for final results, should NOT just use net0
     #instead pass to workers, but w/o any mutation and just for a single gen
 
+    #TODO: add 
     pressure_results = pressurize.pressurize(configs, population[0].net, True, instance_file+"Xiter0.csv") #True: track node fitness
     population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
     fitness.eval_fitness([population[0]])

@@ -5,10 +5,8 @@ def l1(s):
     return str(s).ljust(10,' ')
 def l(s):
     return str(s).ljust(7,' ')
-
-
 ################################### Fitness function #########################################
-def unambig(G): # G is a networkx DiGraph (one of your population of networks)
+def unambiguity_fitness_score(G): # G is a networkx DiGraph (one of your population of networks)
     n2e     = 0.5
     e2n     = 2.0
     p       = .5 
@@ -31,8 +29,3 @@ def unambig(G): # G is a networkx DiGraph (one of your population of networks)
 ###############################################################################################
 
 
-def deg1(net):
-    fitness = 0
-    for deg in net.degree().values():
-        if (deg == 1): fitness += 1
-    return fitness

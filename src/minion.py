@@ -47,12 +47,12 @@ def evolve_minion(worker_file):
                 population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
 
             elif (control == 'unambig'):
-                population[p].fitness_parts[0] = control_fitness.unambig(population[p].net)
-                population[p].fitness_parts[1], population[p].fitness_parts[2] = 1,1
+                population[p].fitness_parts[2] = control_fitness.unambig(population[p].net)
+                population[p].fitness_parts[1], population[p].fitness_parts[0] = 1,1
 
             elif (control == 'deg 1'):
-                population[p].fitness_parts[0] = control_fitness.deg1(population[p].net)
-                population[p].fitness_parts[1], population[p].fitness_parts[2] = 1,1
+                population[p].fitness_parts[2] = control_fitness.deg1(population[p].net)
+                population[p].fitness_parts[1], population[p].fitness_parts[0] = 1,1
 
 
 
