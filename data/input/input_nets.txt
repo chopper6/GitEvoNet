@@ -1,0 +1,8 @@
+Bacteria Users\Crbn\Desktop\McGWinter17\EvoNet\GitEvoNet\GitEvoNet\data\input\networks\Bacteria.dump
+ER Users\Crbn\Desktop\McGWinter17\EvoNet\GitEvoNet\GitEvoNet\data\input\networks\ER.dump
+HumanIso Users\Crbn\Desktop\McGWinter17\EvoNet\GitEvoNet\GitEvoNet\data\input\networks\HumanIso.dump
+Plant Users\Crbn\Desktop\McGWinter17\EvoNet\GitEvoNet\GitEvoNet\data\input\networks\Plant.dump
+SF Users\Crbn\Desktop\McGWinter17\EvoNet\GitEvoNet\GitEvoNet\data\input\networks\SF.dump
+Vinayagam Users\Crbn\Desktop\McGWinter17\EvoNet\GitEvoNet\GitEvoNet\data\input\networks\Vinayagam.dump
+Worm Users\Crbn\Desktop\McGWinter17\EvoNet\GitEvoNet\GitEvoNet\data\input\networks\Worm.dump
+Yeast Users\Crbn\Desktop\McGWinter17\EvoNet\GitEvoNet\GitEvoNet\data\input\networks\Yeast.dump
