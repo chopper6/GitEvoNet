@@ -12,12 +12,15 @@ def eval_fitness(population):
     return population
 
 
-def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, net, track_node_fitness, node_info, instance_file_name):
+def kp_instance_properties(a_result, leaf_metric, leaf_operator, hub_metric, hub_operator, fitness_operator, net, track_node_fitness, node_info, instance_file_name):
 
     #LEAF MEASURES
     RGAR, RGMG, ratio, ratio_onesided, ratio_sq, ratio_btm_sq, leaf_control, dual1 = 0,0,0,0,0,0,0,0
     max_sum, max_sum_sq, combo_sum, combo_sum_sq = 0,0,0,0
-    leaf_score = 0
+    if (leaf_operator == 'average' or leaf_operator == 'sum'): leaf_score = 0
+    elif (leaf_operator == 'product' or leaf_operator == 'product4' or leaf_operator == 'product8'): leaf_score = 1
+    else: print ("ERROR in fitness(): unknown leaf_operator: " + str(leaf_operator))
+
     if (track_node_fitness == True): Bmax = len(node_info['freq'])-1
 
     #HUB MEASURES
@@ -58,7 +61,9 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         for g in ALL_GENES:
             # g[0] gene name, g[1] benefits, g[2] damages, g[3] if in knapsack (binary)
             B,D=g[1],g[2]
-            leaf_score += leaf_fitness.node_score(leaf_metric, B, D)
+            if (leaf_operator == 'average' or leaf_operator == 'sum'): leaf_score += leaf_fitness.node_score(leaf_metric, B, D)
+            elif (leaf_operator == 'product' or leaf_operator == 'product4' or leaf_operator == 'product8'): leaf_score *= leaf_fitness.node_score(leaf_metric, B, D)
+            else: print("ERROR in fitness(): unknown leaf_operator: " + str(leaf_operator))
             RGAR += leaf_fitness.node_score("RGAR", B, D)
 
             all_ben.append(B)
@@ -90,13 +95,19 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         # -------------------------------------------------------------------------------------------------
 
         leaf_denom = leaf_fitness.assign_denom (leaf_metric, num_genes)
-        leaf_score /= leaf_denom #ASSUMES ALL LEAF METRICS ARE CALC'D PER EACH NODE
+        if (leaf_operator == 'average' or leaf_operator == 'sum'): leaf_score /= leaf_denom #ASSUMES ALL LEAF METRICS ARE CALC'D PER EACH NODE
+        elif (leaf_operator == 'product'): leaf_score = math.pow(leaf_score, 1/leaf_denom)
+        elif (leaf_operator == 'product4'): leaf_score = math.pow(leaf_score, 4/leaf_denom)
+        elif (leaf_operator == 'product8'): leaf_score = math.pow(leaf_score, 8/leaf_denom)
+        #if (leaf_metric == "ln2" or leaf_metric == "ln"): leaf_score = math.pow(math.e, leaf_score)
         RGAR /= leaf_fitness.assign_denom ("RGAR", num_genes)
 
         hub_score = hub_fitness.assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4)
         hub_denom = hub_fitness.assign_denom (hub_metric, soln_bens)
-        #print("\nFitness(): hub score = " + str(hub_score) + ", hub denom = " + str(hub_denom) + ".")
         hub_score /= float(hub_denom)
+        if (hub_operator == 'pow'): hub_score = math.pow(hub_score, 1/len(GENES_in)) #TODO: see if this works and all
+        elif (hub_operator == 'mult'): hub_score /= len(GENES_in)
+        #print("\nFitness(): hub score = " + str(hub_score) + ", hub denom = " + str(hub_denom) + ".")
         #print("Fitness(): hub fitness = " + str(hub_score) + ".\n")
         ETB = hub_fitness.assign_numer ("ETB", soln_bens, soln_bens_sq, soln_bens_4)
         ETB /= float(hub_fitness.assign_denom ("ETB", soln_bens))
@@ -116,7 +127,7 @@ def kp_instance_properties(a_result, leaf_metric, hub_metric, fitness_operator, 
         with open(instance_file_name, 'a') as file_out:
             for line in lines:
                 file_out.write(line + "\n")
-    return [RGAR, ETB, fitness_score, node_info]
+    return [leaf_score, hub_score, fitness_score, node_info]
 
 
 

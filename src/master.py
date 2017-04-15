@@ -30,6 +30,10 @@ def evolve_from_seed(configs):
     num_draw =  float(configs['num_drawings'])
     max_gen = float(configs['max_generations'])
     debug = (configs['debug'])
+    worker_pop_size_config = int(configs['num_worker_nets'])
+
+    control = configs['control']
+    if (control == "None"): control = None
 
     worker_survive_fraction = float(configs['worker_percent_survive'])/100
     init_type = str(configs['initial_net_type'])
@@ -47,7 +51,7 @@ def evolve_from_seed(configs):
     output.init_csv(output_dir, configs)
     draw_nets.init(output_dir)
 
-    worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, 10000000)
+    worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, 10000000, worker_pop_size_config)
     print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
 
     population = net_generator.init_population(init_type, start_size, pop_size, configs)
@@ -56,10 +60,18 @@ def evolve_from_seed(configs):
     #TODO: for final results, should NOT just use net0
     #instead pass to workers, but w/o any mutation and just for a single gen
 
-    #TODO: add 
-    pressure_results = pressurize.pressurize(configs, population[0].net, True, instance_file+"Xiter0.csv") #True: track node fitness
-    population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-    fitness.eval_fitness([population[0]])
+    if (control == None):
+        pressure_results = pressurize.pressurize(configs, population[0].net, True, instance_file+"Xiter0.csv") #True: track node fitness
+        population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
+        fitness.eval_fitness([population[0]])
+
+    elif (control == 'unambig'):
+        population[0].fitness_parts[2] = control_fitness.unambig(population[0].net)
+        population[0].fitness_parts[1], population[p].fitness_parts[0] = 1,1
+
+    elif (control == 'deg 1'):
+        population[p].fitness_parts[2] = control_fitness.deg1(population[p].net)
+        population[p].fitness_parts[1], population[p].fitness_parts[0] = 1,1
     output.deg_change_csv([population[0]], output_dir)
 
     total_gens = 0
@@ -67,12 +79,12 @@ def evolve_from_seed(configs):
     iter = 0
     while (size < end_size and total_gens < max_gen):
 
-        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive)
+        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive, worker_pop_size_config)
 
         if (iter % int(max_gen / num_output) == 0):
             output.to_csv(population, output_dir, total_gens)
             print("Master at gen " + str(total_gens) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
-            worker_percent_survive = math.ceil(worker_survive_fraction * worker_pop_size)
+            worker_percent_survive = worker_pop_size #TODO: temp: math.ceil(worker_survive_fraction * worker_pop_size)
             print("Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
 
             nx.write_edgelist(population[0].net, output_dir+"/fittest_net.edgelist")
@@ -174,22 +186,22 @@ def parse_worker_popn (num_workers, output_dir, num_survive):
     return sorted_popn[:num_survive]
 
 
-def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_survive):
+def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_survive, worker_pop_size_config):
 
 
     worker_pop_size = math.floor(end_size/size)
 
-    worker_gens = worker_pop_size
+    worker_gens = 1 #TODO: worker_pop_size
     # ISLAND #
     # percent_size = float(size) / float(end_size)
     # math.ceil(10 * math.pow(math.e, -4 * percent_size))
-    pop_size = worker_pop_size * num_workers
+    pop_size = worker_pop_size_config * num_workers
     num_survive = int(pop_size * survive_fraction)
     if (num_survive < 1):  num_survive = 1
     if (num_survive > prev_num_survive):   num_survive = prev_num_survive
 
-
-    return worker_pop_size, pop_size, num_survive, worker_gens
+    #TODO: temp manual pop size set
+    return worker_pop_size_config, pop_size, num_survive, worker_gens
 
 
 def debug(population):

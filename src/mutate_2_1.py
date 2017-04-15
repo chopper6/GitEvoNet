@@ -165,7 +165,9 @@ def rewire(net, num_rewire):
                     post_edges = len(net.edges())
                     net_undir = net.to_undirected()
                     num_cc = nx.number_connected_components(net_undir)
-                    if (num_cc > 1): print("ERROR rewire(): undo failed to restore to single component")
+                    if (num_cc > 1): 
+                        print("ERROR rewire(): undo failed to restore to single component")
+                        return 1
                     if (post_edges != pre_edges): print("\nMUTATE() ERROR: undo rewire failed.")
                 else:
                     post_edges = len(net.edges())

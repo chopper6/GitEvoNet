@@ -18,6 +18,7 @@ def evolve_minion(worker_file):
     output_dir += str(worker_ID)
     max_gen = int(configs['max_generations'])
     control = configs['control']
+    if (control == "None"): control = None
 
     random.seed(randSeed)
     population = gen_population_from_seed(seed, pop_size)

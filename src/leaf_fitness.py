@@ -50,11 +50,23 @@ def node_score (leaf_metric, B, D):
 
     elif (leaf_metric == 'ln1'):
         if (B+D==0 or B-D==0): return 0
-        return math.log(100*(abs(B-D)/float(B+D)))
+        return math.log((abs(B-D)/float(B+D)))
 
     elif (leaf_metric == 'ln2'):
         if (B+D==0): return 0
         return math.log(100*(max(B,D)/float(B+D)))
+
+    elif (leaf_metric == 'ln'):
+        if (B+D==0): return 0
+        return 1+math.log(max(B,D)/float(B+D))
+
+    elif (leaf_metric == 'exp'):
+        if (B+D == 0): return 0
+        return math.pow(math.e,max(B,D)/float(B+D))
+
+    elif (leaf_metric == 'log10'):
+        if (B+D==0): return 0
+        return math.log10(max(B,D)/float(B+D))
 
     elif (leaf_metric == 'sqrt1'):
         if (B+D==0): return 0
