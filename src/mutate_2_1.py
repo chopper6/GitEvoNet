@@ -133,8 +133,7 @@ def rewire(net, num_rewire):
             edge = edge[0]
             # print("rewire(): during.")
             # TODO: TEMP don't allow 0 deg edges
-            while ((net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1) or (
-                    net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1)):
+            while ((net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1) or (net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1)):
                 edge = rd.sample(net.edges(), 1)
                 edge = edge[0]
 
@@ -150,7 +149,7 @@ def rewire(net, num_rewire):
             if (sign == 0):     sign = -1
 
             net.add_edge(node, node2, sign=sign)
-            # else: net.add_edge(node2, node, sign=sign)
+            #else: net.add_edge(node2, node, sign=sign)
             post_edges = len(net.edges())
             if (post_edges > pre_edges):  # check that edge successfully added
                 net.remove_edge(edge[0], edge[1])

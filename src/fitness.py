@@ -38,6 +38,7 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, hub_metric, hub
         soln_bens = []
         soln_bens_sq = []
         soln_bens_4 = []
+        soln_dmgs = []
 
         for g in GENES_in:
             # g[0] gene name, g[1] benefits, g[2] damages, g[3] if in knapsack (binary)
@@ -45,6 +46,7 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, hub_metric, hub
             soln_bens.append(B)
             soln_bens_sq.append(math.pow(B,2))
             soln_bens_4.append(math.pow(B,4))
+            soln_dmgs.append(D)
 
             if (track_node_fitness == True): 
                 if (B > Bmax or D > Bmax):
@@ -93,7 +95,6 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, hub_metric, hub
         num_genes = len(ALL_GENES)
 
         # -------------------------------------------------------------------------------------------------
-
         leaf_denom = leaf_fitness.assign_denom (leaf_metric, num_genes)
         if (leaf_operator == 'average' or leaf_operator == 'sum'): leaf_score /= leaf_denom #ASSUMES ALL LEAF METRICS ARE CALC'D PER EACH NODE
         elif (leaf_operator == 'product'): leaf_score = math.pow(leaf_score, 1/leaf_denom)
@@ -101,19 +102,23 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, hub_metric, hub
         elif (leaf_operator == 'product8'): leaf_score = math.pow(leaf_score, 8/leaf_denom)
         #if (leaf_metric == "ln2" or leaf_metric == "ln"): leaf_score = math.pow(math.e, leaf_score)
         RGAR /= leaf_fitness.assign_denom ("RGAR", num_genes)
-
-        hub_score = hub_fitness.assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4)
+        hub_score = hub_fitness.assign_numer (hub_metric, soln_bens, soln_dmgs, soln_bens_sq, soln_bens_4)
         hub_denom = hub_fitness.assign_denom (hub_metric, soln_bens)
         hub_score /= float(hub_denom)
         if (hub_operator == 'pow'): hub_score = math.pow(hub_score, 1/len(GENES_in)) #TODO: see if this works and all
         elif (hub_operator == 'mult'): hub_score /= len(GENES_in)
+        elif (hub_operator == 'sum all'): hub_score /= float(sum(all_ben))
+        elif (hub_operator == 'prod all'):
+            denom = 1
+            for B in all_ben:
+                if (B != 0): denom *= B
+            hub_score /= denom
         #print("\nFitness(): hub score = " + str(hub_score) + ", hub denom = " + str(hub_denom) + ".")
         #print("Fitness(): hub fitness = " + str(hub_score) + ".\n")
-        ETB = hub_fitness.assign_numer ("ETB", soln_bens, soln_bens_sq, soln_bens_4)
-        ETB /= float(hub_fitness.assign_denom ("ETB", soln_bens))
+        #ETB = hub_fitness.assign_numer ("ETB", soln_bens, soln_dmgs, soln_bens_sq, soln_bens_4)
+        #ETB /= float(hub_fitness.assign_denom ("ETB", soln_bens))
 
         fitness_score = operate_on_features (leaf_score, hub_score, fitness_operator)
-
 
         if (track_node_fitness==True):
             node_info = node_fitness.calc(node_info, leaf_metric, hub_metric, fitness_operator, soln_bens, num_genes)

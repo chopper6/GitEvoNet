@@ -25,7 +25,7 @@ def evolve_minion(worker_file):
     start_size = len(seed.net.nodes())
     pressurize_time = 0
     mutate_time = 0
-
+    
     for g in range(worker_gens):
         gen_percent = float(curr_gen/max_gen)
         if (g != 0):
@@ -46,7 +46,6 @@ def evolve_minion(worker_file):
                 t1 = ptime()
                 pressurize_time += t1-t0
                 population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-
             elif (control == 'unambig'):
                 population[p].fitness_parts[2] = control_fitness.unambig(population[p].net)
                 population[p].fitness_parts[1], population[p].fitness_parts[0] = 1,1
@@ -63,7 +62,6 @@ def evolve_minion(worker_file):
         del old_popn
         #debug(population,worker_ID)
         curr_gen += 1
-
     write_out_worker(worker_file, population, num_return)
     
     # some output
@@ -74,7 +72,6 @@ def evolve_minion(worker_file):
         output.minion_csv(orig_dir, pressurize_time, growth, end_size)
         #debug(population, worker_ID)
         #if (worker_ID==0): print("Pressurizing took " + str(pressurize_time) + " secs, while mutate took " + str(mutate_time) + " secs.")
-
 
 def write_out_worker(worker_file, population, num_return):
     # overwrite own input file with return population
@@ -99,6 +96,10 @@ def debug(population, worker_ID):
     for p in range(pop_size):
         for q in range(0, p):
             if (p != q): assert (population[p] != population[q])
+
+    print("Minion nets exist?")
+    for p in range(pop_size):
+            print(population[p].net)
 
     ''' BOUNDARY CHECK
     if (len(population[p].net.nodes()) > len(population[p].net.edges())):

@@ -30,6 +30,7 @@ def evolve_from_seed(configs):
     num_draw =  float(configs['num_drawings'])
     max_gen = float(configs['max_generations'])
     debug = (configs['debug'])
+    if (debug == 'True'): debug = True
     worker_pop_size_config = int(configs['num_worker_nets'])
 
     control = configs['control']
@@ -106,12 +107,10 @@ def evolve_from_seed(configs):
 
         # distribute workers
         if (debug == True):
-            dump_file = output_dir + "workers/" + str(w) + "/arg_dump"
-            seed = population[w % num_survive].copy()
+            dump_file = output_dir + "workers/" + str(0) + "/arg_dump"
+            seed = population[0].copy()
             randSeeds = os.urandom(sysRand().randint(0, 1000000))
-            assert (seed != population[w % num_survive])
-            worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds,
-                           total_gens, configs]
+            worker_args = [0, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds,total_gens, configs]
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
             #pool.map_async(minion.evolve_minion, (dump_file,))
@@ -130,13 +129,14 @@ def evolve_from_seed(configs):
                 pool.map_async(minion.evolve_minion, (dump_file,))
                 #minion.evolve_minion(dump_file)
                 sleep(.0001)
-
         pool.close()
         pool.join()
         pool.terminate()
 
         del population
-        if (debug == True): num_worker = 1
+        if (debug == True):
+            print("debug is ON") 
+            num_workers, num_survive = 1,1
         population = parse_worker_popn(num_workers, output_dir, num_survive)
         size = len(population[0].net.nodes())
         iter += 1
@@ -180,8 +180,10 @@ def parse_worker_popn (num_workers, output_dir, num_survive):
         dump_file = output_dir + "workers/" + str(w) + "/arg_dump"
         with open(dump_file, 'rb') as file:
             worker_pop = pickle.load(file)
+        i=0
         for indiv in worker_pop:
             popn.append(indiv)
+            i+=1
     sorted_popn = sorted(popn, key=attrgetter('fitness'), reverse=True)
     return sorted_popn[:num_survive]
 

@@ -20,10 +20,15 @@ def node_score (hub_metric, B, D, soln_bens):
     else: return 1 #print("ERROR in fitness.node_hub_score(): unknown hub metric.")
 
 
-def assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4):
+def assign_numer (hub_metric, soln_bens, soln_dmgs, soln_bens_sq, soln_bens_4):
     if (sum(soln_bens) == 0): return 0
 
     if (hub_metric=='ETB'): return sum(set(soln_bens))
+    elif (hub_metric=='multETB'):
+        numer = 1
+        for B in set(soln_bens):
+            numer *= B
+        return numer
     elif (hub_metric == 'ETB sqrt'): return math.pow(sum(set(soln_bens)),.5)
     elif(hub_metric=='effic'): return math.pow(sum(soln_bens_sq), .5)
     elif(hub_metric=='effic 2'): return sum(soln_bens_sq)
@@ -39,8 +44,38 @@ def assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4):
         for B in soln_bens:
             soln_rt += math.pow(B,.5)
         return soln_rt
+    elif (hub_metric == 'Bsq'): return sum(soln_bens_sq)
+    elif (hub_metric == 'multB'):
+        numer = 1
+        for B in soln_bens:
+            numer *= B
+        return numer
 
     elif(hub_metric=='control'): return max(soln_bens)
+
+    elif (hub_metric=='ratio'):
+        numer=1
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer *= B/float(B+D)
+        return numer
+
+    elif (hub_metric=='combo'):
+        numer=0
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer += (math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))
+        return numer
+
+    elif (hub_metric=='combo prod'):
+        numer=1
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer *= (math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))
+        return numer
 
     #NEW
     elif(hub_metric=='1'):
@@ -72,7 +107,7 @@ def assign_numer (hub_metric, soln_bens, soln_bens_sq, soln_bens_4):
 def assign_denom (hub_metric, soln_bens):
     if (sum(soln_bens) == 0): return 1
 
-    if (hub_metric=='ETB'): return sum(soln_bens)
+    if (hub_metric=='ETB' or hub_metric=='multETB' or hub_metric=='multB' or hub_metric=='Bsq' or hub_metric=='combo' or hub_metric=='combo prod'): return 1 #sum(soln_bens)
     elif (hub_metric == 'ETB sqrt'): return math.pow(sum(soln_bens), .5)
     elif(hub_metric=='effic'): return sum(soln_bens)
     elif(hub_metric=='effic 2'): return math.pow(sum(soln_bens), 2)
@@ -80,6 +115,7 @@ def assign_denom (hub_metric, soln_bens):
     elif(hub_metric=='effic 8'): return math.pow(sum(soln_bens), 8)
     elif(hub_metric == 'effic sqrt'): return math.pow(sum(soln_bens), .5)
     elif(hub_metric=='control'): return sum(soln_bens)
+    elif(hub_metric=='ratio'): return 1
 
     #NEW
     elif (hub_metric == '1'):
