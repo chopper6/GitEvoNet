@@ -37,19 +37,11 @@ def advice (M, samples, biased, advice_upon):
             rand                = random.uniform(0,1)
             #rand                = random.SystemRandom().uniform(0,1)
 
-            if (advice_upon=='nodes'): 
+            if (advice_upon=='nodes' or advice_upon=='edges'):
                 if rand <= biased_center:            
                     advice[element] = 1
                 else:
                     advice[element] = -1
-
-            elif (advice_upon=='edges'):
-                if element[0] not in advice.keys():
-                    advice[element[0]] = {}
-                if rand <= biased_center:
-                    advice[element[0]][element[1]] = 1
-                else:
-                    advice[element[0]][element[1]] = -1
 
     
     return advice

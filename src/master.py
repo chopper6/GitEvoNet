@@ -8,7 +8,7 @@ from operator import attrgetter
 from random import SystemRandom as sysRand
 from time import sleep
 import networkx as nx
-import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, plot_fitness, node_fitness
+import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, plot_fitness, node_fitness, mutate
 import instances
 
 
@@ -25,10 +25,10 @@ def evolve_from_seed(configs):
     output_dir = configs['output_directory']
     survive_percent = float(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
-    num_output = float(configs['num_output'])
-    num_net_output = float(configs['num_net_output'])
-    num_draw =  float(configs['num_drawings'])
-    max_gen = float(configs['max_generations'])
+    num_output = int(configs['num_output'])
+    num_net_output = int(configs['num_net_output'])
+    num_draw =  int(configs['num_drawings'])
+    max_gen = int(configs['max_generations'])
     debug = (configs['debug'])
     if (debug == 'True'): debug = True
     worker_pop_size_config = int(configs['num_worker_nets'])
@@ -42,6 +42,8 @@ def evolve_from_seed(configs):
     end_size = int(configs['ending_size'])
 
     instance_file = configs['instance_file']
+    num_grow = int(configs['num_grows'])
+    node_edge_ratio = float(configs['edge_to_node_ratio'])
 
     draw_layout = str(configs['draw_layout'])
     num_fitness_plots = int(configs['num_fitness_plots']) #ASSUMES != 0
@@ -101,6 +103,10 @@ def evolve_from_seed(configs):
 
         if (iter % int(max_gen/num_net_output) ==0):
             nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(iter))
+
+        if (iter % int(max_gen/num_grow) ==0):
+            for p in range(len(population)):
+                mutate.add_nodes(population[p].net, 1, node_edge_ratio)
 
         #debug(population)
         pool = mp.Pool(processes=num_workers)

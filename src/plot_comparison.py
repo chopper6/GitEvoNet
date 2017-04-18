@@ -1,6 +1,7 @@
 import matplotlib
 matplotlib.use('Agg') # you need this line if you're running this code on rupert
 import sys, os, matplotlib.pyplot as plt, matplotlib.patches as mpatches, networkx as nx, numpy as np
+import math
 #from scipy.stats import itemfreq
 import matplotlib.ticker as ticker
 #from ticker import FuncFormatter
@@ -78,12 +79,11 @@ def plot_em(real_net_file, sim_net_file, plot_title):
     ax.set_xlim([0.7,1000])
     ax.set_ylim([.02,100])
 
-    #TODO: fix dis:
-    '''
-    fmatter = ticker.FuncFormatter(LogXformatter)
-    ax.get_xaxis().set_major_formatter(fmatter)
-    ax.get_yaxis().set_major_formatter(fmatter)
-    '''
+    xfmatter = ticker.FuncFormatter(LogXformatter)
+    yfmatter = ticker.FuncFormatter(LogYformatter)
+    ax.get_xaxis().set_major_formatter(xfmatter)
+    ax.get_yaxis().set_major_formatter(yfmatter)
+
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     plt.tick_params(axis='both', which='both', right='off', top='off') #http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
@@ -108,11 +108,38 @@ def walklevel(some_dir, level=1): #MOD to dirs only
         if num_sep + level <= num_sep_this:
             del dirs[:]
 
+
+
+###################################################
+def LogYformatter(y, _):
+    if int(y) == float(y) and float(y)>0:
+        return str(int(y))+' %'
+    elif float(y) >= .1:
+        return str(y)+' %'
+    else:
+        return ""
+###################################################
+def LogXformatter(x, _):
+    if x<=1:
+        return str(int(x))
+    if math.log10(x)  == int(math.log10(x)):
+        return str(int(x))
+    else:
+        return ""
+######################################################
+
 if __name__ == "__main__":
     base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
-    real_net_file = str(sys.argv[1])
-    sim_dirr = str(base_dir + sys.argv[2])
-   
+    real_net_file = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/input_nets.txt"
+
+    if (sys.argv[1] == 'single'):
+        sim_dirr = str(base_dir + sys.argv[1])
+        for sim_file in os.listdir(sim_dirr+"/nets/"):
+            print("Plotting sim file " + str(sim_file))
+            plot_em(real_net_file, sim_dirr +"/nets/"+ sim_file, sim_dirr + "/comparison_plots/" + sim_file + ".png")
+
+    sim_dirr = str(base_dir + sys.argv[1])
+
     sims = list(walklevel(sim_dirr)) 
     for sim in sims[0]:
         sim = sim_dirr + "/" + sim

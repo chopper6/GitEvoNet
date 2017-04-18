@@ -2,7 +2,7 @@
 
 import math, pickle
 import output, fitness, pressurize
-import mutate_2_1 as mutate
+import mutate
 from time import process_time as ptime
 import random
 import control_fitness
@@ -20,6 +20,8 @@ def evolve_minion(worker_file):
     control = configs['control']
     if (control == "None"): control = None
 
+    node_edge_ratio = float(configs['edge_to_node_ratio'])
+
     random.seed(randSeed)
     population = gen_population_from_seed(seed, pop_size)
     start_size = len(seed.net.nodes())
@@ -36,7 +38,7 @@ def evolve_minion(worker_file):
 
         for p in range(pop_size):
             t0 = ptime()
-            mutate.mutate(configs, population[p].net, gen_percent)
+            mutate.mutate(configs, population[p].net, gen_percent, node_edge_ratio)
             t1 = ptime()
             mutate_time += t1-t0
           
