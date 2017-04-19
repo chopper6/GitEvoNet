@@ -3,7 +3,7 @@ import random as rd
 import networkx as nx
 # from random import SystemRandom as rd
 
-def mutate(configs, net, gen_percent, node_edge_ratio):
+def mutate(configs, net, gen_percent, edge_node_ratio):
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
     rewire_freq = float(configs['rewire_mutation_frequency'])
     sign_freq = float(configs['sign_mutation_frequency'])
@@ -16,7 +16,7 @@ def mutate(configs, net, gen_percent, node_edge_ratio):
     # GROW (ADD NODE)
     # starts unconnected
     num_grow = num_mutations(grow_freq, mutn_type, gen_percent)
-    add_nodes(net, num_grow, node_edge_ratio)
+    if (num_grow > 0): add_nodes(net, num_grow, edge_node_ratio)
 
 
     # SHRINK (REMOVE NODE)
@@ -97,7 +97,7 @@ def add_edges(net, num_add):
             net.add_edge(node, node2, sign=sign)
             post_size = len(net.edges())
 
-def add_nodes(net, num_add, node_edge_ratio):
+def add_nodes(net, num_add, edge_node_ratio):
     # ADD NODE
     for i in range(num_add):
         pre_size = post_size = len(net.nodes())
@@ -124,8 +124,10 @@ def add_nodes(net, num_add, node_edge_ratio):
     # MAINTAIN NODE_EDGE RATIO
     # ASSUMES BTWN 1 & 2
     num_edge_add = 0
-    pr_second = 1 - node_edge_ratio
-    if (rd.random() < pr_second): num_edge_add += 1
+    curr_ratio = len(net.edges())/float(len(net.nodes()))
+    if (curr_ratio < edge_node_ratio): num_edge_add += 1
+    #pr_second = edge_node_ratio -1
+    #if (rd.random() < pr_second): num_edge_add += 1
 
     add_edges(net, num_edge_add)
 

@@ -83,6 +83,9 @@ def node_score (leaf_metric, B, D):
     elif (leaf_metric == 'combo'):
         return (math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))
 
+    elif (leaf_metric == 'entropy1'):
+        return ((B+D+1)*math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))
+
     else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric: " + str(leaf_metric))
 
 

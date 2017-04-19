@@ -43,7 +43,7 @@ def evolve_from_seed(configs):
 
     instance_file = configs['instance_file']
     num_grow = int(configs['num_grows'])
-    node_edge_ratio = float(configs['edge_to_node_ratio'])
+    edge_node_ratio = float(configs['edge_to_node_ratio'])
 
     draw_layout = str(configs['draw_layout'])
     num_fitness_plots = int(configs['num_fitness_plots']) #ASSUMES != 0
@@ -106,7 +106,7 @@ def evolve_from_seed(configs):
 
         if (iter % int(max_gen/num_grow) ==0):
             for p in range(len(population)):
-                mutate.add_nodes(population[p].net, 1, node_edge_ratio)
+                mutate.add_nodes(population[p].net, 1, edge_node_ratio)
 
         #debug(population)
         pool = mp.Pool(processes=num_workers)

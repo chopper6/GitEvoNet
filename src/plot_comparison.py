@@ -132,21 +132,24 @@ if __name__ == "__main__":
     base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
     real_net_file = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/input_nets.txt"
 
-    if (sys.argv[1] == 'single'):
-        sim_dirr = str(base_dir + sys.argv[1])
+    if (str(sys.argv[1]) == 'single'):
+        sim_dirr = str(base_dir + sys.argv[2])
+        if not os.path.exists(sim_dirr + "/comparison_plots/"):
+            os.makedirs(sim_dirr + "/comparison_plots/")
         for sim_file in os.listdir(sim_dirr+"/nets/"):
             print("Plotting sim file " + str(sim_file))
             plot_em(real_net_file, sim_dirr +"/nets/"+ sim_file, sim_dirr + "/comparison_plots/" + sim_file + ".png")
 
-    sim_dirr = str(base_dir + sys.argv[1])
+    else:
+        sim_dirr = str(base_dir + sys.argv[1])
 
-    sims = list(walklevel(sim_dirr)) 
-    for sim in sims[0]:
-        sim = sim_dirr + "/" + sim
-        print("\n\nPlotting from sim dir " + str(sim))
-        if not os.path.exists(sim + "/comparison_plots/"):
-            os.makedirs(sim + "/comparison_plots/")
-        for sim_file in os.listdir(sim+"/nets/"):
-            print("Plotting sim file " + str(sim_file))
-            plot_em(real_net_file, sim +"/nets/"+ sim_file, sim + "/comparison_plots/" + sim_file + ".png")
+        sims = list(walklevel(sim_dirr)) 
+        for sim in sims[0]:
+            sim = sim_dirr + "/" + sim
+            print("\n\nPlotting from sim dir " + str(sim))
+            if not os.path.exists(sim + "/comparison_plots/"):
+                os.makedirs(sim + "/comparison_plots/")
+            for sim_file in os.listdir(sim+"/nets/"):
+                print("Plotting sim file " + str(sim_file))
+                plot_em(real_net_file, sim +"/nets/"+ sim_file, sim + "/comparison_plots/" + sim_file + ".png")
     print("\nDone.\n")
