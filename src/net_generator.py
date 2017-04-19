@@ -25,6 +25,8 @@ class Net:
 def init_population(init_type, start_size, pop_size, configs):
 
     sign_edges_needed = True
+    edge_node_ratio = float(configs['edge_to_node_ratio'])
+    num_edges = int(start_size*edge_node_ratio)
 
     if (init_type == 'shell'):
         population = [Net(nx.DiGraph(), i) for i in range(pop_size)] #change to generate, based on start_size
@@ -181,12 +183,42 @@ def init_population(init_type, start_size, pop_size, configs):
     elif (init_type == 'All 3s'):
         population = [Net(nx.configuration_model([3 for e in range(start_size)]),i) for i in range(pop_size)]
 
+    elif (init_type == 'random'):
+        estim_p = num_edges/float(start_size*start_size)
+        init_net = (nx.erdos_renyi_graph(start_size, estim_p, directed=True, seed=None))
+        if (len(init_net.edges()) == 0): print("ERROR in net_generator: estim_p too low to generate any edges")
+
+        if (len(init_net.edges()) < num_edges):
+            num_add = num_edges - len(init_net.edges())
+            mutate.add_edges(init_net, num_add)
+
+        elif (len(init_net.edges()) > num_edges):
+            num_rm = num_edges - len(init_net.edges())
+            mutate.rm_edges(init_net, num_rm)
+
+        num_cc = 2
+        num_rewire=0
+        while (num_cc != 1):
+            num_rewire += 1
+            mutate.rewire(init_net,10)
+
+            net_undir = init_net.to_undirected()
+            num_cc = nx.number_connected_components(net_undir)
+
+        print("Number of rewires to avoid 0 degree = " + str(num_rewire) + ", num attempts to create suitable net = " + str(num_cc) + ".\n")
+        population = [Net(init_net.copy(), i) for i in range(pop_size)]
+
+
 
     else:
         print("ERROR in master.gen_init_population(): unknown init_type.")
         return
 
+
     if (sign_edges_needed==True): sign_edges(population)
+    if (configs['biased']==True):
+        advice_on = configs['advice_upon']
+        assign_bias(population, advice_on)
 
     return population
 
@@ -224,3 +256,4 @@ def double_edges(population):
         edges = net.edges()
         for edge in edges:
             net.add_edge(edge[1], edge[0])  # add reverse edge
+

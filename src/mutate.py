@@ -118,7 +118,8 @@ def add_nodes(net, num_add, edge_node_ratio):
 
         sign = rd.randint(0, 1)
         if (sign == 0):     sign = -1
-        net.add_edge(node, node2, sign=sign)
+        if (rd.random() < .5): net.add_edge(node, node2, sign=sign)
+        else: net.add_edge(node2, node, sign=sign)
         post_size = len(net.edges())
 
     # MAINTAIN NODE_EDGE RATIO
@@ -138,9 +139,24 @@ def rm_edges(net, num_rm):
         while (pre_size == post_size):
             edge = rd.sample(net.edges(), 1)
             edge = edge[0]
+            sign_orig = net[edge[0]][edge[1]]['sign']
             net.remove_edge(edge[0], edge[1])
             post_size = len(net.edges())
             if (post_size == pre_size): print("WARNING: mutate remove edge failed, trying again.")
+
+            net_undir = net.to_undirected()
+            num_cc = nx.number_connected_components(net_undir)
+
+            # UNDO RM:
+            if (num_cc > 1):
+                net.add_edge(edge[0], edge[1], sign=sign_orig)
+                net_undir = net.to_undirected()
+                num_cc = nx.number_connected_components(net_undir)
+                post_size = len(net.edges())
+                if (num_cc > 1 or post_size!=pre_size):
+                    print("ERROR rewire(): undo failed to restore to single component")
+                    return 1
+
 
 
 def rewire(net, num_rewire):
@@ -155,8 +171,8 @@ def rewire(net, num_rewire):
         while (rewire_success == False):  # ensure sucessful rewire
             edge = rd.sample(net.edges(), 1)
             edge = edge[0]
-            # print("rewire(): during.")
-            # TODO: TEMP don't allow 0 deg edges
+
+            # don't allow 0 deg edges
             while ((net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1) or (net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1)):
                 edge = rd.sample(net.edges(), 1)
                 edge = edge[0]

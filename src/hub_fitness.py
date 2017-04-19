@@ -29,6 +29,7 @@ def assign_numer (hub_metric, soln_bens, soln_dmgs, soln_bens_sq, soln_bens_4):
         for B in set(soln_bens):
             numer *= B
         return numer
+    elif (hub_metric == 'ETBv2'): return sum(soln_bens)
     elif (hub_metric == 'ETB sqrt'): return math.pow(sum(set(soln_bens)),.5)
     elif(hub_metric=='effic'): return math.pow(sum(soln_bens_sq), .5)
     elif(hub_metric=='effic 2'): return sum(soln_bens_sq)
@@ -107,7 +108,7 @@ def assign_numer (hub_metric, soln_bens, soln_dmgs, soln_bens_sq, soln_bens_4):
 def assign_denom (hub_metric, soln_bens):
     if (sum(soln_bens) == 0): return 1
 
-    if (hub_metric=='ETB' or hub_metric=='multETB' or hub_metric=='multB' or hub_metric=='Bsq' or hub_metric=='combo' or hub_metric=='combo prod'): return 1 #sum(soln_bens)
+    if (hub_metric=='ETB' or hub_metric=='ETBv2' or hub_metric=='multETB' or hub_metric=='multB' or hub_metric=='Bsq' or hub_metric=='combo' or hub_metric=='combo prod'): return 1 #sum(soln_bens)
     elif (hub_metric == 'ETB sqrt'): return math.pow(sum(soln_bens), .5)
     elif(hub_metric=='effic'): return sum(soln_bens)
     elif(hub_metric=='effic 2'): return math.pow(sum(soln_bens), 2)
