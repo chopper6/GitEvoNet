@@ -18,7 +18,7 @@ def plot_em(real_net_file, sim_net_file, plot_title):
     for  line in input_files:
         # PLOT SIM NET
         M = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
-        print("Simulated Net: \tnodes " + str(len(M.nodes())) + "\tedges " + str(len(M.edges())))
+        #print("Simulated Net: \tnodes " + str(len(M.nodes())) + "\tedges " + str(len(M.edges())))
         num_nodes = len(M.nodes())
 
         degrees = list(M.degree().values())
@@ -100,7 +100,7 @@ def plot_em(real_net_file, sim_net_file, plot_title):
         plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
 
         plt.tight_layout()
-        plt.savefig(str(title) + " vs sim at gen " + str(plot_title), dpi=300,bbox='tight') # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
+        plt.savefig(str(plot_title) + " vs " + str(title) + ".png", dpi=300,bbox='tight') # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
         plt.clf()
         plt.cla()
         plt.close()
@@ -145,7 +145,7 @@ if __name__ == "__main__":
             os.makedirs(sim_dirr + "/comparison_plots/")
         for sim_file in os.listdir(sim_dirr+"/nets/"):
             print("Plotting sim file " + str(sim_file))
-            plot_em(real_net_file, sim_dirr +"/nets/"+ sim_file, sim_dirr + "/comparison_plots/" + sim_file + ".png")
+            plot_em(real_net_file, sim_dirr +"/nets/"+ sim_file, sim_dirr + "/comparison_plots/" + sim_file)
 
     else:
         sim_dirr = str(base_dir + sys.argv[1])
@@ -158,5 +158,5 @@ if __name__ == "__main__":
                 os.makedirs(sim + "/comparison_plots/")
             for sim_file in os.listdir(sim+"/nets/"):
                 print("Plotting sim file " + str(sim_file))
-                plot_em(real_net_file, sim +"/nets/"+ sim_file, sim + "/comparison_plots/" + sim_file + ".png")
+                plot_em(real_net_file, sim +"/nets/"+ sim_file, sim + "/comparison_plots/" + sim_file)
     print("\nDone.\n")
