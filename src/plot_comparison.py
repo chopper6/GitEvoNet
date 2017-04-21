@@ -14,26 +14,11 @@ def plot_em(real_net_file, sim_net_file, plot_title):
     colors = ['#E6FAB3', '#B3FAE2', '#B2C6FB','#E4B2FB','#FBB2B2','#F9C140','#D2F940']
     # pick more colors from here: http://htmlcolorcodes.com/ , number of colos >= number of networks in input_files ]
     i = 0
-    H = []
     for  line in input_files:
-        # PLOT SIM NET
-        M = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
+        H = []
+        sim_net = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
         #print("Simulated Net: \tnodes " + str(len(M.nodes())) + "\tedges " + str(len(M.edges())))
-        num_nodes = len(M.nodes())
-
-        degrees = list(M.degree().values())
-        in_degrees, out_degrees = list(M.in_degree().values()), list(M.out_degree().values())
-        # degrees = in_degrees + out_degrees
-        degs, freqs = np.unique(degrees, return_counts=True)
-        tot = float(sum(freqs))
-        freqs = [(f / tot) * 100 for f in freqs]
-
-        plt.loglog(degs, freqs, basex=10, basey=10, linestyle='-', linewidth=2, color='#000000', alpha=1,
-                   markersize=8, marker='', markeredgecolor='None')
-
-        patch = mpatches.Patch(color=colors[i], label="Simulation")
-
-        H = H + [patch]
+        num_nodes = len(sim_net.nodes())
 
 
         # PLOT REAL NETS
@@ -67,11 +52,26 @@ def plot_em(real_net_file, sim_net_file, plot_title):
             # you can also scatter the in/out degrees on the same plot
             # plt.scatter( .... )
 
+
         #i think one patch per set of samples?
         patch =  mpatches.Patch(color=colors[i], label=title)
 
         H = H + [patch]
-        i+=1
+
+        #PLOT SIM NET
+        degrees = list(sim_net.degree().values())
+        in_degrees, out_degrees = list(sim_net.in_degree().values()), list(sim_net.out_degree().values())
+        # degrees = in_degrees + out_degrees
+        degs, freqs = np.unique(degrees, return_counts=True)
+        tot = float(sum(freqs))
+        freqs = [(f / tot) * 100 for f in freqs]
+
+        plt.loglog(degs, freqs, basex=10, basey=10, linestyle='-', linewidth=2, color='#000000', alpha=1,
+                   markersize=8, marker='', markeredgecolor='None')
+
+        patch = mpatches.Patch(color=colors[i], label="Simulation")
+
+        H = H + [patch]
 
 
         #FORMAT PLOT
@@ -83,8 +83,8 @@ def plot_em(real_net_file, sim_net_file, plot_title):
         # https://www.sharelatex.com/learn/Mathematical_expressions
         # http://matplotlib.org/users/usetex.html
 
-        ax.set_xlim([0.7,1000])
-        ax.set_ylim([.02,100])
+        ax.set_xlim([0.7,200])
+        ax.set_ylim([.1,100])
 
         xfmatter = ticker.FuncFormatter(LogXformatter)
         yfmatter = ticker.FuncFormatter(LogYformatter)
@@ -104,6 +104,8 @@ def plot_em(real_net_file, sim_net_file, plot_title):
         plt.clf()
         plt.cla()
         plt.close()
+
+    i += 1
 
 def walklevel(some_dir, level=1): #MOD to dirs only
     some_dir = some_dir.rstrip(os.path.sep)
