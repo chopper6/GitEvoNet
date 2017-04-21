@@ -23,7 +23,22 @@ def node_score (hub_metric, B, D, soln_bens):
 def assign_numer (hub_metric, soln_bens, soln_dmgs, soln_bens_sq, soln_bens_4):
     if (sum(soln_bens) == 0): return 0
 
-    if (hub_metric=='ETB'): return sum(set(soln_bens))
+    if (hub_metric=='ETB' or hub_metric=='old ETB'): return sum(set(soln_bens))
+    elif(hub_metric == 'ETB RG'):
+        numer=0
+        for i in range(len(soln_bens)):
+            if (soln_dmgs[i] == 0): numer += 1
+        RG = numer / len(soln_bens)
+        return RG*sum(set(soln_bens))
+
+    elif(hub_metric == 'ETB combo'):
+        numer=0
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer += (math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))
+        return numer*sum(set(soln_bens))
+
     elif (hub_metric=='multETB'):
         numer = 1
         for B in set(soln_bens):
@@ -78,7 +93,97 @@ def assign_numer (hub_metric, soln_bens, soln_dmgs, soln_bens_sq, soln_bens_4):
             numer *= (math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))
         return numer
 
-    #NEW
+    elif (hub_metric == 'entropy1'):
+        numer=0
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer += ((B+D+1)*math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))
+        return numer
+
+    elif (hub_metric == 'entropy2'):
+        numer=0
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer += (math.factorial(B+D)/float(math.factorial(B)*math.factorial(D)))
+        return numer
+
+    elif (hub_metric == 'entropy3'):
+        numer=0
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer +=  (math.pow(2,(B+D))*math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))
+        return numer
+
+    elif (hub_metric == 'entropy3 prod'):
+        numer=1
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer *=  (math.pow(2,(B+D))*math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))
+        return numer
+
+
+    elif (hub_metric == 'entropy4'):
+        numer=0
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer +=   (math.pow(2,(B+D)) - (math.factorial(B+D)/float(math.factorial(B)*math.factorial(D))))/math.pow(2,(B+D))
+        return numer
+    elif (hub_metric == 'entropy4 prod'):
+        numer=1
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer *=  (math.pow(2,(B+D)) - (math.factorial(B+D)/float(math.factorial(B)*math.factorial(D))))/math.pow(2,(B+D))
+        return numer
+
+    elif (hub_metric == 'ETB entropy4'):
+        numer=0
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer +=   (math.pow(2,(B+D)) - (math.factorial(B+D)/float(math.factorial(B)*math.factorial(D))))/math.pow(2,(B+D))
+        return numer*sum(set(soln_bens))
+
+    elif (hub_metric=='entropy5'):
+        numer=0
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer += (math.factorial(B+D)/float(math.factorial(D)*math.factorial(B)))
+        return numer
+
+    elif (hub_metric=='entropy5 prod'):
+        numer=1
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer *= (math.factorial(B+D)/float(math.factorial(D)*math.factorial(B)))
+        return numer
+
+    elif (hub_metric == 'entropy6'):
+        entropy_after =0
+        total_degs = 0
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            entropy_after +=   (math.factorial(B+D)/float(math.factorial(B)*math.factorial(D)))
+            total_degs += B+D
+        entropy_before = math.pow(2,total_degs)
+        return (entropy_before - entropy_after) / float(entropy_before)
+
+    elif (hub_metric == 'entropy7'):
+        numer=0
+        for i in range(len(soln_bens)):
+            B = soln_bens[i]
+            D = soln_dmgs[i]
+            numer += math.log(math.factorial(B+D)/float(math.factorial(B)*math.factorial(D)),2)
+        return 1/numer
+
     elif(hub_metric=='1'):
         powB = 0
         for B in soln_bens:
@@ -117,6 +222,7 @@ def assign_denom (hub_metric, soln_bens):
     elif(hub_metric == 'effic sqrt'): return math.pow(sum(soln_bens), .5)
     elif(hub_metric=='control'): return sum(soln_bens)
     elif(hub_metric=='ratio'): return 1
+    elif(hub_metric=='old ETB' or hub_metric=='ETB combo'): return sum(soln_bens)
 
     #NEW
     elif (hub_metric == '1'):
@@ -136,5 +242,6 @@ def assign_denom (hub_metric, soln_bens):
         for B in soln_bens:
             logB += math.log(B)
         return logB
-
+    #TODO: for fucks sake just default to returning 1 
+    elif (hub_metric == 'entropy1' or hub_metric == 'entropy2' or hub_metric == 'entropy3' or hub_metric == 'entropy4' or hub_metric == 'entropy4 prod' or hub_metric == 'entropy3 prod' or hub_metric == 'entropy5' or hub_metric == 'entropy5 prod' or hub_metric == 'entropy6' or hub_metric == 'ETB entropy4' or hub_metric == 'ETB RG' or hub_metric == 'entropy7'): return 1
     else: print("ERROR in fitness.assign_hub_denom(): unknown hub metric:" + str(hub_metric))

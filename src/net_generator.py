@@ -158,7 +158,7 @@ def init_population(init_type, start_size, pop_size, configs):
         sign_edges([init_net])
         sign_edges_needed = False
         num_rewire = start_size*10
-        mutate.rewire(init_net.net, num_rewire, None)
+        mutate.rewire(init_net.net, num_rewire)
 
         population = [Net(init_net.net.copy(), i) for i in range(pop_size)]
         assert(population[0] != population[1] and population[0].net != population[1].net)
@@ -186,26 +186,23 @@ def init_population(init_type, start_size, pop_size, configs):
     elif (init_type == 'random'):
         estim_p = num_edges/float(start_size*start_size)
         init_net = (nx.erdos_renyi_graph(start_size, estim_p, directed=True, seed=None))
-        if (len(init_net.edges()) == 0): print("ERROR in net_generator: estim_p too low to generate any edges")
+        
+        edge_list = init_net.edges()
+        for edge in edge_list:
+            sign = sysRand().randint(0, 1)
+            if (sign == 0):     sign = -1
+            init_net[edge[0]][edge[1]]['sign'] = sign
+
+        rewire_till_connected(init_net)
 
         if (len(init_net.edges()) < num_edges):
             num_add = num_edges - len(init_net.edges())
             mutate.add_edges(init_net, num_add)
 
         elif (len(init_net.edges()) > num_edges):
-            num_rm = num_edges - len(init_net.edges())
+            num_rm = len(init_net.edges()) - num_edges
             mutate.rm_edges(init_net, num_rm)
-
-        num_cc = 2
-        num_rewire=0
-        while (num_cc != 1):
-            num_rewire += 1
-            mutate.rewire(init_net,10)
-
-            net_undir = init_net.to_undirected()
-            num_cc = nx.number_connected_components(net_undir)
-
-        print("Number of rewires to avoid 0 degree = " + str(num_rewire) + ", num attempts to create suitable net = " + str(num_cc) + ".\n")
+        rewire_till_connected(init_net)
         population = [Net(init_net.copy(), i) for i in range(pop_size)]
 
 
@@ -257,3 +254,43 @@ def double_edges(population):
         for edge in edges:
             net.add_edge(edge[1], edge[0])  # add reverse edge
 
+def rewire_till_connected(net):
+        net_undir = net.to_undirected()
+        num_cc = nx.number_connected_components(net_undir)
+        num_rewire = 0
+        while (num_cc != 1):
+            pre_edges = len(net.edges())
+            components = list(nx.connected_components(net_undir))
+            c1 = components[0]
+            c2 = components[1]
+            node = sysRand().sample(c1, 1)
+            node = node[0]
+            node2 = sysRand().sample(c2, 1)
+            node2 = node2[0]
+            
+            edge = sysRand().sample(net.edges(), 1)
+            edge = edge[0]
+
+            # don't allow 0 deg edges
+            while ((net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1) or (net.in_degree(edge[1]) + net.out_degree(edge[1]) == 1)):
+                edge = sysRand().sample(net.edges(), 1)
+                edge = edge[0]
+                   
+            net.remove_edge(edge[0], edge[1])
+            if (len(net.edges()) == pre_edges): print("ERROR net_gen(): rm edge failed.")
+
+            sign = sysRand().randint(0, 1)
+            if (sign == 0):     sign = -1
+
+            if (sysRand().random() < .5): net.add_edge(node, node2, sign=sign)
+            else: net.add_edge(node2, node, sign=sign)
+            post_edges = len(net.edges())
+            if (post_edges != pre_edges): print("ERROR net_gen(): changes num edges during rewire")
+
+
+            num_rewire += 1
+
+            net_undir = net.to_undirected()
+            num_cc = nx.number_connected_components(net_undir)
+            if (num_rewire % 100 == 0): print("net_gen.rewire_till_connected(): num components=" + str(num_cc))
+        print("net_gen.rewire_till_connected(): finished with " + str(num_rewire) + " rewires.\n")   

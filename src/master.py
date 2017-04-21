@@ -80,7 +80,7 @@ def evolve_from_seed(configs):
     total_gens = 0
     size = start_size
     iter = 0
-    while (size < end_size and total_gens < max_gen):
+    while (size <= end_size and total_gens < max_gen):
 
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive, worker_pop_size_config)
 
@@ -104,9 +104,10 @@ def evolve_from_seed(configs):
         if (iter % int(max_gen/num_net_output) ==0):
             nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(iter))
 
-        if (iter % int(max_gen/num_grow) ==0):
-            for p in range(len(population)):
-                mutate.add_nodes(population[p].net, 1, edge_node_ratio)
+        if (num_grow != 0):
+            if (iter % int(max_gen/num_grow) ==0):
+                for p in range(len(population)):
+                    mutate.add_nodes(population[p].net, 1, edge_node_ratio)
 
         #debug(population)
         pool = mp.Pool(processes=num_workers)

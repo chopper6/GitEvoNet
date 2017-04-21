@@ -83,13 +83,32 @@ def node_score (leaf_metric, B, D):
     elif (leaf_metric == 'combo'):
         return (math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))
 
+    elif (leaf_metric == 'combo2'):
+        return (math.factorial(B+D)/float(math.factorial(B)*math.factorial(D)))
+
     elif (leaf_metric == 'entropy1'):
         return ((B+D+1)*math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))
+
+    elif (leaf_metric == 'entropy2'):
+        return (math.factorial(B+D)/float(math.factorial(B)*math.factorial(D)))
+
+    elif (leaf_metric == 'entropy3'):
+        return (math.pow(2,(B+D))*math.factorial(B)*math.factorial(D)/float(math.factorial(B+D)))    
+
+    elif (leaf_metric == 'entropy4'):
+        return (math.pow(2,(B+D)) - (math.factorial(B+D)/float(math.factorial(B)*math.factorial(D))))/ math.pow(2,(B+D))
+
+    elif (leaf_metric == 'entropy5'):
+        return (math.factorial(B+D)/float(math.factorial(B)*math.factorial(D)))
+
+    elif (leaf_metric == 'entropy7'):
+        return math.log(math.factorial(B+D)/float(math.factorial(B)*math.factorial(D)),2)
 
     else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric: " + str(leaf_metric))
 
 
 def assign_denom(leaf_metric, num_genes):
     #if (leaf_metric == 'ratio 11'): return math.pow(combo_sum,2)
+
     return num_genes
 

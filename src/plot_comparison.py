@@ -55,7 +55,7 @@ def plot_em(real_net_file, sim_net_file, plot_title):
     print ("Simulated Net: \tnodes "+str(len(M.nodes()))+"\tedges "+str(len(M.edges())))
 
     degrees = list(M.degree().values())
-    #in_degrees, out_degrees = list(M.in_degree().values()), list(M.out_degree().values())
+    in_degrees, out_degrees = list(M.in_degree().values()), list(M.out_degree().values())
     #degrees = in_degrees + out_degrees
     degs, freqs = np.unique(degrees, return_counts=True)
     tot = float(sum(freqs))
