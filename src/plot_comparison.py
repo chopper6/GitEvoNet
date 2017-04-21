@@ -4,17 +4,39 @@ import sys, os, matplotlib.pyplot as plt, matplotlib.patches as mpatches, networ
 import math
 #from scipy.stats import itemfreq
 import matplotlib.ticker as ticker
+import random as rd
 #from ticker import FuncFormatter
 
 def plot_em(real_net_file, sim_net_file, plot_title):
     # each line in 'input.txt' should be: [network name (spaces allowed) followed by /path/to/edge/file.txt/or/pickled/network.dump]
     input_files = open(real_net_file,'r').readlines()
 
-    colors = ['#E6FAB3', '#B3FAE2', '#B2C6FB','#E4B2FB','#FBB2B2','#F9C140','#D2F940', '#000000']
+    colors = ['#E6FAB3', '#B3FAE2', '#B2C6FB','#E4B2FB','#FBB2B2','#F9C140','#D2F940']
     # pick more colors from here: http://htmlcolorcodes.com/ , number of colos >= number of networks in input_files ]
     i = 0
     H = []
     for  line in input_files:
+        # PLOT SIM NET
+        M = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
+        print("Simulated Net: \tnodes " + str(len(M.nodes())) + "\tedges " + str(len(M.edges())))
+        num_nodes = len(M.nodes())
+
+        degrees = list(M.degree().values())
+        in_degrees, out_degrees = list(M.in_degree().values()), list(M.out_degree().values())
+        # degrees = in_degrees + out_degrees
+        degs, freqs = np.unique(degrees, return_counts=True)
+        tot = float(sum(freqs))
+        freqs = [(f / tot) * 100 for f in freqs]
+
+        plt.loglog(degs, freqs, basex=10, basey=10, linestyle='-', linewidth=2, color='#000000', alpha=1,
+                   markersize=8, marker='', markeredgecolor='None')
+
+        patch = mpatches.Patch(color=colors[i], label="Simulation")
+
+        H = H + [patch]
+
+
+        # PLOT REAL NETS
         line         = line.strip()
         title        = line.split()[:-1][0]
         network_file = line.split()[-1]
@@ -25,78 +47,63 @@ def plot_em(real_net_file, sim_net_file, plot_title):
         #nx.write_gpickle(M,'dumps/'+network_file.split('/')[-1].split('.')[0]+'.dump')
         M = nx.read_gpickle(network_file)
 
+        repeats = 100
+        for j in range(repeats):
+            sample_nodes = rd.sample(M.nodes(), num_nodes)
 
-        #with open (network_file,''
-        #print (network_file.split('/')[-1].strip()+"\tnodes "+str(len(M.nodes()))+"\tedges "+str(len(M.edges())))
+            #with open (network_file,''
+            #print (network_file.split('/')[-1].strip()+"\tnodes "+str(len(M.nodes()))+"\tedges "+str(len(M.edges())))
 
-        degrees = list(M.degree().values())
-        in_degrees, out_degrees = list(M.in_degree().values()), list(M.out_degree().values())
-        #degrees = in_degrees + out_degrees
-        #SCIPY GET FREQS
-        #tmp     = itemfreq(degrees) # Get the item frequencies
-        #degs, freqs =  tmp[:, 0], tmp[:, 1] # 0 = unique values in data, 1 = frequencies
+            degrees = list(M.degree(sample_nodes).values())
+            in_degrees, out_degrees = list(M.in_degree(sample_nodes).values()), list(M.out_degree(sample_nodes).values())
+            #degrees = in_degrees + out_degrees
 
-        #NP GET FREQS
-        degs, freqs = np.unique(degrees, return_counts=True)
-        tot = float(sum(freqs))
-        freqs = [(f/tot)*100 for f in freqs]
+            #NP GET FREQS
+            degs, freqs = np.unique(degrees, return_counts=True)
+            tot = float(sum(freqs))
+            freqs = [(f/tot)*100 for f in freqs]
 
-        plt.loglog(degs, freqs, basex=10, basey=10, linestyle='-',  linewidth=2, color = colors[i], alpha=0.5, markersize=8, marker='', markeredgecolor='None')
-        # you can also scatter the in/out degrees on the same plot
-        # plt.scatter( .... )
+            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='-',  linewidth=2, color = colors[i], alpha=0.2, markersize=8, marker='', markeredgecolor='None')
+            # you can also scatter the in/out degrees on the same plot
+            # plt.scatter( .... )
 
+        #i think one patch per set of samples?
         patch =  mpatches.Patch(color=colors[i], label=title)
 
         H = H + [patch]
         i+=1
 
-    #PLOT SIM NET
-    M = nx.read_edgelist(sim_net_file,nodetype=int,create_using=nx.DiGraph())
-    print ("Simulated Net: \tnodes "+str(len(M.nodes()))+"\tedges "+str(len(M.edges())))
 
-    degrees = list(M.degree().values())
-    in_degrees, out_degrees = list(M.in_degree().values()), list(M.out_degree().values())
-    #degrees = in_degrees + out_degrees
-    degs, freqs = np.unique(degrees, return_counts=True)
-    tot = float(sum(freqs))
-    freqs = [(f/tot)*100 for f in freqs]
+        #FORMAT PLOT
+        ax = plt.gca() # gca = get current axes instance
 
-    plt.loglog(degs, freqs, basex=10, basey=10, linestyle='-',  linewidth=2, color = colors[i], alpha=0.5, markersize=8, marker='', markeredgecolor='None')
+        # if you are plotting a single network, you can add a text describing the fitness function used:
+        ax.text(.5,.7,r'$f(N)=\prod\frac {b}{b+d}\times\sum_{j=1}^{n} etc$', horizontalalignment='center', transform=ax.transAxes, size=20)
+        # change (x,y)=(.5, .7) to position the text in a good location; the "f(N)=\sum \frac{}" is a mathematical expression using latex, see this:
+        # https://www.sharelatex.com/learn/Mathematical_expressions
+        # http://matplotlib.org/users/usetex.html
 
-    patch =  mpatches.Patch(color=colors[i], label="Simulation")
+        ax.set_xlim([0.7,1000])
+        ax.set_ylim([.02,100])
 
-    H = H + [patch]
+        xfmatter = ticker.FuncFormatter(LogXformatter)
+        yfmatter = ticker.FuncFormatter(LogYformatter)
+        ax.get_xaxis().set_major_formatter(xfmatter)
+        ax.get_yaxis().set_major_formatter(yfmatter)
 
-    #FORMAT PLOT
-    ax = plt.gca() # gca = get current axes instance
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        plt.tick_params(axis='both', which='both', right='off', top='off') #http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
+        plt.legend(loc='upper right', handles=H, frameon=False,fontsize= 11)
+        plt.xlabel('degree  ')
+        plt.ylabel('% genes ')
+        plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
 
-    # if you are plotting a single network, you can add a text describing the fitness function used:
-    ax.text(.5,.7,r'$f(N)=\prod\frac {b}{b+d}\times\sum_{j=1}^{n} etc$', horizontalalignment='center', transform=ax.transAxes, size=20)
-    # change (x,y)=(.5, .7) to position the text in a good location; the "f(N)=\sum \frac{}" is a mathematical expression using latex, see this:
-    # https://www.sharelatex.com/learn/Mathematical_expressions
-    # http://matplotlib.org/users/usetex.html
-
-    ax.set_xlim([0.7,1000])
-    ax.set_ylim([.02,100])
-
-    xfmatter = ticker.FuncFormatter(LogXformatter)
-    yfmatter = ticker.FuncFormatter(LogYformatter)
-    ax.get_xaxis().set_major_formatter(xfmatter)
-    ax.get_yaxis().set_major_formatter(yfmatter)
-
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    plt.tick_params(axis='both', which='both', right='off', top='off') #http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
-    plt.legend(loc='upper right', handles=H, frameon=False,fontsize= 11)
-    plt.xlabel('degree  ')
-    plt.ylabel('% genes ')
-    plt.title('Degree Distribution')
-
-    plt.tight_layout()
-    plt.savefig(plot_title, dpi=300,bbox='tight') # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
-    plt.clf()
-    plt.cla()
-    plt.close()
+        plt.tight_layout()
+        plt.savefig(str(title) + " vs sim at gen " + str(plot_title), dpi=300,bbox='tight') # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
+        plt.clf()
+        plt.cla()
+        plt.close()
 
 def walklevel(some_dir, level=1): #MOD to dirs only
     some_dir = some_dir.rstrip(os.path.sep)
