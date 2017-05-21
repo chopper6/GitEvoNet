@@ -64,17 +64,9 @@ def evolve_from_seed(configs):
     #instead pass to workers, but w/o any mutation and just for a single gen
 
     if (control == None):
-        pressure_results = pressurize.pressurize(configs, population[0].net, True, instance_file+"Xiter0.csv") #True: track node fitness
-        population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
+        population[0].fitness = pressurize.pressurize(configs, population[0].net, True, instance_file+"Xiter0.csv") #True: track node fitness
         fitness.eval_fitness([population[0]])
 
-    elif (control == 'unambig'):
-        population[0].fitness_parts[2] = control_fitness.unambig(population[0].net)
-        population[0].fitness_parts[1], population[p].fitness_parts[0] = 1,1
-
-    elif (control == 'deg 1'):
-        population[p].fitness_parts[2] = control_fitness.deg1(population[p].net)
-        population[p].fitness_parts[1], population[p].fitness_parts[0] = 1,1
     output.deg_change_csv([population[0]], output_dir)
 
     total_gens = 0
@@ -94,12 +86,6 @@ def evolve_from_seed(configs):
 
         if (iter % int(max_gen / num_draw) == 0 and num_draw != 0 ):
             draw_nets.basic(population, output_dir, total_gens, draw_layout)
-
-        if (iter % int(max_gen/num_fitness_plots) ==0):
-            #if first gen, have already pressurized w/net[0]
-            if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True, instance_file+"Xiter"+str(iter)+".csv" )  # True: track node fitness
-            node_info = pressure_results[3]
-            node_fitness.write_out(output_dir + "/node_info/" + str(iter) + ".csv", node_info)
 
         if (iter % int(max_gen/num_net_output) ==0):
             nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(iter))
@@ -158,10 +144,6 @@ def evolve_from_seed(configs):
     output.deg_change_csv(population, output_dir)
     draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
-    if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, True, instance_file+"Xiter"+str(iter)+".csv")  # True: track node fitness
-    node_info = pressure_results[3]
-    node_fitness.write_out(output_dir + "/node_info/" + str(iter) + ".csv", node_info)
-
     print("Evolution finished, generating images.")
     plot_nets.single_run_plots(output_dir)
     #instances.analyze(output_dir)
@@ -193,7 +175,8 @@ def parse_worker_popn (num_workers, output_dir, num_survive):
         for indiv in worker_pop:
             popn.append(indiv)
             i+=1
-    sorted_popn = sorted(popn, key=attrgetter('fitness'), reverse=True)
+
+    sorted_popn = fitness.eval_fitness(popn)
     return sorted_popn[:num_survive]
 
 

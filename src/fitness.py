@@ -1,18 +1,30 @@
 import math, random
 from operator import attrgetter
 import networkx as nx
-import hub_fitness, leaf_fitness, node_fitness
+import hub_fitness, leaf_fitness
 
 def eval_fitness(population):
     #determines fitness of each individual and orders the population by fitness
-    for p in range(len(population)):
-        population[p].fitness = population[p].fitness_parts[2]
+    #for p in range(len(population)):
+    #    population[p].fitness = population[p].fitness_parts[2]
     
-    population = sorted(population,key=attrgetter('fitness'), reverse=True)
-    #reverse since MAX fitness function
+    population = sorted(population,key=attrgetter('fitness'), reverse=False)  #MIN
     return population
 
 
+def node_fitness(net, leaf_metric):
+    for node in net.nodes():
+        B,D = node['benefits'], node['damages']
+        node['fitness'] += leaf_fitness.node_score(leaf_metric, B,D)
+
+def node_product(net):
+    fitness_score = 1
+    for node in net.nodes():
+        if node['fitness'] == 0: print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
+        else: fitness_score *= node['fitness']
+    return fitness_score
+
+#OLD
 def kp_instance_properties(a_result, leaf_metric, leaf_operator, hub_metric, hub_operator, fitness_operator, net, track_node_fitness, node_info, instance_file_name):
 
     #LEAF MEASURES
@@ -49,9 +61,9 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, hub_metric, hub
             soln_bens_4.append(math.pow(B,4))
             soln_dmgs.append(D)
 
-            if (track_node_fitness == True): 
+            if (track_node_fitness == True):
                 if (B > Bmax or D > Bmax):
-                    xadfdas=3 
+                    xadfdas=3
                     #print("WARNING fitness(): B = " + str(B) + ", D = " + str(D) + " not included in node_info.")
                 else: node_info['freq in solution'][B][D] += 1
         if (track_node_fitness == True): node_info = node_fitness.normz(node_info, len(GENES_in), 'freq in solution')
@@ -87,7 +99,7 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, hub_metric, hub
 
 
             if (track_node_fitness==True):
-                if (B > Bmax or D > Bmax): 
+                if (B > Bmax or D > Bmax):
                     xadsf=3
                     #print("WARNING fitness(): B = " + str(B) + ", D = " + str(D) + " not included in node_info.")
                 else: node_info['freq'][B][D] += 1
@@ -124,7 +136,7 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, hub_metric, hub
         hub_score /= float(hub_denom)
         if (hub_operator == 'pow'): hub_score = math.pow(hub_score, 1/len(GENES_in)) #TODO: see if this works and all
         elif (hub_operator == 'mult'): hub_score /= len(GENES_in)
-        elif (hub_operator == 'sum all'): 
+        elif (hub_operator == 'sum all'):
             if (sum(all_ben)>0): hub_score /= float(sum(all_ben))
         elif (hub_operator == 'inv sum'): hub_score = 1/hub_score
         elif (hub_operator == 'inv leaf'): hub_score = leaf_score/hub_score

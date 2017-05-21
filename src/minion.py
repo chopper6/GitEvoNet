@@ -44,20 +44,9 @@ def evolve_minion(worker_file):
           
             t0 = ptime()
             if (control == None):
-                pressure_results = pressurize.pressurize(configs, population[p].net, False, None) #false: don't track node fitness, None: don't write instances to file
+                population[p].fitness = pressurize.pressurize(configs, population[p].net, False, None) #false: don't track node fitness, None: don't write instances to file
                 t1 = ptime()
                 pressurize_time += t1-t0
-                population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-            elif (control == 'unambig'):
-                population[p].fitness_parts[2] = control_fitness.unambig(population[p].net)
-                population[p].fitness_parts[1], population[p].fitness_parts[0] = 1,1
-
-            elif (control == 'deg 1'):
-                population[p].fitness_parts[2] = control_fitness.deg1(population[p].net)
-                population[p].fitness_parts[1], population[p].fitness_parts[0] = 1,1
-
-
-
 
         old_popn = population
         population = fitness.eval_fitness(old_popn)

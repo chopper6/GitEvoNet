@@ -44,12 +44,13 @@ def advice (M, samples, biased, advice_upon):
                     advice[element] = -1
 
             elif (advice_upon=='edges'):
-                if element[0] not in advice.keys():
-                    advice[element[0]] = {}
+                if element not in advice.keys():
+                    advice[element] = {}
+                    print("UTIL.advice(): adding ele " + str(element) + " to advice.keys().")
                 if rand <= biased_center:
-                    advice[element[0]][element[1]] = 1
+                    advice[str(element)] = 1
                 else:
-                    advice[element[0]][element[1]] = -1
+                    advice[str(element)] = -1
 
     
     return advice

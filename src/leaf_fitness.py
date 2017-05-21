@@ -196,6 +196,19 @@ def node_score (leaf_metric, B, D):
             return (.25-(math.pow(B/(B+D),1)*math.pow(D/(B+D),1)))*4
 
 
+
+    # MIN ENTROPY
+    elif (leaf_metric == 'min_entropy'):
+        if (B+D==0): return 0
+        if (B==0): H_B = 0
+        else: H_B = -1*(B/(B+D)) * math.log2(B/(B+D))
+
+        if (D==0): H_D = 0
+        else: H_D = -1*(D/(B+D)) * math.log2(D/(B+D))
+
+        return (H_B + H_D)
+
+
     else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric: " + str(leaf_metric))
 
 

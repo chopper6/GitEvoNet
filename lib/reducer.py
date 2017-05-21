@@ -1,10 +1,9 @@
 import random, util, math, time, numpy as np
 
-#--------------------------------------------------------------------------------------------------  
-def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria):
-    #print ("in reducer, " + str(advice_sampling_threshold))
+#--------------------------------------------------------------------------------------------------
+def simple_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria):
     if  advice_sampling_threshold <=0:
-        print ("WARNING: reverse_reduction yields empty set.")
+        print ("WARNING: simple_reduction yields empty set.")
         yield [{},{},0]
     else:
         if (advice_upon == 'nodes'): samples = net.nodes()
@@ -16,6 +15,22 @@ def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold,
         for i in range(advice_sampling_threshold):
             yield [ BDT_calculator   (net, util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon), T_percentage, BD_criteria, advice_upon) ]
 
+
+#--------------------------------------------------------------------------------------------------  
+def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria):
+    #print ("in reducer, " + str(advice_sampling_threshold))
+    if  advice_sampling_threshold <=0:
+        print ("WARNING: reverse_reduction yields empty set.")
+        Bs,Ds, tol = [{},{},0]
+    else:
+        if (advice_upon == 'nodes'): samples = net.nodes()
+        elif (advice_upon == 'edges'): samples = net.edges()
+        else:
+            print ("ERROR reverse_reduction: unknown advice_upon: " + str(advice_upon))
+            return
+
+        Bs,Ds,tol = BDT_calculator   (net, util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon), T_percentage, BD_criteria, advice_upon)
+    return Bs,Ds,tol
 #--------------------------------------------------------------------------------------------------                
 def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
     BENEFITS, DAMAGES = {}, {}
@@ -24,7 +39,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
         print("ERROR in reducer.BDT_calc_node: unknown BD_criteria: " + str(BD_criteria))
     
     for element in Advice.keys():
-        if (advice_upon=='nodes'):
+        if (advice_upon=='nodes'): #TODO: add node advice version, if nec
             target = element
             sources = M.predecessors(target)
 
@@ -80,6 +95,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
             if M[source][target]['sign'] == advice:  # in agreement with the Oracle
                 if (BD_criteria == 'both' or BD_criteria == 'source'):
                     ######### REWARDING the source node ###########
+                    M[source]['benefits'] += 1
                     if source in BENEFITS.keys():
                         BENEFITS[source] += 1
                     else:
@@ -87,8 +103,10 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
                         if source not in DAMAGES.keys():
                             DAMAGES[source] = 0
 
+
                 if (BD_criteria == 'both' or BD_criteria == 'target'):
                     ######### REWARDING the target node ###########
+                    M[target]['benefits'] += 1
                     if target in BENEFITS.keys():
                         BENEFITS[target] += 1
                     else:
@@ -100,6 +118,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
             else:  # in disagreement with the Oracle
                 if (BD_criteria == 'both' or BD_criteria == 'source'):
                     ######### PENALIZING the source node ##########
+                    M[source]['damages'] += 1
                     if source in DAMAGES.keys():
                         DAMAGES[source] += 1
                     else:
@@ -109,6 +128,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
 
                 if (BD_criteria == 'both' or BD_criteria == 'target'):
                     ######### PENALIZING the target node ##########
+                    M[target]['damages'] += 1
                     if target in DAMAGES.keys():
                         DAMAGES[target] += 1
                     else:
