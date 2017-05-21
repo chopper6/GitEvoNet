@@ -97,7 +97,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
             if M[source][target]['sign'] == advice:  # in agreement with the Oracle
                 if (BD_criteria == 'both' or BD_criteria == 'source'):
                     ######### REWARDING the source node ###########
-                    M[source]['benefits'] += 1
+                    M.node[source]['benefits'] += 1
                     if source in BENEFITS.keys():
                         BENEFITS[source] += 1
                     else:
@@ -108,7 +108,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
 
                 if (BD_criteria == 'both' or BD_criteria == 'target'):
                     ######### REWARDING the target node ###########
-                    M[target]['benefits'] += 1
+                    M.node[target]['benefits'] += 1
                     if target in BENEFITS.keys():
                         BENEFITS[target] += 1
                     else:
@@ -120,7 +120,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
             else:  # in disagreement with the Oracle
                 if (BD_criteria == 'both' or BD_criteria == 'source'):
                     ######### PENALIZING the source node ##########
-                    M[source]['damages'] += 1
+                    M.node[source]['damages'] += 1
                     if source in DAMAGES.keys():
                         DAMAGES[source] += 1
                     else:
@@ -130,7 +130,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
 
                 if (BD_criteria == 'both' or BD_criteria == 'target'):
                     ######### PENALIZING the target node ##########
-                    M[target]['damages'] += 1
+                    M.node[target]['damages'] += 1
                     if target in DAMAGES.keys():
                         DAMAGES[target] += 1
                     else:
