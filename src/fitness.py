@@ -14,14 +14,14 @@ def eval_fitness(population):
 
 def node_fitness(net, leaf_metric):
     for node in net.nodes():
-        B,D = node['benefits'], node['damages']
-        node['fitness'] += leaf_fitness.node_score(leaf_metric, B,D)
+        B,D = net[node]['benefits'], net[node]['damages']
+        net[node]['fitness'] += leaf_fitness.node_score(leaf_metric, B,D)
 
 def node_product(net):
     fitness_score = 1
     for node in net.nodes():
-        if node['fitness'] == 0: print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
-        else: fitness_score *= node['fitness']
+        if net[node]['fitness'] == 0: print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
+        else: fitness_score *= net[node]['fitness']
     return fitness_score
 
 #OLD
