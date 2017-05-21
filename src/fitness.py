@@ -15,13 +15,19 @@ def eval_fitness(population):
 def node_fitness(net, leaf_metric):
     for node in net.nodes():
         B,D = net[node]['benefits'], net[node]['damages']
+        print(B,D)
         net[node]['fitness'] += leaf_fitness.node_score(leaf_metric, B,D)
+        #print(net[node]['fitness'])
 
 def node_product(net):
     fitness_score = 1
+    num_0 = 0
     for node in net.nodes():
-        if net[node]['fitness'] == 0: print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
+        if net[node]['fitness'] == 0: 
+            #print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
+            num_0 += 1
         else: fitness_score *= net[node]['fitness']
+    print(str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
     return fitness_score
 
 #OLD
