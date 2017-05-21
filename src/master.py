@@ -104,8 +104,10 @@ def evolve_from_seed(configs):
         if (iter % int(max_gen/num_net_output) ==0):
             nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(iter))
 
-        if (num_grow != 0):
-            if (iter % int(max_gen/num_grow) ==0):
+        if (num_grow != 0): #WILL NOT WORK WELL WITH ISLAND ALGO, OR MULT WORKER GENS
+            #ASSUMES GROWTH ONLY FOR 1st HALF
+            rate = int(max_gen/(2*num_grow))
+            if ((iter-start_size) % rate ==0 and iter < (max_gen/2 - start_size*rate)):
                 for p in range(len(population)):
                     mutate.add_nodes(population[p].net, 1, edge_node_ratio)
 

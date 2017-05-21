@@ -120,7 +120,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
         else:
             print ("ERROR reducer: unknown advice_upon: " + str(advice_upon))
             return
-
+    
     T_edges = round (max (1, math.ceil (sum(DAMAGES.values())*(T_percentage/100))))
 
     assert len(BENEFITS.keys())==len(DAMAGES.keys())

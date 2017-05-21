@@ -48,7 +48,7 @@ def normz(node_info, fraction, feature):
     else:
         for B in range(len(node_info[feature])):
             for D in range(len(node_info[feature][B])):
-                node_info[feature][B][D] /= fraction
+                if (fraction != 0): node_info[feature][B][D] /= fraction
 
     return node_info
 

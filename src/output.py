@@ -43,20 +43,14 @@ def deg_change_csv(population, output_dir):
         output = csv.writer(deg_file)
         distrib_info = []
 
-        in_degrees, out_degrees = list(population[0].net.in_degree().values()), list(
-            population[0].net.out_degree().values())
+        degrees = list(population[0].net.degree().values())
 
-        indegs, indegs_freqs = np.unique(in_degrees, return_counts=True)
+        #is actually all degs not just in
+        indegs, indegs_freqs = np.unique(degrees, return_counts=True)
         indegs = np.array2string(indegs).replace('\n', '')
         indegs_freqs = np.array2string(indegs_freqs).replace('\n', '')
         distrib_info.append(indegs)
         distrib_info.append(indegs_freqs)
-
-        outdegs, outdegs_freqs = np.unique(out_degrees, return_counts=True)
-        outdegs = np.array2string(outdegs).replace('\n', '')
-        outdegs_freqs = np.array2string(outdegs_freqs).replace('\n', '')
-        distrib_info.append(outdegs)
-        distrib_info.append(outdegs_freqs)
 
         output.writerow(distrib_info)
 

@@ -4,14 +4,17 @@ import sys, os, matplotlib.pyplot as plt, matplotlib.patches as mpatches, networ
 import math
 #from scipy.stats import itemfreq
 import matplotlib.ticker as ticker
+import matplotlib.font_manager as font_manager
+from matplotlib import rcParams
 import random as rd
 #from ticker import FuncFormatter
 
 def plot_em(real_net_file, sim_net_file, plot_title):
+    #update_rcParams()
     # each line in 'input.txt' should be: [network name (spaces allowed) followed by /path/to/edge/file.txt/or/pickled/network.dump]
     input_files = open(real_net_file,'r').readlines()
 
-    colors = ['#E6FAB3', '#B3FAE2', '#B2C6FB','#E4B2FB','#FBB2B2','#F9C140','#D2F940']
+    colors = ['#ADECD7', '#ADC0F3','#E4B2FB','#FBB2B2','#FFCC66','#C3F708']
     # pick more colors from here: http://htmlcolorcodes.com/ , number of colos >= number of networks in input_files ]
     i = 0
     for  line in input_files:
@@ -33,9 +36,11 @@ def plot_em(real_net_file, sim_net_file, plot_title):
         M = nx.read_gpickle(network_file)
 
         repeats = 100
+        ENR = 0
         for j in range(repeats):
             sample_nodes = rd.sample(M.nodes(), num_nodes)
-
+            ENR += len(M.edges(sample_nodes))/float(len(sample_nodes))
+            #if (j==0): print(title + " has ENR = " + str(len(M.edges())/float(len(M.nodes()))) + ".\n")
             #with open (network_file,''
             #print (network_file.split('/')[-1].strip()+"\tnodes "+str(len(M.nodes()))+"\tedges "+str(len(M.edges())))
 
@@ -48,13 +53,15 @@ def plot_em(real_net_file, sim_net_file, plot_title):
             tot = float(sum(freqs))
             freqs = [(f/tot)*100 for f in freqs]
 
-            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='-',  linewidth=2, color = colors[i], alpha=0.2, markersize=8, marker='', markeredgecolor='None')
+            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, color = colors[i], alpha=0.25, markersize=8, marker='.', markeredgecolor='None', )
             # you can also scatter the in/out degrees on the same plot
             # plt.scatter( .... )
 
 
         #i think one patch per set of samples?
         patch =  mpatches.Patch(color=colors[i], label=title)
+        ENR /= repeats
+        #print("Avg ENR " + str(title) + " = " + str(ENR) )
 
         H = H + [patch]
 
@@ -66,23 +73,23 @@ def plot_em(real_net_file, sim_net_file, plot_title):
         tot = float(sum(freqs))
         freqs = [(f / tot) * 100 for f in freqs]
 
-        plt.loglog(degs, freqs, basex=10, basey=10, linestyle='-', linewidth=2, color='#000000', alpha=1,
-                   markersize=8, marker='', markeredgecolor='None')
+        plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=.5, color='#000000', alpha=1, markersize=10, marker='.', markeredgecolor='None')
 
-        patch = mpatches.Patch(color=colors[i], label="Simulation")
+        patch = mpatches.Patch(color='#000000', label="Simulation")
 
         H = H + [patch]
-
 
         #FORMAT PLOT
         ax = plt.gca() # gca = get current axes instance
 
         # if you are plotting a single network, you can add a text describing the fitness function used:
-        ax.text(.5,.7,r'$f(N)=\prod\frac {b}{b+d}\times\sum_{j=1}^{n} etc$', horizontalalignment='center', transform=ax.transAxes, size=20)
+        #ax.text(.5,.7,r'$f(N)=\prod\frac {b}{b+d}\times\sum_{j=1}^{n} etc$', horizontalalignment='center', transform=ax.transAxes, size=20)
         # change (x,y)=(.5, .7) to position the text in a good location; the "f(N)=\sum \frac{}" is a mathematical expression using latex, see this:
         # https://www.sharelatex.com/learn/Mathematical_expressions
         # http://matplotlib.org/users/usetex.html
 
+        #ax.set_xscale('log')
+        #ax.set_yscale('log')
         ax.set_xlim([0.7,200])
         ax.set_ylim([.1,100])
 
@@ -97,7 +104,7 @@ def plot_em(real_net_file, sim_net_file, plot_title):
         plt.legend(loc='upper right', handles=H, frameon=False,fontsize= 11)
         plt.xlabel('degree  ')
         plt.ylabel('% genes ')
-        plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
+        #plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
 
         plt.tight_layout()
         plt.savefig(str(plot_title) + " vs " + str(title) + ".png", dpi=300,bbox='tight') # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
@@ -105,7 +112,7 @@ def plot_em(real_net_file, sim_net_file, plot_title):
         plt.cla()
         plt.close()
 
-    i += 1
+        i += 1
 
 def walklevel(some_dir, level=1): #MOD to dirs only
     some_dir = some_dir.rstrip(os.path.sep)
@@ -135,13 +142,51 @@ def LogXformatter(x, _):
         return str(int(x))
     else:
         return ""
-######################################################
+##################################################################
+def update_rcParams():
+    font_path = '/home/2014/choppe1/Documents/EvoNet/virt_workspace/fonts/adobe/Adobe_Caslon_Pro_Regular.ttf'
+    prop = font_manager.FontProperties(fname=font_path)
+    rcParams['font.family'] = prop.get_name()
+    rcParams['font.serif']         = 'Helvetica' #['Bitstream Vera Sans', 'DejaVu Sans', 'Lucida Grande', 'Verdana', 'Geneva', 'Lucid', 'Arial', 'Helvetica', 'Avant Garde', 'sans-serif']
 
+    rcParams['axes.labelsize'] = 16
+    rcParams['axes.titlesize'] = 20
+    rcParams['grid.alpha'] = 0.1
+    rcParams['axes.grid']=False
+    rcParams['savefig.pad_inches']=.001
+    rcParams['grid.color']='grey'
+
+    rcParams['xtick.color']        =  'black'    #  ax.tick_params(axis='x', colors='red'). This will set both the tick and ticklabel to this color. To change labels' color, use: for t in ax.xaxis.get_ticklabels(): t.set_color('red')
+    rcParams['xtick.direction']    =  'out'      # ax.get_yaxis().set_tick_params(which='both', direction='out')
+    rcParams['xtick.labelsize']    =  12
+    rcParams['xtick.major.pad']    =  1.0
+    rcParams['xtick.major.size']   =  6     # how long the tick is
+    rcParams['xtick.major.width']  =  1
+    rcParams['xtick.minor.pad']    =  1.0
+    rcParams['xtick.minor.size']   =  2.5
+    rcParams['xtick.minor.width']  =  0.5
+    rcParams['xtick.minor.visible']=  False
+
+
+    rcParams['ytick.color']        =  'black'       # ax.tick_params(axis='x', colors='red')
+    rcParams['ytick.direction']    =  'out'         # ax.get_xaxis().set_tick_params(which='both', direction='out')
+    rcParams['ytick.labelsize']    =  12
+    rcParams['ytick.major.pad']    =  2
+    rcParams['ytick.major.size']   =  6
+    rcParams['ytick.major.width']  =  1
+    rcParams['ytick.minor.pad']    =  2.0
+    rcParams['ytick.minor.size']   =  2.5
+    rcParams['ytick.minor.width']  =  0.5
+    rcParams['ytick.minor.visible']=  False
+    return prop
+##################################################################
 if __name__ == "__main__":
     base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
-    real_net_file = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/input_nets.txt"
+    real_net_file = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/input_all_nets.txt"
 
-    if (str(sys.argv[1]) == 'single'):
+    if (str(sys.argv[1]) == 'singleAll'): real_net_file = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/input_all_nets.txt"
+
+    if (str(sys.argv[1]) == 'single' or str(sys.argv[1]) == 'singleAll'):
         sim_dirr = str(base_dir + sys.argv[2])
         if not os.path.exists(sim_dirr + "/comparison_plots/"):
             os.makedirs(sim_dirr + "/comparison_plots/")
@@ -151,7 +196,7 @@ if __name__ == "__main__":
 
     else:
         sim_dirr = str(base_dir + sys.argv[1])
-
+        print("sim dirr = " + str(sim_dirr))
         sims = list(walklevel(sim_dirr)) 
         for sim in sims[0]:
             sim = sim_dirr + "/" + sim
