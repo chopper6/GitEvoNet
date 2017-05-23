@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import matplotlib, os, csv, sys
+import matplotlib, os, csv, sys, math
 matplotlib.use('Agg') # This must be done before importing matplotlib.pyplot
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -303,6 +303,11 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
         for j in range(num_outputs):
             ydata.append(net_info[j, i])
             xdata.append(net_info[j, 0])
+
+        if (titles[i] == ' Fitness'):
+            for y in ydata:
+                y = math.log(y)
+            titles[i] += ' Log-Scaled'
         x_ticks = []
         max_gen = xdata[-1]
         for j in range(0, 11):

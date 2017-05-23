@@ -18,7 +18,7 @@ def sample_p_elements (elements,p):
     return  random.sample(elements,p)
     #return  random.SystemRandom().sample(elements,p) 
 #--------------------------------------------------------------------------------------------------
-def advice (M, samples, biased, advice_upon):
+def advice (M, samples, biased, advice_upon, bias_on):
     advice = {}
     if not biased:
         for element in samples:
@@ -37,7 +37,11 @@ def advice (M, samples, biased, advice_upon):
                 #ele = ele.split(",")
                 source = int(ele[0])
                 target = int(ele[1])
-                biased_center = 0.5 + M.node[source]['conservation_score'] + M.node[target]['conservation_score']
+                if (bias_on == 'nodes'):
+                    biased_center = 0.5 + M.node[source]['conservation_score'] + M.node[target]['conservation_score']
+                elif (bias_on == 'edges'):
+                    biased_center = 0.5 + M[source][target]['conservation_score']
+                else: print("ERROR  util.advice(): unknown bias_on: " + str(bias_on))
 
             else:
                 print("ERROR util.advice(): unknown advice_upon: " + str(advice_upon))

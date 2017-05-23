@@ -31,7 +31,7 @@ def pressurize(configs, net, track_node_fitness, instance_file_name):
 
     for i in range(num_samples_relative):
         node_data.reset_BDs(net)
-        reducer.simple_reduction(net, pressure_relative, tolerance, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
+        reducer.simple_reduction(net, pressure_relative, tolerance, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'], configs['bias_on'])
         fitness.node_fitness(net, leaf_metric) #poss move this out of loop, ie sum all BDs first
 
     node_data.normz_by_num_instances(net, num_samples_relative)

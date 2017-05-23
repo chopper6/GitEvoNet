@@ -43,7 +43,7 @@ def mutate(configs, net, gen_percent, edge_node_ratio):
     # REWIRE EDGE
     # TODO: try changing to rm, then add
     num_rewire = num_mutations(rewire_freq, mutn_type, gen_percent)
-    rewire(net, num_rewire)
+    rewire(net, num_rewire, configs['biased'])
 
 
     # CHANGE EDGE SIGN
@@ -159,7 +159,7 @@ def rm_edges(net, num_rm):
 
 
 
-def rewire(net, num_rewire):
+def rewire(net, num_rewire, bias):
     for i in range(num_rewire):
         # print("rewire(): before.")
         pre_edges = len(net.edges())
@@ -178,6 +178,7 @@ def rewire(net, num_rewire):
                 edge = edge[0]
 
             sign_orig = net[edge[0]][edge[1]]['sign']
+            if (bias == True): consv_score = net[edge[0]][edge[1]]['conservation_score']
 
             node = rd.sample(net.nodes(), 1)
             node = node[0]
@@ -188,7 +189,8 @@ def rewire(net, num_rewire):
             sign = rd.randint(0, 1)
             if (sign == 0):     sign = -1
 
-            net.add_edge(node, node2, sign=sign)
+            if (bias == True): net.add_edge(node, node2, sign=sign, conservation_score = consv_score)
+            else:  net.add_edge(node, node2, sign=sign)
             #else: net.add_edge(node2, node, sign=sign)
             post_edges = len(net.edges())
             if (post_edges > pre_edges):  # check that edge successfully added

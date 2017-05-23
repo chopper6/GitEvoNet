@@ -1,7 +1,7 @@
 import random, util, math, time, numpy as np
 
 #--------------------------------------------------------------------------------------------------
-def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria):
+def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria, bias_on):
     if  advice_sampling_threshold <=0:
         print ("WARNING: simple_reduction yields empty set.")
         yield [{},{},0]
@@ -13,11 +13,11 @@ def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold,
             return
 
         for i in range(advice_sampling_threshold):
-            yield [ BDT_calculator   (net, util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon), T_percentage, BD_criteria, advice_upon) ]
+            yield [ BDT_calculator   (net, util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon, bias_on), T_percentage, BD_criteria, advice_upon) ]
 
 
 #--------------------------------------------------------------------------------------------------  
-def simple_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria):
+def simple_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria, bias_on):
     #print ("in reducer, " + str(advice_sampling_threshold))
     if  advice_sampling_threshold <=0:
         print ("WARNING: reverse_reduction yields empty set.")
@@ -29,7 +29,7 @@ def simple_reduction(net, sample_size, T_percentage, advice_sampling_threshold, 
             print ("ERROR reverse_reduction: unknown advice_upon: " + str(advice_upon))
             return
 
-        Bs,Ds,tol = BDT_calculator   (net, util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon), T_percentage, BD_criteria, advice_upon)
+        Bs,Ds,tol = BDT_calculator   (net, util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon,bias_on), T_percentage, BD_criteria, advice_upon)
     return Bs,Ds,tol
 #--------------------------------------------------------------------------------------------------                
 def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
