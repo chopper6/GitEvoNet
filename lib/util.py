@@ -32,8 +32,9 @@ def advice (M, samples, biased, advice_upon):
                 biased_center = 0.5 + M.node[element]['conservation_score']
             elif (advice_upon == 'edges'):
                 # also trying NODE-based conservation score
-                ele = element.replace('(', '').replace(')', '').replace("'", '').replace(' ', '')
-                ele = ele.split(",")
+                ele = element
+                #ele = element.replace('(', '').replace(')', '').replace("'", '').replace(' ', '')
+                #ele = ele.split(",")
                 source = int(ele[0])
                 target = int(ele[1])
                 biased_center = 0.5 + M.node[source]['conservation_score'] + M.node[target]['conservation_score']
@@ -52,9 +53,9 @@ def advice (M, samples, biased, advice_upon):
                     advice[element] = -1
 
             elif (advice_upon=='edges'):
-                if element not in advice.keys():
-                    advice[element] = {}
-                    print("UTIL.advice(): adding ele " + str(element) + " to advice.keys().")
+                #if element not in advice.keys():
+                    #advice[element] = {}
+                    #print("UTIL.advice(): adding ele " + str(element) + " to advice.keys().")
                 if rand <= biased_center:
                     advice[str(element)] = 1
                 else:
