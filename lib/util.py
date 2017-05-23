@@ -28,8 +28,16 @@ def advice (M, samples, biased, advice_upon):
 
     else: #TODO match to unbiased above
         for element in samples:
-            if (advice_upon=='nodes'):  biased_center = 0.5 + M.node[element]['conservation_score']
-            elif (advice_upon == 'edges'):  biased_center = 0.5 + M.edge[element]['conservation_score']
+            if (advice_upon == 'nodes'):
+                biased_center = 0.5 + M.node[element]['conservation_score']
+            elif (advice_upon == 'edges'):
+                # also trying NODE-based conservation score
+                ele = element.replace('(', '').replace(')', '').replace("'", '').replace(' ', '')
+                ele = ele.split(",")
+                source = int(ele[0])
+                target = int(ele[1])
+                biased_center = 0.5 + M.node[source]['conservation_score'] + M.node[target]['conservation_score']
+
             else:
                 print("ERROR util.advice(): unknown advice_upon: " + str(advice_upon))
                 return

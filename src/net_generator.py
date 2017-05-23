@@ -211,11 +211,22 @@ def init_population(init_type, start_size, pop_size, configs):
         print("ERROR in master.gen_init_population(): unknown init_type.")
         return
 
+    if (sign_edges_needed == True): sign_edges(population)
+    if (configs['biased'] == True): assign_node_consv(population, configs['bias_distribution'])
+    return population
 
-    if (sign_edges_needed==True): sign_edges(population)
-    if (configs['biased']==True):
-        advice_on = configs['advice_upon']
-        assign_bias(population, advice_on)
+
+def assign_node_consv(population, distrib):
+    # since assigns to whole population, will be biased since selection will occur on most fit distribution of conservation scores
+    for p in range(len(population)):
+        net = population[p].net
+        for n in net.nodes():
+            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,.25)
+            else:
+                print("ERROR in net_generator(): unknown bias distribution: " + str (distrib))
+                return 1
+
+            net.node[n]['conservation_score'] = consv_score
 
     return population
 
