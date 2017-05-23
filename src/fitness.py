@@ -8,26 +8,26 @@ def eval_fitness(population):
     #for p in range(len(population)):
     #    population[p].fitness = population[p].fitness_parts[2]
     
-    population = sorted(population,key=attrgetter('fitness'), reverse=False)  #MIN
+    population = sorted(population,key=attrgetter('fitness'), reverse=True)  #MAX
     return population
 
 
 def node_fitness(net, leaf_metric):
-    for node in net.nodes():
-        B,D = net[node]['benefits'], net[node]['damages']
-        print(B,D)
-        net[node]['fitness'] += leaf_fitness.node_score(leaf_metric, B,D)
+    for n in net.nodes():
+        B,D = net.node[n]['benefits'], net.node[n]['damages']
+        if (B+D == 0): print ("WARNING fitness.node_fitness(): B+D == 0")
+        net.node[n]['fitness'] += leaf_fitness.node_score(leaf_metric, B,D)
         #print(net[node]['fitness'])
 
 def node_product(net):
     fitness_score = 1
     num_0 = 0
-    for node in net.nodes():
-        if net[node]['fitness'] == 0: 
+    for n in net.nodes():
+        if net.node[n]['fitness'] == 0: 
             #print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
             num_0 += 1
-        else: fitness_score *= net[node]['fitness']
-    print(str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
+        else: fitness_score *= net.node[n]['fitness']
+    if (num_0 > 0): print("WARNING: fitness.node_product(): " + str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
     return fitness_score
 
 #OLD

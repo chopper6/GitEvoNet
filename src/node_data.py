@@ -16,5 +16,7 @@ def normz_by_num_instances(net, num_instances):
         print("WARNING: node_fitness(): # instances = 0")
         return
     for n in net.nodes():
+        pre = net.node[n]['fitness']
         net.node[n]['fitness'] /= float(num_instances)
+        #print(pre, net.node[n]['fitness'])
 

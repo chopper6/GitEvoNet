@@ -88,10 +88,8 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
 
         elif (advice_upon=='edges'):
             advice = Advice[element]
-            print(element)
             element = element.replace('(','').replace(')','').replace("'",'').replace(' ','')
             element = element.split(",")
-            print("after split ele: " + str(element))
             source = int(element[0])
             target = int(element[1])
             if M[source][target]['sign'] == advice:  # in agreement with the Oracle
