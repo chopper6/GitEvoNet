@@ -305,8 +305,10 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
             xdata.append(net_info[j, 0])
 
         if (titles[i] == ' Fitness'):
+            ydata2 = []
             for y in ydata:
-                y = math.log(y)
+                ydata2.append(math.log(y,10))
+            ydata = ydata2   
             titles[i] += ' Log-Scaled'
         x_ticks = []
         max_gen = xdata[-1]

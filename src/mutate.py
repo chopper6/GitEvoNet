@@ -201,7 +201,8 @@ def rewire(net, num_rewire, bias):
 
                 # UNDO REWIRE:
                 if (num_cc > 1):
-                    net.add_edge(edge[0], edge[1], sign=sign_orig)
+                    if (bias == True): net.add_edge(edge[0], edge[1], sign=sign_orig, conservation_score = consv_score)
+                    else: net.add_edge(edge[0], edge[1], sign=sign_orig)
                     net.remove_edge(node, node2)
                     post_edges = len(net.edges())
                     net_undir = net.to_undirected()
