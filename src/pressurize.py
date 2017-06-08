@@ -12,6 +12,8 @@ def pressurize(configs, net, track_node_fitness, instance_file_name):
     advice = configs['advice_upon']
     max_B_plot = int(configs['max_B_plot'])
 
+    use_kp = configs['use_knapsack']
+
     leaf_metric = str(configs['leaf_metric'])
     leaf_operator = str(configs['leaf_operation'])
     hub_metric = str(configs['hub_metric'])
@@ -23,20 +25,46 @@ def pressurize(configs, net, track_node_fitness, instance_file_name):
         pressure_relative = int(pressure * len(net.nodes()))
     elif (advice=='edges'):
         pressure_relative = int(pressure * len(net.edges()))
-    else: 
+    else:
         print("ERROR in pressurize(): unknown advice_upon: " + str(advice))
         return
 
-    node_data.reset_fitness(net)
 
-    for i in range(num_samples_relative):
-        node_data.reset_BDs(net)
-        reducer.simple_reduction(net, pressure_relative, tolerance, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'], configs['bias_on'])
-        fitness.node_fitness(net, leaf_metric) #poss move this out of loop, ie sum all BDs first
+    if (use_kp == 'True'):
+        leaf_fitness, hub_fitness, solo_fitness = 0, 0, 0
 
-    node_data.normz_by_num_instances(net, num_samples_relative)
-    fitness_score = fitness.node_product(net)
+        kp_instances = reducer.reverse_reduction(net, pressure_relative, tolerance, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
 
-    return fitness_score
+        if (instance_file_name != None): open(instance_file_name, 'w')
+
+        for kp in kp_instances:
+            a_result = solver.solve_knapsack(kp, knapsack_solver)
+            inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness, node_info_instance = fitness.kp_instance_properties(a_result, leaf_metric, leaf_operator, hub_metric, hub_operator, fitness_operator, net, False, None, instance_file_name)
+
+            leaf_fitness += inst_leaf_fitness
+            hub_fitness += inst_hub_fitness
+            solo_fitness += inst_solo_fitness
+
+        leaf_fitness /= num_samples_relative
+        hub_fitness /= num_samples_relative
+        solo_fitness /= num_samples_relative
 
 
+        return [leaf_fitness, hub_fitness, solo_fitness, None]
+
+    elif (use_kp == 'False'):
+        node_data.reset_fitness(net)
+
+        for i in range(num_samples_relative):
+            node_data.reset_BDs(net)
+            reducer.simple_reduction(net, pressure_relative, tolerance, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'], configs['bias_on'])
+            fitness.node_fitness(net, leaf_metric) #poss move this out of loop, ie sum all BDs first
+
+        node_data.normz_by_num_instances(net, num_samples_relative)
+        fitness_score = fitness.node_product(net)
+
+
+        return [0,0, fitness_score, None] #weird as all hell, but [2] is used as the actual fitness
+
+
+    else: print("ERROR in pressurize(): unknown use_knapsack config: " + str(use_kp))

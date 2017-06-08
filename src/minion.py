@@ -20,6 +20,8 @@ def evolve_minion(worker_file):
     control = configs['control']
     if (control == "None"): control = None
 
+    use_kp = configs['use_knapsack']
+
     node_edge_ratio = float(configs['edge_to_node_ratio'])
 
     random.seed(randSeed)
@@ -41,12 +43,12 @@ def evolve_minion(worker_file):
             mutate.mutate(configs, population[p].net, gen_percent, node_edge_ratio)
             t1 = ptime()
             mutate_time += t1-t0
-          
-            t0 = ptime()
+
             if (control == None):
-                population[p].fitness = pressurize.pressurize(configs, population[p].net, False, None) #false: don't track node fitness, None: don't write instances to file
-                t1 = ptime()
-                pressurize_time += t1-t0
+                pressure_results = pressurize.pressurize(configs, population[p].net, False, None)  # false: don't track node fitness, None: don't write instances to file
+                population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
+
+            else: print("ERROR in minion(): unknown control config: " + str(control))
 
         old_popn = population
         population = fitness.eval_fitness(old_popn)

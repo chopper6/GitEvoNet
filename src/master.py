@@ -45,6 +45,8 @@ def evolve_from_seed(configs):
     num_grow = int(configs['num_grows'])
     edge_node_ratio = float(configs['edge_to_node_ratio'])
 
+    use_kp = configs['use_knapsack']
+
     draw_layout = str(configs['draw_layout'])
     num_fitness_plots = int(configs['num_fitness_plots']) #ASSUMES != 0
     if (num_fitness_plots > max_gen or num_output > max_gen or num_draw > max_gen):
@@ -60,11 +62,12 @@ def evolve_from_seed(configs):
     population = net_generator.init_population(init_type, start_size, pop_size, configs)
 
     #init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
-    #TODO: for final results, should NOT just use net0
+
     #instead pass to workers, but w/o any mutation and just for a single gen
 
     if (control == None):
-        population[0].fitness = pressurize.pressurize(configs, population[0].net, True, instance_file+"Xiter0.csv") #True: track node fitness
+        pressure_results = pressurize.pressurize(configs, population[0].net, False, None)  # false: don't track node fitness, None: don't write instances to file
+        population[0].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
         fitness.eval_fitness([population[0]])
 
     output.deg_change_csv([population[0]], output_dir)

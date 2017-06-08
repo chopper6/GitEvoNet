@@ -5,8 +5,8 @@ import hub_fitness, leaf_fitness
 
 def eval_fitness(population):
     #determines fitness of each individual and orders the population by fitness
-    #for p in range(len(population)):
-    #    population[p].fitness = population[p].fitness_parts[2]
+    for p in range(len(population)):
+        population[p].fitness = population[p].fitness_parts[2]
     
     population = sorted(population,key=attrgetter('fitness'), reverse=True)  #MAX
     return population
