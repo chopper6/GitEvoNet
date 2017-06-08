@@ -43,7 +43,7 @@ def mutate(configs, net, gen_percent, edge_node_ratio):
     # REWIRE EDGE
     # TODO: try changing to rm, then add
     num_rewire = num_mutations(rewire_freq, mutn_type, gen_percent)
-    rewire(net, num_rewire, configs['biased'])
+    rewire(net, num_rewire, configs['biased'], configs['bias_on'])
 
 
     # CHANGE EDGE SIGN
@@ -159,7 +159,7 @@ def rm_edges(net, num_rm):
 
 
 
-def rewire(net, num_rewire, bias):
+def rewire(net, num_rewire, bias, bias_on):
     for i in range(num_rewire):
         # print("rewire(): before.")
         pre_edges = len(net.edges())
@@ -178,7 +178,7 @@ def rewire(net, num_rewire, bias):
                 edge = edge[0]
 
             sign_orig = net[edge[0]][edge[1]]['sign']
-            if (bias == True): consv_score = net[edge[0]][edge[1]]['conservation_score']
+            if (bias == True and bias_on == 'edges'): consv_score = net[edge[0]][edge[1]]['conservation_score']
 
             node = rd.sample(net.nodes(), 1)
             node = node[0]
@@ -189,7 +189,7 @@ def rewire(net, num_rewire, bias):
             sign = rd.randint(0, 1)
             if (sign == 0):     sign = -1
 
-            if (bias == True): net.add_edge(node, node2, sign=sign, conservation_score = consv_score)
+            if (bias == True and bias_on == 'edges'): net.add_edge(node, node2, sign=sign, conservation_score = consv_score)
             else:  net.add_edge(node, node2, sign=sign)
             #else: net.add_edge(node2, node, sign=sign)
             post_edges = len(net.edges())
@@ -201,7 +201,7 @@ def rewire(net, num_rewire, bias):
 
                 # UNDO REWIRE:
                 if (num_cc > 1):
-                    if (bias == True): net.add_edge(edge[0], edge[1], sign=sign_orig, conservation_score = consv_score)
+                    if (bias == True and bias_on == 'edges'): net.add_edge(edge[0], edge[1], sign=sign_orig, conservation_score = consv_score)
                     else: net.add_edge(edge[0], edge[1], sign=sign_orig)
                     net.remove_edge(node, node2)
                     post_edges = len(net.edges())

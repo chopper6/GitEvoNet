@@ -224,7 +224,8 @@ def assign_node_consv(population, distrib):
     for p in range(len(population)):
         net = population[p].net
         for n in net.nodes():
-            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,.25)
+            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,1)
+            elif (distrib == 'normal'): consv_score = sysRand().normalvariate(.5,.15)
             else:
                 print("ERROR in net_generator(): unknown bias distribution: " + str (distrib))
                 return 1
@@ -238,7 +239,8 @@ def assign_edge_consv(population, distrib):
     for p in range(len(population)):
         net = population[p].net
         for edge in net.edges():
-            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,.5)
+            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,1)
+            elif (distrib == 'normal'): consv_score = sysRand().normalvariate(.5,.15)
             else:
                 print("ERROR in net_generator(): unknown bias distribution: " + str (distrib))
                 return 1
