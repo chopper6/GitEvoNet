@@ -67,7 +67,7 @@ def evolve_from_seed(configs):
 
     if (control == None):
         pressure_results = pressurize.pressurize(configs, population[0].net, False, None)  # false: don't track node fitness, None: don't write instances to file
-        population[0].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
+        population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
         fitness.eval_fitness([population[0]])
 
     output.deg_change_csv([population[0]], output_dir)

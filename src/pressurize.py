@@ -32,8 +32,10 @@ def pressurize(configs, net, track_node_fitness, instance_file_name):
 
     if (use_kp == 'True'):
         leaf_fitness, hub_fitness, solo_fitness = 0, 0, 0
+        node_data.reset_fitness(net) #not actually used when kp = True
+        node_data.reset_BDs(net)
 
-        kp_instances = reducer.reverse_reduction(net, pressure_relative, tolerance, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'])
+        kp_instances = reducer.reverse_reduction(net, pressure_relative, tolerance, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'], configs['bias_on'])
 
         if (instance_file_name != None): open(instance_file_name, 'w')
 
