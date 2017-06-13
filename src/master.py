@@ -1,6 +1,6 @@
 # master process, and functions used only by master
 
-import math, os, pickle, sys
+import math, os, pickle, sys, time, shutil
 os.environ['analysis'] = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib/analysis"
 sys.path.insert(0, os.getenv('analysis'))
 import multiprocessing as mp
@@ -11,17 +11,19 @@ import networkx as nx
 import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, plot_fitness, node_fitness, mutate
 import instances
 
+from mpi4py import MPI
 
-def evolve_master(configs):
+
+def evolve_master(orig_dir, configs, num_workers):
     protocol = configs['protocol']
     if (protocol == 'from seed'):
-        evolve_from_seed(configs)
+        evolve_from_seed(orig_dir, configs, num_workers)
     else:
         print("ERROR in master(): unknown protocol " + str(protocol))
 
-def evolve_from_seed(configs):
+def evolve_from_seed(orig_dir, configs, num_workers):
     # get configs
-    num_workers = int(configs['number_of_workers'])
+    #num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory']
     survive_percent = float(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
@@ -32,15 +34,10 @@ def evolve_from_seed(configs):
     debug = (configs['debug'])
     if (debug == 'True'): debug = True
     worker_pop_size_config = int(configs['num_worker_nets'])
-
-    control = configs['control']
-    if (control == "None"): control = None
-
     worker_survive_fraction = float(configs['worker_percent_survive'])/100
     init_type = str(configs['initial_net_type'])
     start_size = int(configs['starting_size'])
     end_size = int(configs['ending_size'])
-
     instance_file = configs['instance_file']
     num_grow = int(configs['num_grows'])
     edge_node_ratio = float(configs['edge_to_node_ratio'])
@@ -65,10 +62,9 @@ def evolve_from_seed(configs):
 
     #instead pass to workers, but w/o any mutation and just for a single gen
 
-    if (control == None):
-        pressure_results = pressurize.pressurize(configs, population[0].net, False, None)  # false: don't track node fitness, None: don't write instances to file
-        population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-        fitness.eval_fitness([population[0]])
+    pressure_results = pressurize.pressurize(configs, population[0].net, False, None)  # false: don't track node fitness, None: don't write instances to file
+    population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
+    fitness.eval_fitness([population[0]])
 
     output.deg_change_csv([population[0]], output_dir)
 
@@ -100,12 +96,25 @@ def evolve_from_seed(configs):
                 for p in range(len(population)):
                     mutate.add_nodes(population[p].net, 1, edge_node_ratio)
 
+        # MPI PARALLEL
+        # progress file = dir, gen
+        if (iter ==0):
+            with open(output_dir + "/progress.txt", 'w') as out:
+                out.write(output_dir + "\n")
+
+        with open(output_dir + "/progress.txt", 'a') as out:
+            out.write(str(iter) + "\n")
+        if not os.path.exists(output_dir + "to_workers/" + str(iter)):
+            os.makedirs(output_dir + "to_workers/" + str(iter))
+        else: print("WARNING in master(): dir to_workers/" + str(iter) + " already exists...")
+
         #debug(population)
         pool = mp.Pool(processes=num_workers)
 
         # distribute workers
-        if (debug == True):
-            dump_file = output_dir + "workers/" + str(0) + "/arg_dump"
+
+        if (debug == True): #sequential debug
+            dump_file = output_dir + "to_workers/" + str(iter) + "/0"
             seed = population[0].copy()
             randSeeds = os.urandom(sysRand().randint(0, 1000000))
             worker_args = [0, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds,total_gens, configs]
@@ -117,28 +126,29 @@ def evolve_from_seed(configs):
 
         else:
             for w in range(num_workers):
-                dump_file =  output_dir + "workers/" + str(w) + "/arg_dump"
+                dump_file =  output_dir + "to_workers/" + str(iter) + "/" + str(w)
                 seed = population[w % num_survive].copy()
                 randSeeds = os.urandom(sysRand().randint(0,1000000))
                 assert(seed != population[w % num_survive])
                 worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, total_gens, configs]
                 with open(dump_file, 'wb') as file:
                     pickle.dump(worker_args, file)
-                pool.map_async(minion.evolve_minion, (dump_file,))
-                #minion.evolve_minion(dump_file)
-                sleep(.0001)
-        pool.close()
-        pool.join()
-        pool.terminate()
+
 
         del population
         if (debug == True):
             print("debug is ON") 
             num_workers, num_survive = 1,1
-        population = parse_worker_popn(num_workers, output_dir, num_survive)
+
+
+        watch(configs)
+        population = parse_worker_popn(num_workers, iter, output_dir, num_survive)
         size = len(population[0].net.nodes())
         iter += 1
         total_gens += worker_gens
+
+    #workers don't need until next config run
+    os.remove(output_dir + "/progress.txt")
 
     #final outputs
     nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(iter))
@@ -162,22 +172,28 @@ def init_dirs(num_workers, output_dir):
         os.makedirs(output_dir + "/instances/")
     if not os.path.exists(output_dir + "/nets/"):
         os.makedirs(output_dir + "/nets/")
-    for w in range(num_workers):
-        dirr = output_dir + "workers/" + str(w)
-        if not os.path.exists(dirr):
-            os.makedirs(dirr)
+    dirr = output_dir + "to_workers/"
+    if not os.path.exists(dirr):
+        os.makedirs(dirr)
+    dirr = output_dir + "to_master/"
+    if not os.path.exists(dirr):
+        os.makedirs(dirr)
 
 
-def parse_worker_popn (num_workers, output_dir, num_survive):
+def parse_worker_popn (num_workers, iter, output_dir, num_survive):
     popn = []
     for w in range(num_workers):
-        dump_file = output_dir + "workers/" + str(w) + "/arg_dump"
+        dump_file = output_dir + "to_master/" + str(iter) + "/" + str(w)
         with open(dump_file, 'rb') as file:
             worker_pop = pickle.load(file)
         i=0
         for indiv in worker_pop:
             popn.append(indiv)
             i+=1
+
+    #del old gen dirs
+    shutil.rmtree(output_dir + "to_master/" + str(iter))
+    shutil.rmtree(output_dir + "to_workers/" + str(iter))
 
     sorted_popn = fitness.eval_fitness(popn)
     return sorted_popn[:num_survive]
@@ -211,4 +227,23 @@ def debug(population):
     for p in range(len(population)):
         for q in range(0, p):
             if (p != q): assert (population[p] != population[q])
+
+
+
+def watch(configs):
+
+    dump_dir = configs['output_directory'] + "to_master/"
+    files_per_dir = configs['num_workers']
+
+    done, i = False, 1
+
+    while not done:
+        time.sleep(2*i)  #checks less and less freq
+        i += 1
+        for root, dirs, files in os.walk(dump_dir):  # TODO: add check timestamp
+            if (len(files) == files_per_dir):
+                for f in files:
+                    print("last mod'd: " + str(os.path.getmtime(root + "/" + f)) + ", curr time = " + str(time.time()) + "\n")
+
+                return
 

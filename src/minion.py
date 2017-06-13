@@ -1,13 +1,51 @@
 # worker processes
 
-import math, pickle
-import output, fitness, pressurize
-import mutate
+import math, pickle, random, os, time
+import output, fitness, pressurize, mutate, init
 from time import process_time as ptime
-import random
-import control_fitness
 
-def evolve_minion(worker_file):
+def work(orig_dir, rank):
+
+    print ("\t\t\t\tworker #"+str(rank)+" is working,\t")
+    progress = orig_dir + "/progress.txt"
+
+    done = False
+    gen = 0
+    prev_dir = None
+    while not done:
+        while not os.path.isfile (progress): # master will create this file
+            time.sleep(4)
+
+        #TODO: check that file not recently touched
+        with open(progress, 'r') as file:
+            lines = file.readlines()
+            dirr = lines[0].strip()
+
+            if (dirr == 'finished'): return #no more work to be done
+
+            #reset gen for new config file (indicated by diff directory)
+            if (prev_dir != dirr): gen = 0
+            prev_dir = dirr
+
+            print("worker using dir: " + str(dirr))
+            global_gen = int(lines[-1].strip())
+            print("worker using gen: " + str(gen))
+
+
+            if (gen == global_gen):
+
+                worker_args = str(dirr) + "/" + str(gen) + "/" + str(rank)
+                while not os.path.isfile(worker_args):
+                    time.sleep(4)
+
+                evolve_minion(worker_args, gen, rank)
+                gen+=1
+
+            else: print("minion.work(): worker gen = " + str(gen) + ", while global gen = " + str(global_gen))
+
+
+
+def evolve_minion(worker_file, gen, rank):
     with open(str(worker_file), 'rb') as file:
         worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, configs = pickle.load(file)
         file.close()
@@ -55,11 +93,11 @@ def evolve_minion(worker_file):
         del old_popn
         #debug(population,worker_ID)
         curr_gen += 1
-    write_out_worker(worker_file, population, num_return)
+    write_out_worker(output_dir + "/to_master/" + str(gen) + "/" + str(rank), population, num_return)
     
     # some output
     if (worker_ID == 0):
-        orig_dir = configs['output_directory'] #.replace("v4nu_minknap_1X_both_reverse/", '')
+        orig_dir = configs['output_directory']
         end_size = len(population[0].net.nodes())
         growth = end_size - start_size
         output.minion_csv(orig_dir, pressurize_time, growth, end_size)
