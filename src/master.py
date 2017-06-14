@@ -14,15 +14,15 @@ import instances
 from mpi4py import MPI
 
 
-def evolve_master(orig_dir, configs, num_workers):
+def evolve_master(orig_dir, configs, num_workers, cont):
     protocol = configs['protocol']
     if (protocol == 'from seed'):
-        evolve_from_seed(orig_dir, configs, num_workers)
+        evolve_from_seed(orig_dir, configs, num_workers, cont)
     else:
         print("ERROR in master(): unknown protocol " + str(protocol))
     return
 
-def evolve_from_seed(orig_dir, configs, num_workers):
+def evolve_from_seed(orig_dir, configs, num_workers, cont):
     # get configs
     #num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory']
@@ -50,28 +50,40 @@ def evolve_from_seed(orig_dir, configs, num_workers):
     if (num_fitness_plots > max_gen or num_output > max_gen or num_draw > max_gen):
         print("WARNING master(): more output requested than generations.")
 
-    init_dirs(num_workers, output_dir, orig_dir)
-    output.init_csv(output_dir, configs)
-    draw_nets.init(output_dir)
 
-    worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, 10000000, worker_pop_size_config)
-    print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
+    if (cont == False):
+        init_dirs(num_workers, output_dir, orig_dir)
+        output.init_csv(output_dir, configs)
+        draw_nets.init(output_dir)
 
-    population = net_generator.init_population(init_type, start_size, pop_size, configs)
+        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, 10000000, worker_pop_size_config)
+        print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
 
-    #init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
+        population = net_generator.init_population(init_type, start_size, pop_size, configs)
 
-    #instead pass to workers, but w/o any mutation and just for a single gen
+        #init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
+        pressure_results = pressurize.pressurize(configs, population[0].net, False, None)  # false: don't track node fitness, None: don't write instances to file
+        population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
+        fitness.eval_fitness([population[0]])
 
-    pressure_results = pressurize.pressurize(configs, population[0].net, False, None)  # false: don't track node fitness, None: don't write instances to file
-    population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-    fitness.eval_fitness([population[0]])
+        output.deg_change_csv([population[0]], output_dir)
 
-    output.deg_change_csv([population[0]], output_dir)
+        total_gens, size, iter = 0, start_size, 0
 
-    total_gens = 0
-    size = start_size
-    iter = 0
+    elif (cont == True):
+        #curr not able to use dynamic worker gens and parallel islands
+        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers, survive_fraction, 10000000, worker_pop_size_config)
+        with open(orig_dir + "/progress.txt", 'r') as file:
+            lines = file.readlines()
+            iter = lines[-1]
+        population = parse_worker_popn(num_workers, iter, orig_dir, num_survive)
+        size = len(population[0].net.nodes())
+        total_gens = iter #also temp, assumes worker gens = 1
+
+    else:
+        print("ERROR in master(): unknown cont arg: " + str(cont))
+        size, totals_gens, iter, population = None, None, None, None #just to avoid annoying warnings
+
     while (size <= end_size and total_gens < max_gen):
         print("curr master iteration = " + str(iter))
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive, worker_pop_size_config)
@@ -110,7 +122,7 @@ def evolve_from_seed(orig_dir, configs, num_workers):
             os.makedirs(orig_dir + "/to_workers/" + str(iter))
         if not os.path.exists(orig_dir + "/to_master/" + str(iter)):
             os.makedirs(orig_dir + "/to_master/" + str(iter))
-        else: print("WARNING in master(): dir /to_workers/" + str(iter) + " already exists...")
+        else: print("WARNING in master(): dir /to_master/" + str(iter) + " already exists...")
 
         #debug(population)
         pool = mp.Pool(processes=num_workers)
@@ -165,6 +177,10 @@ def evolve_from_seed(orig_dir, configs, num_workers):
     print("Evolution finished, generating images.")
     plot_nets.single_run_plots(output_dir)
     #instances.analyze(output_dir)
+
+    with open(orig_dir + "/finished_dirs.txt", 'a') as out:
+        out.write(output_dir + "\n")
+
     print("Master finished.")
     return
 
@@ -178,12 +194,10 @@ def init_dirs(num_workers, output_dir, orig_dir):
         os.makedirs(output_dir + "/instances/")
     if not os.path.exists(output_dir + "/nets/"):
         os.makedirs(output_dir + "/nets/")
-    dirr = orig_dir + "/to_workers/"
-    if not os.path.exists(dirr):
-        os.makedirs(dirr)
-    dirr = orig_dir + "/to_master/"
-    if not os.path.exists(dirr):
-        os.makedirs(dirr)
+    if not os.path.exists(orig_dir + "/to_workers/"):
+        os.makedirs(orig_dir + "/to_workers/")
+    if not os.path.exists(orig_dir + "/to_master/"):
+        os.makedirs(orig_dir + "/to_master/")
 
 
 def parse_worker_popn (num_workers, iter, orig_dir, num_survive):
