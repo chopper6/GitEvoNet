@@ -16,36 +16,37 @@ def work(orig_dir, rank):
         while not os.path.isfile (progress): # master will create this file
             time.sleep(4)
 
-        #TODO: check that file not recently touched
-        with open(progress, 'r') as file:
-            lines = file.readlines()
-            dirr = lines[0].strip()
+        if (os.path.getmtime(progress) + 2 < time.time()): #check that file has not been recently touched
+            with open(progress, 'r') as file:
+                lines = file.readlines()
+                if (len(lines) > 1):
+                    dirr = lines[0].strip()
 
-            if (dirr == 'finished'): return #no more work to be done
+                    if (dirr == 'finished'): return #no more work to be done
 
-            #reset gen for new config file (indicated by diff directory)
-            if (prev_dir != dirr): gen = 0
-            prev_dir = dirr
+                    #reset gen for new config file (indicated by diff directory)
+                    if (prev_dir != dirr): gen = 0
+                    prev_dir = dirr
 
-            print("worker using dir: " + str(dirr))
-            global_gen = int(lines[-1].strip())
-            print("worker using gen: " + str(gen))
+                    #print("worker using dir: " + str(dirr))
+                    #print("worker() progress lines: " + str(lines))
+                    global_gen = int(lines[-1].strip())
+                    #print("worker using gen: " + str(gen) + ", while global gen = " + str(global_gen))
+
+                    if (gen == global_gen):
+
+                        worker_args = str(orig_dir) + "/to_workers/" + str(gen) + "/" + str(rank)
+                        #print("worker looking for file: " + str(worker_args))
+                        while not os.path.isfile(worker_args):
+                            time.sleep(4)
+                        evolve_minion(worker_args, gen, rank, orig_dir)
+                        gen+=1
+
+                    #else: print("minion.work(): worker gen = " + str(gen) + ", while global gen = " + str(global_gen))
 
 
-            if (gen == global_gen):
 
-                worker_args = str(dirr) + "/" + str(gen) + "/" + str(rank)
-                while not os.path.isfile(worker_args):
-                    time.sleep(4)
-
-                evolve_minion(worker_args, gen, rank)
-                gen+=1
-
-            else: print("minion.work(): worker gen = " + str(gen) + ", while global gen = " + str(global_gen))
-
-
-
-def evolve_minion(worker_file, gen, rank):
+def evolve_minion(worker_file, gen, rank, orig_dir):
     with open(str(worker_file), 'rb') as file:
         worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, configs = pickle.load(file)
         file.close()
@@ -93,7 +94,7 @@ def evolve_minion(worker_file, gen, rank):
         del old_popn
         #debug(population,worker_ID)
         curr_gen += 1
-    write_out_worker(output_dir + "/to_master/" + str(gen) + "/" + str(rank), population, num_return)
+    write_out_worker(orig_dir + "/to_master/" + str(gen) + "/" + str(rank), population, num_return)
     
     # some output
     if (worker_ID == 0):
@@ -106,6 +107,7 @@ def evolve_minion(worker_file, gen, rank):
 
 def write_out_worker(worker_file, population, num_return):
     # overwrite own input file with return population
+    #print("worker writing out to " + str(worker_file) + "\n")
     with open(worker_file, 'wb') as file:
         pickle.dump(population[:num_return], file)
         file.close()

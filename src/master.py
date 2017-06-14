@@ -20,6 +20,7 @@ def evolve_master(orig_dir, configs, num_workers):
         evolve_from_seed(orig_dir, configs, num_workers)
     else:
         print("ERROR in master(): unknown protocol " + str(protocol))
+    return
 
 def evolve_from_seed(orig_dir, configs, num_workers):
     # get configs
@@ -49,7 +50,7 @@ def evolve_from_seed(orig_dir, configs, num_workers):
     if (num_fitness_plots > max_gen or num_output > max_gen or num_draw > max_gen):
         print("WARNING master(): more output requested than generations.")
 
-    init_dirs(num_workers, output_dir)
+    init_dirs(num_workers, output_dir, orig_dir)
     output.init_csv(output_dir, configs)
     draw_nets.init(output_dir)
 
@@ -72,7 +73,7 @@ def evolve_from_seed(orig_dir, configs, num_workers):
     size = start_size
     iter = 0
     while (size <= end_size and total_gens < max_gen):
-
+        print("curr master iteration = " + str(iter))
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive, worker_pop_size_config)
 
         if (iter % int(max_gen / num_output) == 0):
@@ -99,14 +100,17 @@ def evolve_from_seed(orig_dir, configs, num_workers):
         # MPI PARALLEL
         # progress file = dir, gen
         if (iter ==0):
-            with open(output_dir + "/progress.txt", 'w') as out:
+            with open(orig_dir + "/progress.txt", 'w') as out:
                 out.write(output_dir + "\n")
 
-        with open(output_dir + "/progress.txt", 'a') as out:
+        with open(orig_dir + "/progress.txt", 'a') as out:
+            print("master(): write to progress: " + str(iter))
             out.write(str(iter) + "\n")
-        if not os.path.exists(output_dir + "to_workers/" + str(iter)):
-            os.makedirs(output_dir + "to_workers/" + str(iter))
-        else: print("WARNING in master(): dir to_workers/" + str(iter) + " already exists...")
+        if not os.path.exists(orig_dir + "/to_workers/" + str(iter)):
+            os.makedirs(orig_dir + "/to_workers/" + str(iter))
+        if not os.path.exists(orig_dir + "/to_master/" + str(iter)):
+            os.makedirs(orig_dir + "/to_master/" + str(iter))
+        else: print("WARNING in master(): dir /to_workers/" + str(iter) + " already exists...")
 
         #debug(population)
         pool = mp.Pool(processes=num_workers)
@@ -125,8 +129,9 @@ def evolve_from_seed(orig_dir, configs, num_workers):
             sleep(.0001)
 
         else:
-            for w in range(num_workers):
-                dump_file =  output_dir + "to_workers/" + str(iter) + "/" + str(w)
+            for w in range(1,num_workers+1):
+                dump_file =  orig_dir + "/to_workers/" + str(iter) + "/" + str(w)
+                #print("master dumping to file: " + str(dump_file))
                 seed = population[w % num_survive].copy()
                 randSeeds = os.urandom(sysRand().randint(0,1000000))
                 assert(seed != population[w % num_survive])
@@ -141,14 +146,14 @@ def evolve_from_seed(orig_dir, configs, num_workers):
             num_workers, num_survive = 1,1
 
 
-        watch(configs)
-        population = parse_worker_popn(num_workers, iter, output_dir, num_survive)
+        watch(configs, iter, num_workers, orig_dir)
+        population = parse_worker_popn(num_workers, iter, orig_dir, num_survive)
         size = len(population[0].net.nodes())
         iter += 1
         total_gens += worker_gens
 
     #workers don't need until next config run
-    os.remove(output_dir + "/progress.txt")
+    os.remove(orig_dir + "/progress.txt")
 
     #final outputs
     nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(iter))
@@ -161,9 +166,10 @@ def evolve_from_seed(orig_dir, configs, num_workers):
     plot_nets.single_run_plots(output_dir)
     #instances.analyze(output_dir)
     print("Master finished.")
+    return
 
 
-def init_dirs(num_workers, output_dir):
+def init_dirs(num_workers, output_dir, orig_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     if not os.path.exists(output_dir + "/node_info/"):
@@ -172,18 +178,18 @@ def init_dirs(num_workers, output_dir):
         os.makedirs(output_dir + "/instances/")
     if not os.path.exists(output_dir + "/nets/"):
         os.makedirs(output_dir + "/nets/")
-    dirr = output_dir + "to_workers/"
+    dirr = orig_dir + "/to_workers/"
     if not os.path.exists(dirr):
         os.makedirs(dirr)
-    dirr = output_dir + "to_master/"
+    dirr = orig_dir + "/to_master/"
     if not os.path.exists(dirr):
         os.makedirs(dirr)
 
 
-def parse_worker_popn (num_workers, iter, output_dir, num_survive):
+def parse_worker_popn (num_workers, iter, orig_dir, num_survive):
     popn = []
-    for w in range(num_workers):
-        dump_file = output_dir + "to_master/" + str(iter) + "/" + str(w)
+    for w in range(1,num_workers+1):
+        dump_file = orig_dir + "/to_master/" + str(iter) + "/" + str(w)
         with open(dump_file, 'rb') as file:
             worker_pop = pickle.load(file)
         i=0
@@ -192,8 +198,8 @@ def parse_worker_popn (num_workers, iter, output_dir, num_survive):
             i+=1
 
     #del old gen dirs
-    shutil.rmtree(output_dir + "to_master/" + str(iter))
-    shutil.rmtree(output_dir + "to_workers/" + str(iter))
+    shutil.rmtree(orig_dir + "/to_master/" + str(iter))
+    shutil.rmtree(orig_dir + "/to_workers/" + str(iter))
 
     sorted_popn = fitness.eval_fitness(popn)
     return sorted_popn[:num_survive]
@@ -230,20 +236,21 @@ def debug(population):
 
 
 
-def watch(configs):
+def watch(configs, iter, num_workers, orig_dir):
 
-    dump_dir = configs['output_directory'] + "to_master/"
-    files_per_dir = configs['num_workers']
+    dump_dir = orig_dir + "/to_master/" + str(iter)
 
     done, i = False, 1
 
     while not done:
         time.sleep(2*i)  #checks less and less freq
         i += 1
-        for root, dirs, files in os.walk(dump_dir):  # TODO: add check timestamp
-            if (len(files) == files_per_dir):
+        #print(dump_dir)
+        for root, dirs, files in os.walk(dump_dir): 
+            #print(str(dump_dir) + " has " + str(len(files)) + " files in it.")
+            if (len(files) == num_workers):
                 for f in files:
-                    print("last mod'd: " + str(os.path.getmtime(root + "/" + f)) + ", curr time = " + str(time.time()) + "\n")
+                    if (os.path.getmtime(root + "/" + f) + 2 > time.time()): break #ie file may still be being written
 
                 return
 
