@@ -14,8 +14,9 @@ def batch_run(dirr, num_workers):
 
         num_workers_configs = int(configs['number_of_workers'])
         if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
-        out_dir = dirr.replace('input','output')
-        master.evolve_master(out_dir, configs, num_workers)
+
+        batch_dir = dirr.replace('input','output')
+        master.evolve_master(batch_dir, configs, num_workers)
     print("Batch run completed.")
 
 
@@ -49,8 +50,8 @@ def continue_batch(dirr, num_workers):
                 configs = init.initialize_master(dirr + "/" + config_file, 0)
                 num_workers_configs = int(configs['number_of_workers'])
                 if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
-                out_dir = dirr.replace('input', 'output')
-                master.evolve_master(out_dir, configs, num_workers, cont=True)
+                batch_dir = dirr.replace('input', 'output')
+                master.evolve_master(batch_dir, configs, num_workers, cont=True)
             else:
                 queued_configs.append(config_file)
 
@@ -59,8 +60,8 @@ def continue_batch(dirr, num_workers):
         configs = init.initialize_master(dirr+"/"+config_file, 0)
         num_workers_configs = int(configs['number_of_workers'])
         if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
-        out_dir = dirr.replace('input','output')
-        master.evolve_master(out_dir, configs, num_workers, cont=False)
+        batch_dir = dirr.replace('input','output')
+        master.evolve_master(batch_dir, configs, num_workers, cont=False)
     print("Batch run completed.")
 
 
@@ -90,11 +91,9 @@ if __name__ == "__main__":
         batch_run(dirr, num_workers)
 
     else:
-        out_dir = dirr.replace('input','output')
+        batch_dir = dirr.replace('input','output')
         import minion
 
-        minion.work(out_dir, rank)
-        # workers wait for workload from master, work, and finally dump their results for the master to harvest.
-        # repeat; a worker exits when master gives it an empty workload
+        minion.work(batch_dir, rank)
 
 

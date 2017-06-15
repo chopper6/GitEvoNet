@@ -2,7 +2,7 @@ import math
 import reducer, solver, node_data, fitness
 from ctypes import cdll
 
-def pressurize(configs, net, track_node_fitness, instance_file_name):
+def pressurize(configs, net, instance_file_name):
     # configs:
     pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
     tolerance = int(configs['PT_pairs_dict'][1][1])
@@ -16,6 +16,7 @@ def pressurize(configs, net, track_node_fitness, instance_file_name):
 
     leaf_metric = str(configs['leaf_metric'])
     leaf_operator = str(configs['leaf_operation'])
+    leaf_pow = str(configs['leaf_power'])
     hub_metric = str(configs['hub_metric'])
     hub_operator = str(configs['hub_operation'])
     fitness_operator = str(configs['fitness_operation'])
@@ -41,7 +42,7 @@ def pressurize(configs, net, track_node_fitness, instance_file_name):
 
         for kp in kp_instances:
             a_result = solver.solve_knapsack(kp, knapsack_solver)
-            inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness, node_info_instance = fitness.kp_instance_properties(a_result, leaf_metric, leaf_operator, hub_metric, hub_operator, fitness_operator, net, False, None, instance_file_name)
+            inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness, node_info_instance = fitness.kp_instance_properties(a_result, leaf_metric, leaf_pow, leaf_operator, hub_metric, hub_operator, fitness_operator, net, instance_file_name)
 
             leaf_fitness += inst_leaf_fitness
             hub_fitness += inst_hub_fitness
@@ -52,7 +53,7 @@ def pressurize(configs, net, track_node_fitness, instance_file_name):
         solo_fitness /= num_samples_relative
 
 
-        return [leaf_fitness, hub_fitness, solo_fitness, None]
+        return [leaf_fitness, hub_fitness, solo_fitness]
 
     elif (use_kp == 'False'):
         node_data.reset_fitness(net)
@@ -66,7 +67,7 @@ def pressurize(configs, net, track_node_fitness, instance_file_name):
         fitness_score = fitness.node_product(net)
 
 
-        return [0,0, fitness_score, None] #weird as all hell, but [2] is used as the actual fitness
+        return [0,0, fitness_score] #weird as all hell, but [2] is used as the actual fitness
 
 
     else: print("ERROR in pressurize(): unknown use_knapsack config: " + str(use_kp))

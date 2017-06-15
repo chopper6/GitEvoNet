@@ -14,7 +14,7 @@ def work(orig_dir, rank):
     prev_dir = None
     while not done:
         while not os.path.isfile (progress): # master will create this file
-            time.sleep(4)
+            time.sleep(2)
 
         if (os.path.getmtime(progress) + 2 < time.time()): #check that file has not been recently touched
             with open(progress, 'r') as file:
@@ -38,7 +38,7 @@ def work(orig_dir, rank):
                         worker_args = str(orig_dir) + "/to_workers/" + str(gen) + "/" + str(rank)
                         #print("worker looking for file: " + str(worker_args))
                         while not os.path.isfile(worker_args):
-                            time.sleep(4)
+                            time.sleep(2)
                         evolve_minion(worker_args, gen, rank, orig_dir)
                         gen+=1
 
@@ -58,8 +58,6 @@ def evolve_minion(worker_file, gen, rank, orig_dir):
     max_gen = int(configs['max_generations'])
     control = configs['control']
     if (control == "None"): control = None
-
-    use_kp = configs['use_knapsack']
 
     node_edge_ratio = float(configs['edge_to_node_ratio'])
 
@@ -84,7 +82,7 @@ def evolve_minion(worker_file, gen, rank, orig_dir):
             mutate_time += t1-t0
 
             if (control == None):
-                pressure_results = pressurize.pressurize(configs, population[p].net, False, None)  # false: don't track node fitness, None: don't write instances to file
+                pressure_results = pressurize.pressurize(configs, population[p].net, None)  # false: don't track node fitness, None: don't write instances to file
                 population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
 
             else: print("ERROR in minion(): unknown control config: " + str(control))
