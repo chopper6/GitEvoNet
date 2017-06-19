@@ -32,6 +32,7 @@ def continue_batch(dirr, num_workers):
                 curr_dir = lines[0].strip()
                 curr_gen = int(lines[-1].strip())  #never used, except for print statement
 
+
     if os.path.isfile(dirr + "/finished_dirs.txt"):
         with open (dirr + "/finished_dirs.txt") as file:
             finished_dirs = file.readlines()

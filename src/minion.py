@@ -38,7 +38,9 @@ def work(batch_dir, rank):
                     global_gen = int(lines[-1].strip())
                     #print("worker using gen: " + str(gen) + ", while global gen = " + str(global_gen))
                     if (len(lines) > 2):
-                        if (lines[2] == 'continue'): gen = global_gen
+                        if (lines[-1] == 'continue'):
+                            print("Worker #" + str(rank) + " recognizes continue command.")
+                            gen = global_gen
 
                     if (gen == global_gen):
 
@@ -49,7 +51,7 @@ def work(batch_dir, rank):
 
                         t_end = time.time()
                         t_elapsed = t_end - t_start
-                        print("Worker # " + str(rank) + " starting evolution after waiting " + str(t_elapsed) + " seconds.")
+                        print("Worker # " + str(rank) + " starting evolution after waiting " + str(t_elapsed) + " seconds. Starts at gen " + str(gen))
                         evolve_minion(worker_args, gen, rank, batch_dir)
                         gen+=1
 

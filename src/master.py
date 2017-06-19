@@ -274,4 +274,4 @@ def write_mpi_info(batch_dir, output_dir, iter):
         os.makedirs(batch_dir + "/to_workers/" + str(iter))
     if not os.path.exists(batch_dir + "/to_master/" + str(iter)):
         os.makedirs(batch_dir + "/to_master/" + str(iter))
-    else: print("WARNING in master.write_mpi_info(): dir /to_master/" + str(iter) + " already exists...")
+    else: print("WARNING in master.write_mpi_info(): dir /to_master/" + str(iter) + " already exists...sensible if a continuation run.")
