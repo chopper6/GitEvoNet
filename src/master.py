@@ -247,7 +247,7 @@ def watch(configs, iter, num_workers, batch_dir):
 
     t_start = time.time()
     while not done:
-        time.sleep(1.5*i)  #checks less and less freq
+        time.sleep(.2*i)  #checks less and less freq
         i += 1
         #print(dump_dir)
         for root, dirs, files in os.walk(dump_dir): 

@@ -15,17 +15,17 @@ def work(orig_dir, rank):
     while not done:
         t_start = time.time()
         while not os.path.isfile (progress): # master will create this file
-            time.sleep(2)
+            time.sleep(.2)
 
-        if (os.path.getmtime(progress) + 2 < time.time()): #check that file has not been recently touched
+        if (os.path.getmtime(progress) + .5 < time.time()): #check that file has not been recently touched
             with open(progress, 'r') as file:
                 lines = file.readlines()
-                if (len(lines) > 1): #encompasses 'loading next config' condition, since wait for next
-                    dirr = lines[0].strip()
+                if (lines[0] == 'Done'):
+                    print("Worker #" + str(rank) + " + exiting.")
+                    return  # no more work to be done
 
-                    if (dirr == 'Done'):
-                        print("Worker #" + str(rank) + " + exiting.")
-                        return #no more work to be done
+                elif (len(lines) > 1): #encompasses 'loading next config' condition, since wait for next
+                    dirr = lines[0].strip()
 
                     #reset gen for new config file (indicated by diff directory)
                     if (prev_dir != dirr): gen = 0
