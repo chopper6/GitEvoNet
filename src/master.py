@@ -18,6 +18,7 @@ def evolve_master(batch_dir, configs, num_workers, cont):
     return
 
 def evolve_from_seed(batch_dir, configs, num_workers, cont):
+    print("master.evo_from_seed(): cont = " + str(cont))
     # get configs
     #num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory']
@@ -71,6 +72,7 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
         population = parse_worker_popn(num_workers, iter, batch_dir, num_survive)
         size = len(population[0].net.nodes())
         total_gens = iter #also temp, assumes worker gens = 1
+        print("master(): cont with global gen = " + str(iter))
 
     else:
         print("ERROR in master(): unknown cont arg: " + str(cont))
@@ -274,4 +276,4 @@ def write_mpi_info(batch_dir, output_dir, iter):
         os.makedirs(batch_dir + "/to_workers/" + str(iter))
     if not os.path.exists(batch_dir + "/to_master/" + str(iter)):
         os.makedirs(batch_dir + "/to_master/" + str(iter))
-    else: print("WARNING in master.write_mpi_info(): dir /to_master/" + str(iter) + " already exists...sensible if a continuation run.")
+    #else: print("WARNING in master.write_mpi_info(): dir /to_master/" + str(iter) + " already exists...sensible if a continuation run.")

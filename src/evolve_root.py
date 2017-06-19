@@ -20,21 +20,23 @@ def batch_run(dirr, num_workers):
     print("Master: Batch run completed.")
 
 
-def continue_batch(dirr, num_workers):
+def continue_batch(in_dir, num_workers):
     #restarts batch run from a checkpoint
     curr_dir, curr_gen, finished_dirs = None, 0, []
+    out_dir = in_dir.replace('input', 'output')
 
-    if os.path.isfile(dirr + "/progress.txt"):
-        with open (dirr + "/progress.txt") as file:
+    if os.path.isfile(out_dir + "/progress.txt"):
+        with open (out_dir + "/progress.txt") as file:
             lines = file.readlines()
             print("evolve_root(): progress lines = " + str(lines))
             if (len(lines) > 1):
                 curr_dir = lines[0].strip()
                 curr_gen = int(lines[-1].strip())  #never used, except for print statement
+                print("evolve_root(): found continuation file")
 
 
-    if os.path.isfile(dirr + "/finished_dirs.txt"):
-        with open (dirr + "/finished_dirs.txt") as file:
+    if os.path.isfile(out_dir + "/finished_dirs.txt"):
+        with open (out_dir + "/finished_dirs.txt") as file:
             finished_dirs = file.readlines()
         for dirr in finished_dirs:
             dirr = dirr.replace('\n','')
@@ -42,7 +44,7 @@ def continue_batch(dirr, num_workers):
     print("evolve_root(): continuing batch run at dir " + str(curr_dir) + " and gen " + str(curr_gen))
 
     queued_configs = []
-    for config_file in os.listdir(dirr):
+    for config_file in os.listdir(in_dir):
         new = True
         for finished in finished_dirs:
             if (finished == config_file):
@@ -51,26 +53,23 @@ def continue_batch(dirr, num_workers):
         if (new == True):
             if (config_file == curr_dir):
                 print("\nevolve_root(): continuing curr_dir " + str(config_file))
-                configs = init.initialize_master(dirr + "/" + config_file, 0)
+                configs = init.initialize_master(in_dir + "/" + config_file, 0)
                 num_workers_configs = int(configs['number_of_workers'])
                 if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
-                batch_dir = dirr.replace('input', 'output')
-                with open(batch_dir + "/progress.txt", 'a') as out:
+                with open(out_dir + "/progress.txt", 'a') as out:
                     out.write("continue") #matters to workers
-                master.evolve_master(batch_dir, configs, num_workers, cont=True)
+                master.evolve_master(out_dir, configs, num_workers, cont=True)
             else:
                 queued_configs.append(config_file)
 
     for config_file in queued_configs:
         print("Starting evo of config file: " + str(config_file))
-        configs = init.initialize_master(dirr+"/"+config_file, 0)
+        configs = init.initialize_master(in_dir+"/"+config_file, 0)
         num_workers_configs = int(configs['number_of_workers'])
         if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
-        batch_dir = dirr.replace('input','output')
-        master.evolve_master(batch_dir, configs, num_workers, cont=False)
+        master.evolve_master(out_dir, configs, num_workers, cont=False)
 
-    batch_dir = dirr.replace('input', 'output')
-    with open(batch_dir + "/progress.txt", 'w') as out:
+    with open(out_dir + "/progress.txt", 'w') as out:
         out.write("Done")
     print("Master: Batch run completed.")
 
