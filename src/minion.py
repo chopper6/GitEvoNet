@@ -12,6 +12,7 @@ def work(batch_dir, rank):
     done = False
     gen = 0
     prev_dir = None
+    used_cont = False
     while not done:
         t_start = time.time()
         while not os.path.isfile (progress): # master will create this file
@@ -35,12 +36,15 @@ def work(batch_dir, rank):
 
                     #print("worker using dir: " + str(dirr))
                     #print("worker() progress lines: " + str(lines))
-                    global_gen = int(lines[-1].strip())
+                    global_gen = (lines[-1].strip())
                     #print("worker using gen: " + str(gen) + ", while global gen = " + str(global_gen))
                     if (len(lines) > 2):
-                        if (lines[-1] == 'continue'):
+                        if (lines[-1] == 'continue' and used_cont == False):
                             print("Worker #" + str(rank) + " recognizes continue command.")
+                            global_gen = lines[-2].strip()
                             gen = global_gen
+                            used_cont = True
+                    global_gen = int(global_gen)
 
                     if (gen == global_gen):
 
