@@ -4,10 +4,10 @@ import math, pickle, random, os, time
 import output, fitness, pressurize, mutate, init
 from time import process_time as ptime
 
-def work(orig_dir, rank):
+def work(batch_dir, rank):
 
     print ("\t\t\t\tworker #"+str(rank)+" is working,\t")
-    progress = orig_dir + "/progress.txt"
+    progress = batch_dir + "/progress.txt"
 
     done = False
     gen = 0
@@ -26,6 +26,7 @@ def work(orig_dir, rank):
                         return  # no more work to be done
 
                 if (len(lines) > 1): #encompasses 'loading next config' condition, since wait for next
+
                     dirr = lines[0].strip()
 
                     #reset gen for new config file (indicated by diff directory)
@@ -36,10 +37,12 @@ def work(orig_dir, rank):
                     #print("worker() progress lines: " + str(lines))
                     global_gen = int(lines[-1].strip())
                     #print("worker using gen: " + str(gen) + ", while global gen = " + str(global_gen))
+                    if (len(lines) > 2):
+                        if (lines[2] == 'continue'): gen = global_gen
 
                     if (gen == global_gen):
 
-                        worker_args = str(orig_dir) + "/to_workers/" + str(gen) + "/" + str(rank)
+                        worker_args = str(batch_dir) + "/to_workers/" + str(gen) + "/" + str(rank)
                         #print("worker looking for file: " + str(worker_args))
                         while not os.path.isfile(worker_args):
                             time.sleep(2)
@@ -47,7 +50,7 @@ def work(orig_dir, rank):
                         t_end = time.time()
                         t_elapsed = t_end - t_start
                         print("Worker # " + str(rank) + " starting evolution after waiting " + str(t_elapsed) + " seconds.")
-                        evolve_minion(worker_args, gen, rank, orig_dir)
+                        evolve_minion(worker_args, gen, rank, batch_dir)
                         gen+=1
 
                     #else: print("minion.work(): worker gen = " + str(gen) + ", while global gen = " + str(global_gen))

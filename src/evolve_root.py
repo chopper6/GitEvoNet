@@ -27,9 +27,10 @@ def continue_batch(dirr, num_workers):
     if os.path.isfile(dirr + "/progress.txt"):
         with open (dirr + "/progress.txt") as file:
             lines = file.readlines()
+            print("evolve_root(): progress lines = " + str(lines))
             if (len(lines) > 1):
                 curr_dir = lines[0].strip()
-                curr_gen = int(lines[-1].strip())
+                curr_gen = int(lines[-1].strip())  #never used, except for print statement
 
     if os.path.isfile(dirr + "/finished_dirs.txt"):
         with open (dirr + "/finished_dirs.txt") as file:
@@ -53,6 +54,8 @@ def continue_batch(dirr, num_workers):
                 num_workers_configs = int(configs['number_of_workers'])
                 if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
                 batch_dir = dirr.replace('input', 'output')
+                with open(batch_dir + "/progress.txt", 'a') as out:
+                    out.write("continue") #matters to workers
                 master.evolve_master(batch_dir, configs, num_workers, cont=True)
             else:
                 queued_configs.append(config_file)
