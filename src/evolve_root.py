@@ -34,6 +34,8 @@ def continue_batch(dirr, num_workers):
     if os.path.isfile(dirr + "/finished_dirs.txt"):
         with open (dirr + "/finished_dirs.txt") as file:
             finished_dirs = file.readlines()
+        for dirr in finished_dirs:
+            dirr = dirr.replace('\n','')
 
     print("evolve_root(): continuing batch run at dir " + str(curr_dir) + " and gen " + str(curr_gen))
 

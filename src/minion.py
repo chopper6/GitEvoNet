@@ -20,11 +20,12 @@ def work(orig_dir, rank):
         if (os.path.getmtime(progress) + .5 < time.time()): #check that file has not been recently touched
             with open(progress, 'r') as file:
                 lines = file.readlines()
-                if (lines[0] == 'Done'):
-                    print("Worker #" + str(rank) + " + exiting.")
-                    return  # no more work to be done
+                if (lines):
+                    if (lines[0] == 'Done' or lines[0] == 'Done\n'):
+                        print("Worker #" + str(rank) + " + exiting.")
+                        return  # no more work to be done
 
-                elif (len(lines) > 1): #encompasses 'loading next config' condition, since wait for next
+                if (len(lines) > 1): #encompasses 'loading next config' condition, since wait for next
                     dirr = lines[0].strip()
 
                     #reset gen for new config file (indicated by diff directory)
