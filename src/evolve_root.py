@@ -15,7 +15,9 @@ def batch_run(dirr, num_workers):
 
         batch_dir = dirr.replace('input','output')
         master.evolve_master(batch_dir, configs, num_workers, cont=False)
-    print("Batch run completed.")
+    with open(dirr + "/progress.txt", 'w') as out:
+        out.write("Done")
+    print("Master: Batch run completed.")
 
 
 def continue_batch(dirr, num_workers):
@@ -60,7 +62,9 @@ def continue_batch(dirr, num_workers):
         if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
         batch_dir = dirr.replace('input','output')
         master.evolve_master(batch_dir, configs, num_workers, cont=False)
-    print("Batch run completed.")
+    with open(dirr + "/progress.txt", 'w') as out:
+        out.write("Done")
+    print("Master: Batch run completed.")
 
 
 def single_run(config_file):
@@ -86,7 +90,7 @@ if __name__ == "__main__":
             f.flush()
             f.close()
         import util, init, master
-        batch_run(dirr, num_workers)
+        continue_batch(dirr, num_workers) #should encompass fresh starts too
 
     else:
         batch_dir = dirr.replace('input','output')

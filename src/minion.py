@@ -13,20 +13,18 @@ def work(orig_dir, rank):
     gen = 0
     prev_dir = None
     while not done:
-        t_start = ptime()
+        t_start = time.time()
         while not os.path.isfile (progress): # master will create this file
             time.sleep(2)
-
-        #err can occur if master finishes here
 
         if (os.path.getmtime(progress) + 2 < time.time()): #check that file has not been recently touched
             with open(progress, 'r') as file:
                 lines = file.readlines()
-                if (len(lines) > 1):
+                if (len(lines) > 1): #encompasses 'loading next config' condition, since wait for next
                     dirr = lines[0].strip()
 
-                    if (dirr == 'finished'):
-                        done = True #shouldn't matter anyhow
+                    if (dirr == 'Done'):
+                        print("Worker #" + str(rank) + " + exiting.")
                         return #no more work to be done
 
                     #reset gen for new config file (indicated by diff directory)
@@ -45,7 +43,7 @@ def work(orig_dir, rank):
                         while not os.path.isfile(worker_args):
                             time.sleep(2)
 
-                        t_end = ptime()
+                        t_end = time.time()
                         t_elapsed = t_end - t_start
                         print("Worker # " + str(rank) + " starting evolution after waiting " + str(t_elapsed) + " seconds.")
                         evolve_minion(worker_args, gen, rank, orig_dir)
@@ -56,7 +54,7 @@ def work(orig_dir, rank):
 
 
 def evolve_minion(worker_file, gen, rank, orig_dir):
-    t_start = ptime()
+    t_start = time.time()
 
     with open(str(worker_file), 'rb') as file:
         worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, configs = pickle.load(file)
@@ -114,7 +112,7 @@ def evolve_minion(worker_file, gen, rank, orig_dir):
         #debug(population, worker_ID)
         #if (worker_ID==0): print("Pressurizing took " + str(pressurize_time) + " secs, while mutate took " + str(mutate_time) + " secs.")
 
-    t_end = ptime()
+    t_end = time.time()
     time_elapsed = t_end - t_start
     print("Worker #" + str(rank) + " finishing after " + str(time_elapsed) + " seconds")
 

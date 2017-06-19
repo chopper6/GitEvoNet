@@ -76,7 +76,7 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
         print("ERROR in master(): unknown cont arg: " + str(cont))
 
     while (size <= end_size and total_gens < max_gen):
-        t_start = process_time()
+        t_start = time.time()
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive, worker_pop_size_config)
 
         if (iter % int(max_gen / num_output) == 0):
@@ -141,7 +141,7 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
             num_workers, num_survive = 1,1
 
 
-        t_end = process_time()
+        t_end = time.time()
         t_elapsed = t_end-t_start
         print("Master finishing after " + str(t_elapsed) + " seconds.")
         watch(configs, iter, num_workers, batch_dir)
@@ -151,7 +151,9 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
         total_gens += worker_gens
 
     #workers don't need until next config run
-    os.remove(batch_dir + "/progress.txt")
+    with open(batch_dir + "/progress.txt", 'w') as out:
+        out.write("Loading next config.")
+    #os.remove(batch_dir + "/progress.txt")
 
     #final outputs
     nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(iter))
@@ -167,7 +169,7 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
     with open(batch_dir + "/finished_dirs.txt", 'a') as out:
         out.write(output_dir + "\n")
 
-    print("Master finished.")
+    print("Master finished config file.")
     return
 
 
@@ -243,7 +245,7 @@ def watch(configs, iter, num_workers, batch_dir):
 
     done, i = False, 1
 
-    t_start = process_time()
+    t_start = time.time()
     while not done:
         time.sleep(1.5*i)  #checks less and less freq
         i += 1
@@ -254,7 +256,7 @@ def watch(configs, iter, num_workers, batch_dir):
                 for f in files:
                     if (os.path.getmtime(root + "/" + f) + 2 > time.time()): break #ie file may still be being written
 
-                t_end = process_time()
+                t_end = time.time()
                 time_elapsed = t_end - t_start
                 print("master continuing after waiting for " + str(time_elapsed) + " seconds.")
                 return
