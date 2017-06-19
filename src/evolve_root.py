@@ -4,8 +4,6 @@ from mpi4py import MPI
 os.environ['lib'] = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib"
 sys.path.insert(0, os.getenv('lib'))
 
-
-
 def batch_run(dirr, num_workers):
     #ASSUMES all files in dirr are config files
     for config_file in os.listdir(dirr):
@@ -16,7 +14,7 @@ def batch_run(dirr, num_workers):
         if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
 
         batch_dir = dirr.replace('input','output')
-        master.evolve_master(batch_dir, configs, num_workers)
+        master.evolve_master(batch_dir, configs, num_workers, cont=False)
     print("Batch run completed.")
 
 

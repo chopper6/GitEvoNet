@@ -23,7 +23,6 @@ class Net:
 
 
 def init_population(init_type, start_size, pop_size, configs):
-
     sign_edges_needed = True
     edge_node_ratio = float(configs['edge_to_node_ratio'])
     num_edges = int(start_size*edge_node_ratio)

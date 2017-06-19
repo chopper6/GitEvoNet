@@ -38,28 +38,21 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
     num_grow = int(configs['num_grows'])
     edge_node_ratio = float(configs['edge_to_node_ratio'])
 
-    num_instance_plots = configs['num_instance_plots']
+    num_instance_output = int(configs['num_instance_output'])
     instance_file = configs['instance_file']
-    if (num_instance_plots==0): instance_file = None
-
-    #draw_layout = str(configs['draw_layout'])
-    num_fitness_plots = int(configs['num_fitness_plots']) #ASSUMES != 0
-    if (num_fitness_plots > max_gen or num_output > max_gen or num_draw > max_gen):
-        print("WARNING master(): more output requested than generations.")
-
+    if (num_instance_output==0): instance_file = None
 
     size, total_gens, iter, population, num_survive = None, None, None, None, None #just to avoid annoying warnings
 
     if (cont == False):
         init_dirs(num_workers, output_dir, batch_dir)
         output.init_csv(output_dir, configs)
-        draw_nets.init(output_dir)
+        #draw_nets.init(output_dir)
 
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, -1, worker_pop_size_config)
         print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
 
         population = net_generator.init_population(init_type, start_size, pop_size, configs)
-
         #init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
         pressure_results = pressurize.pressurize(configs, population[0].net, instance_file + "Xiter0.csv")  # false: don't track node fitness, None: don't write instances to file
         population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
@@ -83,7 +76,6 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
         print("ERROR in master(): unknown cont arg: " + str(cont))
 
     while (size <= end_size and total_gens < max_gen):
-        print("curr master iteration = " + str(iter))
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive, worker_pop_size_config)
 
         if (iter % int(max_gen / num_output) == 0):
@@ -94,8 +86,8 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
 
             nx.write_edgelist(population[0].net, output_dir+"/fittest_net.edgelist")
 
-        if (num_fitness_plots != 0):
-            if (iter % int(max_gen / num_fitness_plots) == 0):
+        if (num_instance_output != 0):
+            if (iter % int(max_gen / num_instance_output) == 0):
                 # if first gen, have already pressurized w/net[0]
                 if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, instance_file + "Xiter" + str( iter) + ".csv")
 
@@ -267,7 +259,6 @@ def write_mpi_info(batch_dir, output_dir, iter):
             out.write(output_dir + "\n")
 
     with open(batch_dir + "/progress.txt", 'a') as out:
-        print("master(): write to progress: " + str(iter))
         out.write(str(iter) + "\n")
     if not os.path.exists(batch_dir + "/to_workers/" + str(iter)):
         os.makedirs(batch_dir + "/to_workers/" + str(iter))

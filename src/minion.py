@@ -16,6 +16,8 @@ def work(orig_dir, rank):
         while not os.path.isfile (progress): # master will create this file
             time.sleep(2)
 
+        #err can occur if master finishes here
+
         if (os.path.getmtime(progress) + 2 < time.time()): #check that file has not been recently touched
             with open(progress, 'r') as file:
                 lines = file.readlines()
