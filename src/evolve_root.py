@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import os,sys
 from mpi4py import MPI
-os.environ['lib'] = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib"
+os.environ['lib'] = "/home/chopper/lib"
 sys.path.insert(0, os.getenv('lib'))
 
 def batch_run(dirr, num_workers):
