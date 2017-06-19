@@ -13,6 +13,7 @@ def work(orig_dir, rank):
     gen = 0
     prev_dir = None
     while not done:
+        t_start = ptime()
         while not os.path.isfile (progress): # master will create this file
             time.sleep(2)
 
@@ -24,7 +25,9 @@ def work(orig_dir, rank):
                 if (len(lines) > 1):
                     dirr = lines[0].strip()
 
-                    if (dirr == 'finished'): return #no more work to be done
+                    if (dirr == 'finished'):
+                        done = True #shouldn't matter anyhow
+                        return #no more work to be done
 
                     #reset gen for new config file (indicated by diff directory)
                     if (prev_dir != dirr): gen = 0
@@ -41,6 +44,10 @@ def work(orig_dir, rank):
                         #print("worker looking for file: " + str(worker_args))
                         while not os.path.isfile(worker_args):
                             time.sleep(2)
+
+                        t_end = ptime()
+                        t_elapsed = t_end - t_start
+                        print("Worker # " + str(rank) + " starting evolution after waiting " + str(t_elapsed) + " seconds.")
                         evolve_minion(worker_args, gen, rank, orig_dir)
                         gen+=1
 
@@ -49,6 +56,8 @@ def work(orig_dir, rank):
 
 
 def evolve_minion(worker_file, gen, rank, orig_dir):
+    t_start = ptime()
+
     with open(str(worker_file), 'rb') as file:
         worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, configs = pickle.load(file)
         file.close()
@@ -104,6 +113,11 @@ def evolve_minion(worker_file, gen, rank, orig_dir):
         output.minion_csv(orig_dir, pressurize_time, growth, end_size)
         #debug(population, worker_ID)
         #if (worker_ID==0): print("Pressurizing took " + str(pressurize_time) + " secs, while mutate took " + str(mutate_time) + " secs.")
+
+    t_end = ptime()
+    time_elapsed = t_end - t_start
+    print("Worker #" + str(rank) + " finishing after " + str(time_elapsed) + " seconds")
+
 
 def write_out_worker(worker_file, population, num_return):
     # overwrite own input file with return population
