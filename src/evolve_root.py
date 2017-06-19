@@ -62,7 +62,9 @@ def continue_batch(dirr, num_workers):
         if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
         batch_dir = dirr.replace('input','output')
         master.evolve_master(batch_dir, configs, num_workers, cont=False)
-    with open(dirr + "/progress.txt", 'w') as out:
+
+    batch_dir = dirr.replace('input', 'output')
+    with open(batch_dir + "/progress.txt", 'w') as out:
         out.write("Done")
     print("Master: Batch run completed.")
 
