@@ -36,15 +36,14 @@ def work(batch_dir, rank):
 
                     #print("worker using dir: " + str(dirr))
                     #print("worker() progress lines: " + str(lines))
-                    global_gen = (lines[-1].strip())
+                    global_gen = int(lines[-1].strip())
                     #print("worker using gen: " + str(gen) + ", while global gen = " + str(global_gen))
-                    if (len(lines) > 2):
-                        if (lines[-1] == 'continue' and used_cont == False):
-                            print("Worker #" + str(rank) + " recognizes continue command.")
-                            global_gen = lines[-2].strip()
-                            gen = global_gen
-                            used_cont = True
-                    global_gen = int(global_gen)
+                    if (os.path.isfile(batch_dir + "/continue.txt") and used_cont == False):
+                        with open(batch_dir + "/continue.txt") as file:
+                            lines = file.readlines()
+                            gen = int(lines[0])
+                            used_cont = True #single use
+                            print("worker used cont, now has gen = " + str(gen))
 
                     if (gen == global_gen):
 
