@@ -51,20 +51,21 @@ def continue_batch(in_dir, num_workers):
                 print("\nevolve_root(): " + str(config_file) + " already finished, skipping.")
                 new = False
         if (new == True):
-            if (config_file == curr_dir):
-                print("\nevolve_root(): continuing curr_dir " + str(config_file))
-                configs = init.initialize_master(in_dir + "/" + config_file, 0)
-                num_workers_configs = int(configs['number_of_workers'])
-                if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
-                with open(out_dir + "/progress.txt", 'a') as out:
-                    out.write("continue") #matters to workers
-                master.evolve_master(out_dir, configs, num_workers, cont=True)
-            else:
-                queued_configs.append(config_file)
+            configs = init.initialize_master(in_dir+"/"+config_file, 0)
+            if (configs['output_directory'] == curr_dir):
+                if (config_file == curr_dir):
+                    print("\nevolve_root(): continuing curr_dir " + str(config_file))
+                    num_workers_configs = int(configs['number_of_workers'])
+                    if (num_workers != num_workers_configs): print(
+                        "WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
+                    with open(out_dir + "/progress.txt", 'a') as out:
+                        out.write("continue")  # matters to workers
+                    master.evolve_master(out_dir, configs, num_workers, cont=True)
 
-    for config_file in queued_configs:
-        print("Starting evo of config file: " + str(config_file))
-        configs = init.initialize_master(in_dir+"/"+config_file, 0)
+            else: queued_configs.append(configs)
+
+    for configs in queued_configs:
+        print("Starting evo of output dir: " + str(configs['output_directory']))
         num_workers_configs = int(configs['number_of_workers'])
         if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
         master.evolve_master(out_dir, configs, num_workers, cont=False)
