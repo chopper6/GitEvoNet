@@ -18,7 +18,6 @@ def evolve_master(batch_dir, configs, num_workers, cont):
     return
 
 def evolve_from_seed(batch_dir, configs, num_workers, cont):
-    print("master.evo_from_seed(): cont = " + str(cont))
     # get configs
     #num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory']
@@ -68,7 +67,7 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers, survive_fraction, -1, worker_pop_size_config)
         with open(batch_dir + "/progress.txt", 'r') as file:
             lines = file.readlines()
-            iter = lines[-1]
+            iter = int(lines[-1].strip())-1 #since only have data of previous gen
         population = parse_worker_popn(num_workers, iter, batch_dir, num_survive)
         size = len(population[0].net.nodes())
         total_gens = iter #also temp, assumes worker gens = 1
@@ -202,8 +201,11 @@ def parse_worker_popn (num_workers, iter, batch_dir, num_survive):
             i+=1
 
     #del old gen dirs
-    shutil.rmtree(batch_dir + "/to_master/" + str(iter))
-    shutil.rmtree(batch_dir + "/to_workers/" + str(iter))
+    prev_iter = iter - 1
+    if os.path.exists(batch_dir + "/to_master/" + str(prev_iter)):
+        shutil.rmtree(batch_dir + "/to_master/" + str(prev_iter))
+    if os.path.exists(batch_dir + "/to_workers/" + str(prev_iter)):
+        shutil.rmtree(batch_dir + "/to_workers/" + str(prev_iter))
 
     sorted_popn = fitness.eval_fitness(popn)
     return sorted_popn[:num_survive]

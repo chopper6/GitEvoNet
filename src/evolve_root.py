@@ -41,7 +41,7 @@ def continue_batch(in_dir, num_workers):
         for dirr in finished_dirs:
             dirr = dirr.replace('\n','')
 
-    print("evolve_root(): continuing batch run at dir " + str(curr_dir) + " and gen " + str(curr_gen))
+    print("evolve_root(): continuing batch run at dir " + str(curr_dir) + " and gen " + str(curr_gen) + ".")
 
     queued_configs = []
     for config_file in os.listdir(in_dir):
@@ -57,8 +57,9 @@ def continue_batch(in_dir, num_workers):
                     num_workers_configs = int(configs['number_of_workers'])
                     if (num_workers != num_workers_configs): print("WARNING in evolve_root.batch_run(): inconsistent # of workers, using command line choice:" + str(num_workers) + ", instead of " + str(num_workers_configs))
                     with open(out_dir + "/continue.txt", 'w') as out:
-                        out.write(curr_gen)  # matters to workers
+                        out.write(str(curr_gen))  # matters to workers
                     master.evolve_master(out_dir, configs, num_workers, cont=True)
+                    os.remove(out_dir + "/continue.txt")
 
             else: queued_configs.append(configs)
 
