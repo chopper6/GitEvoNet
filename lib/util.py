@@ -71,3 +71,36 @@ def cluster_print(output_dir, text):
         file.write(text + "\n")
         file.flush()
         file.close()
+
+
+def cleanPaths(path):
+    # ignore empty lines
+    # ignore lines beginning with '#'
+    # ignore lines enclosed by @ .. @
+    # replaces $env_var with the actual value
+    clean = []
+    LINES = open(path,'r').readlines()
+    inside_comment = False
+    for i in range(len(LINES)):
+        line = LINES[i].strip()
+        if len(line)==0:
+            continue
+        if inside_comment:
+            if line[0] == '@':
+                inside_comment = False
+        else:
+            if line[0]=='@':
+                inside_comment = True
+                continue
+            if line[0]!='#':
+                clean.append(line)
+    j=0
+    for path in clean:
+        Ds,i = path.split('/'), 0
+        for d in Ds:
+            if len(d.split('$'))>1:
+                Ds[i]=os.getenv(d.split('$')[1])
+            i+=1
+        clean[j]='/'.join(Ds).replace('//','/')
+        j+=1
+    return clean
