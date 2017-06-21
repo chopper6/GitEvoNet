@@ -1,25 +1,21 @@
-# master process, and functions used only by master
-
 import math, os, pickle, sys, time, shutil
-#os.environ['analysis'] = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib/analysis"
-#sys.path.insert(0, os.getenv('analysis'))
-import multiprocessing as mp
 from random import SystemRandom as sysRand
 from time import sleep, process_time
 import networkx as nx
 import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, plot_fitness, node_fitness, mutate
 
-def evolve_master(batch_dir, configs, num_workers, cont):
+def evolve_master(configs):
     protocol = configs['protocol']
+    output_dir = configs['output_directory']
     if (protocol == 'from seed'):
-        evolve_from_seed(batch_dir, configs, num_workers, cont)
+        evolve_from_seed(configs)
     else:
-        print("ERROR in master(): unknown protocol " + str(protocol))
+        print(output_dir,"ERROR in master(): unknown protocol " + str(protocol))
     return
 
-def evolve_from_seed(batch_dir, configs, num_workers, cont):
+def evolve_from_seed(configs):
     # get configs
-    #num_workers = int(configs['number_of_workers'])
+    num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory']
     survive_percent = float(configs['percent_survive'])
     survive_fraction = float(survive_percent) / 100
@@ -44,47 +40,51 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
 
     size, total_gens, iter, population, num_survive = None, None, None, None, None #just to avoid annoying warnings
 
-    if (cont == False):
-        init_dirs(num_workers, output_dir, batch_dir)
-        output.init_csv(output_dir, configs)
-        #draw_nets.init(output_dir)
+    worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, -1, worker_pop_size_config)
+    print(output_dir,"Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
 
-        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, -1, worker_pop_size_config)
-        print("Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
+    prog_path = output_dir + "/progress.txt"
+    cont=False
+    if os.path.isfile(prog_path):
+        with open(prog_path) as file:
+            iter = file.readline
+
+        if (iter): #IS CONTINUATION RUN
+            iter = int(iter)
+            population = parse_worker_popn(num_workers, iter, output_dir, num_survive)
+            size = len(population[0].net.nodes())
+            total_gens = iter  # also temp, assumes worker gens = 1
+            print(output_dir,"master(): cont with global gen = " + str(iter))
+            cont = True
+
+    if cont==False: #FRESH START
+        init_dirs(num_workers, output_dir)
+        output.init_csv(output_dir, configs)
+        # draw_nets.init(output_dir)
 
         population = net_generator.init_population(init_type, start_size, pop_size, configs)
-        #init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
-        pressure_results = pressurize.pressurize(configs, population[0].net, instance_file + "Xiter0.csv")  # false: don't track node fitness, None: don't write instances to file
-        population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-        fitness.eval_fitness([population[0]])
+        # init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
 
+        #init fitness eval
+        pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xiter0.csv")  # false: don't track node fitness, None: don't write instances to file
+        population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = \
+        pressure_results[0], pressure_results[1], pressure_results[2]
+        fitness.eval_fitness([population[0]])
         output.deg_change_csv([population[0]], output_dir)
 
         total_gens, size, iter = 0, start_size, 0
 
-    elif (cont == True):
-        #curr not able to use dynamic worker gens and parallel islands
-        worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers, survive_fraction, -1, worker_pop_size_config)
-        with open(batch_dir + "/progress.txt", 'r') as file:
-            lines = file.readlines()
-            iter = int(lines[-1].strip())-1 #since only have data of previous gen
-        population = parse_worker_popn(num_workers, iter, batch_dir, num_survive)
-        size = len(population[0].net.nodes())
-        total_gens = iter #also temp, assumes worker gens = 1
-        print("master(): cont with global gen = " + str(iter))
-
-    else:
-        print("ERROR in master(): unknown cont arg: " + str(cont))
 
     while (size <= end_size and total_gens < max_gen):
         t_start = time.time()
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive, worker_pop_size_config)
 
+        #OUTPUT INFO
         if (iter % int(max_gen / num_output) == 0):
             output.to_csv(population, output_dir, total_gens)
-            print("Master at gen " + str(total_gens) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
+            print(output_dir,"Master at gen " + str(total_gens) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
             worker_percent_survive = worker_pop_size #should match however workers handle %survive
-            print("Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
+            print(output_dir,"Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
 
             nx.write_edgelist(population[0].net, output_dir+"/fittest_net.edgelist")
 
@@ -106,14 +106,12 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
                 for p in range(len(population)):
                     mutate.add_nodes(population[p].net, 1, edge_node_ratio)
 
-        # MPI PARALLEL
-        # progress file = dir, gen
-        write_mpi_info(batch_dir, output_dir, iter)
 
-        #debug(population)
+        write_mpi_info(output_dir, iter)
+        #debug(population), outdated
 
         # distribute workers
-        if (debug == True): #sequential debug
+        if (debug == True): #sequential debug, may be outdated
             dump_file = output_dir + "to_workers/" + str(iter) + "/0"
             seed = population[0].copy()
             randSeeds = os.urandom(sysRand().randint(0, 1000000))
@@ -126,8 +124,8 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
 
         else:
             for w in range(1,num_workers+1):
-                dump_file =  batch_dir + "/to_workers/" + str(iter) + "/" + str(w)
-                #print("master dumping to file: " + str(dump_file))
+                dump_file =  output_dir + "/to_workers/" + str(iter) + "/" + str(w)
+                #print(output_dir,"master dumping to file: " + str(dump_file))
                 seed = population[w % num_survive].copy()
                 randSeeds = os.urandom(sysRand().randint(0,1000000))
                 assert(seed != population[w % num_survive])
@@ -138,23 +136,21 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
 
         del population
         if (debug == True):
-            print("debug is ON") 
+            print(output_dir,"debug is ON")
             num_workers, num_survive = 1,1
 
 
         t_end = time.time()
         t_elapsed = t_end-t_start
-        print("Master finishing after " + str(t_elapsed) + " seconds.")
-        watch(configs, iter, num_workers, batch_dir)
-        population = parse_worker_popn(num_workers, iter, batch_dir, num_survive)
+        print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.")
+        watch(configs, iter, num_workers, output_dir)
+        population = parse_worker_popn(num_workers, iter, output_dir, num_survive)
         size = len(population[0].net.nodes())
         iter += 1
         total_gens += worker_gens
 
-    #workers don't need until next config run
-    with open(batch_dir + "/progress.txt", 'w') as out:
-        out.write("Loading next config.")
-    #os.remove(batch_dir + "/progress.txt")
+    with open(output_dir + "/progress.txt", 'w') as out:
+        out.write("Done")
 
     #final outputs
     nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(iter))
@@ -163,36 +159,27 @@ def evolve_from_seed(batch_dir, configs, num_workers, cont):
     output.deg_change_csv(population, output_dir)
     #draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
-    print("Evolution finished, generating images.")
+    print(output_dir,"Evolution finished, generating images.")
     plot_nets.single_run_plots(output_dir)
     #instances.analyze(output_dir)
 
-    with open(batch_dir + "/finished_dirs.txt", 'a') as out:
-        out.write(output_dir + "\n")
-
-    print("Master finished config file.")
+    print(output_dir,"Master finished config file.")
     return
 
 
-def init_dirs(num_workers, output_dir, batch_dir):
+def init_dirs(num_workers, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    if not os.path.exists(output_dir + "/node_info/"):
-        os.makedirs(output_dir + "/node_info/")
-    if not os.path.exists(output_dir + "/instances/"):
-        os.makedirs(output_dir + "/instances/")
-    if not os.path.exists(output_dir + "/nets/"):
-        os.makedirs(output_dir + "/nets/")
-    if not os.path.exists(batch_dir + "/to_workers/"):
-        os.makedirs(batch_dir + "/to_workers/")
-    if not os.path.exists(batch_dir + "/to_master/"):
-        os.makedirs(batch_dir + "/to_master/")
+    dirs = ["/node_info/", "/instances/", "/nets/", "/to_workers/", "/to_master/"]
+    for dirr in dirs:
+        if not os.path.exists(output_dir + dirr):
+            os.makedirs(output_dir+dirr)
 
 
-def parse_worker_popn (num_workers, iter, batch_dir, num_survive):
+def parse_worker_popn (num_workers, iter, output_dir, num_survive):
     popn = []
     for w in range(1,num_workers+1): #assumes master is rank0, hence workers are [1,#workers+1]
-        dump_file = batch_dir + "/to_master/" + str(iter) + "/" + str(w)
+        dump_file = output_dir + "/to_master/" + str(iter) + "/" + str(w)
         with open(dump_file, 'rb') as file:
             worker_pop = pickle.load(file)
         i=0
@@ -202,20 +189,20 @@ def parse_worker_popn (num_workers, iter, batch_dir, num_survive):
 
     #del old gen dirs
     prev_iter = iter - 1
-    if os.path.exists(batch_dir + "/to_master/" + str(prev_iter)):
-        shutil.rmtree(batch_dir + "/to_master/" + str(prev_iter))
-    if os.path.exists(batch_dir + "/to_workers/" + str(prev_iter)):
-        shutil.rmtree(batch_dir + "/to_workers/" + str(prev_iter))
+    if os.path.exists(output_dir + "/to_master/" + str(prev_iter)):
+        shutil.rmtree(output_dir + "/to_master/" + str(prev_iter))
+    if os.path.exists(output_dir + "/to_workers/" + str(prev_iter)):
+        shutil.rmtree(output_dir + "/to_workers/" + str(prev_iter))
 
     sorted_popn = fitness.eval_fitness(popn)
     return sorted_popn[:num_survive]
 
 
 def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_survive, worker_pop_size_config):
+    #could add dynam worker_pop_size Island algo and such
 
-    worker_pop_size = math.floor(end_size/size)
-
-    worker_gens = 1 #TODO: worker_pop_size
+    worker_pop_size = math.floor(end_size/size) #not used
+    worker_gens = 1
     # ISLAND #
     # percent_size = float(size) / float(end_size)
     # math.ceil(10 * math.pow(math.e, -4 * percent_size))
@@ -226,15 +213,14 @@ def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_surv
     if (prev_num_survive > 0):
         if (num_survive > prev_num_survive):   num_survive = prev_num_survive
 
-    #TODO: temp manual pop size set
     return worker_pop_size_config, pop_size, num_survive, worker_gens
 
 
 def debug(population):
     '''
-    print("Master population fitness: ")
+    print(output_dir,"Master population fitness: ")
     for p in range(len(population)):
-        print(population[p].fitness)
+        print(output_dir,population[p].fitness)
     '''
     # check that population is unique
     for p in range(len(population)):
@@ -243,39 +229,42 @@ def debug(population):
 
 
 
-def watch(configs, iter, num_workers, batch_dir):
+def watch(configs, iter, num_workers, output_dir):
 
-    dump_dir = batch_dir + "/to_master/" + str(iter)
+    dump_dir = output_dir + "/to_master/" + str(iter)
 
     done, i = False, 1
 
     t_start = time.time()
     while not done:
-        time.sleep(.2*i)  #checks less and less freq
+        time.sleep(.5*i)  #checks less and less freq
         i += 1
-        #print(dump_dir)
-        for root, dirs, files in os.walk(dump_dir): 
-            #print(str(dump_dir) + " has " + str(len(files)) + " files in it.")
+        #print(output_dir,dump_dir)
+        for root, dirs, files in os.walk(dump_dir):
+            #print(output_dir,str(dump_dir) + " has " + str(len(files)) + " files in it.")
             if (len(files) == num_workers):
                 for f in files:
-                    if (os.path.getmtime(root + "/" + f) + 2 > time.time()): break #ie file may still be being written
+                    if (os.path.getmtime(root + "/" + f) + 2 > time.time()): break #file may still be being written
 
                 t_end = time.time()
                 time_elapsed = t_end - t_start
-                print("master continuing after waiting for " + str(time_elapsed) + " seconds.")
+                print(output_dir,"master continuing after waiting for " + str(time_elapsed) + " seconds.")
                 return
 
 
-def write_mpi_info(batch_dir, output_dir, iter):
+def write_mpi_info(output_dir, iter):
 
-    if (iter ==0):
-        with open(batch_dir + "/progress.txt", 'w') as out:
-            out.write(output_dir + "\n")
+    #os.rename(output_dir + "/progress*.txt", output_dir + "/progress_" + str(iter) + ":w.txt")
 
-    with open(batch_dir + "/progress.txt", 'a') as out:
-        out.write(str(iter) + "\n")
-    if not os.path.exists(batch_dir + "/to_workers/" + str(iter)):
-        os.makedirs(batch_dir + "/to_workers/" + str(iter))
-    if not os.path.exists(batch_dir + "/to_master/" + str(iter)):
-        os.makedirs(batch_dir + "/to_master/" + str(iter))
-    #else: print("WARNING in master.write_mpi_info(): dir /to_master/" + str(iter) + " already exists...sensible if a continuation run.")
+    #if (iter ==0):
+    #    with open(output_dir + "/progress.txt", 'w') as out:
+    #        out.write(output_dir + "\n")
+
+    with open(output_dir + "/progress.txt", 'a') as out:
+        out.write(str(iter))
+
+    if not os.path.exists(output_dir + "/to_workers/" + str(iter)):
+        os.makedirs(output_dir + "/to_workers/" + str(iter))
+    if not os.path.exists(output_dir + "/to_master/" + str(iter)):
+        os.makedirs(output_dir + "/to_master/" + str(iter))
+    #else: print(output_dir,"WARNING in master.write_mpi_info(): dir /to_master/" + str(iter) + " already exists...sensible if a continuation run.")

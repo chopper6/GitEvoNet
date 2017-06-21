@@ -3,9 +3,11 @@ import os,sys
 from mpi4py import MPI
 os.environ['lib'] = "/home/chopper/lib"
 sys.path.insert(0, os.getenv('lib'))
+import init, util
 
 def batch_run(dirr, num_workers):
-    #ASSUMES all files in dirr are config files
+    #OBSOLETE, now handled by batch_root
+    #ASSUMES all files in dirr are#  config files
     for config_file in os.listdir(dirr):
         print("Starting evo of config file: " + str(config_file))
         configs = init.initialize_master(dirr+"/"+config_file, 0)
@@ -21,6 +23,7 @@ def batch_run(dirr, num_workers):
 
 
 def continue_batch(in_dir, num_workers):
+    #OBSOLETE, now handled by batch_root
     #restarts batch run from a checkpoint
     curr_dir, curr_gen, finished_dirs = None, 0, []
     out_dir = in_dir.replace('input', 'output')
@@ -75,6 +78,7 @@ def continue_batch(in_dir, num_workers):
 
 
 def single_run(config_file):
+    #OBSOLETE
     #config_file         = util.getCommandLineArgs ()
     configs             = init.initialize_master (config_file, 0)
     master.evolve_master_sequential_debug(configs)
@@ -87,22 +91,19 @@ if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     num_workers = comm.Get_size() - 1  # dont count master
-    #arguments = sys.argv  # arguments should contain the /path/to/configs.txt
-    dirr = sys.argv[1]
-    if rank == 0: print("Harvesting config files from directory: " + str(dirr))
+    config_file = sys.argv[1]
 
     if rank == 0:  # ie is master
-        with open('root_mpi.log', 'w') as f:
-            f.write('Im in dir ' + str(os.getcwd()) + ', dirr = ' + str(dirr) + ', num_workers = ' + str(num_workers))
-            f.flush()
-            f.close()
-        import util, init, master
-        continue_batch(dirr, num_workers) #should encompass fresh starts too
+        log_text = 'Evolve_root(): in dir ' + str(os.getcwd()) + ', config file = ' + str(config_file) + ', num_workers = ' + str(num_workers)
+
+        import master
+        configs = init.initialize_configs(config_file, num_workers)
+        util.cluster_print(configs['output_directory'], log_text)
+        master.evolve_master(configs)
 
     else:
-        batch_dir = dirr.replace('input','output')
         import minion
-
-        minion.work(batch_dir, rank)
+        configs = init.initialize_configs(config_file, num_workers)
+        minion.work(configs, rank)
 
 
