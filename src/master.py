@@ -38,7 +38,7 @@ def evolve_from_seed(configs):
     instance_file = configs['instance_file']
     if (num_instance_output==0): instance_file = None
 
-    size, total_gens, iter, population, num_survive = None, None, None, None, None #just to avoid annoying warnings
+    size, total_gens, itern, population, num_survive = None, None, None, None, None #just to avoid annoying warnings
 
     worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, -1, worker_pop_size_config)
     print(output_dir,"Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
@@ -47,14 +47,14 @@ def evolve_from_seed(configs):
     cont=False
     if os.path.isfile(prog_path):
         with open(prog_path) as file:
-            iter = file.readline
+            itern = file.readline
 
-        if (iter): #IS CONTINUATION RUN
-            iter = int(iter)
-            population = parse_worker_popn(num_workers, iter, output_dir, num_survive)
+        if (itern): #IS CONTINUATION RUN
+            itern = int(itern)
+            population = parse_worker_popn(num_workers, itern, output_dir, num_survive)
             size = len(population[0].net.nodes())
-            total_gens = iter  # also temp, assumes worker gens = 1
-            print(output_dir,"master(): cont with global gen = " + str(iter))
+            total_gens = itern  # also temp, assumes worker gens = 1
+            print(output_dir,"master(): cont with global gen = " + str(itern))
             cont = True
 
     if cont==False: #FRESH START
@@ -66,13 +66,13 @@ def evolve_from_seed(configs):
         # init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
 
         #init fitness eval
-        pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xiter0.csv")  # false: don't track node fitness, None: don't write instances to file
+        pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xitern0.csv")  # false: don't track node fitness, None: don't write instances to file
         population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = \
         pressure_results[0], pressure_results[1], pressure_results[2]
         fitness.eval_fitness([population[0]])
         output.deg_change_csv([population[0]], output_dir)
 
-        total_gens, size, iter = 0, start_size, 0
+        total_gens, size, itern = 0, start_size, 0
 
 
     while (size <= end_size and total_gens < max_gen):
@@ -80,7 +80,7 @@ def evolve_from_seed(configs):
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive, worker_pop_size_config)
 
         #OUTPUT INFO
-        if (iter % int(max_gen / num_output) == 0):
+        if (itern % int(max_gen / num_output) == 0):
             output.to_csv(population, output_dir, total_gens)
             print(output_dir,"Master at gen " + str(total_gens) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
             worker_percent_survive = worker_pop_size #should match however workers handle %survive
@@ -89,30 +89,30 @@ def evolve_from_seed(configs):
             nx.write_edgelist(population[0].net, output_dir+"/fittest_net.edgelist")
 
         if (num_instance_output != 0):
-            if (iter % int(max_gen / num_instance_output) == 0):
+            if (itern % int(max_gen / num_instance_output) == 0):
                 # if first gen, have already pressurized w/net[0]
-                if (iter != 0): pressure_results = pressurize.pressurize(configs, population[0].net, instance_file + "Xiter" + str( iter) + ".csv")
+                if (itern != 0): pressure_results = pressurize.pressurize(configs, population[0].net, instance_file + "Xitern" + str( itern) + ".csv")
 
-        #if (iter % int(max_gen / num_draw) == 0 and num_draw != 0 ):
+        #if (itern % int(max_gen / num_draw) == 0 and num_draw != 0 ):
             #draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
-        if (iter % int(max_gen/num_net_output) ==0):
-            nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(iter))
+        if (itern % int(max_gen/num_net_output) ==0):
+            nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(itern))
 
         if (num_grow != 0): #WILL NOT WORK WELL WITH ISLAND ALGO, OR MULT WORKER GENS
             #ASSUMES GROWTH ONLY FOR 1st HALF
             rate = int(max_gen/(2*num_grow))
-            if ((iter-start_size) % rate ==0 and iter < (max_gen/2 - start_size*rate)):
+            if ((itern-start_size) % rate ==0 and itern < (max_gen/2 - start_size*rate)):
                 for p in range(len(population)):
                     mutate.add_nodes(population[p].net, 1, edge_node_ratio)
 
 
-        write_mpi_info(output_dir, iter)
+        write_mpi_info(output_dir, itern)
         #debug(population), outdated
 
         # distribute workers
         if (debug == True): #sequential debug, may be outdated
-            dump_file = output_dir + "to_workers/" + str(iter) + "/0"
+            dump_file = output_dir + "to_workers/" + str(itern) + "/0"
             seed = population[0].copy()
             randSeeds = os.urandom(sysRand().randint(0, 1000000))
             worker_args = [0, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds,total_gens, configs]
@@ -124,7 +124,7 @@ def evolve_from_seed(configs):
 
         else:
             for w in range(1,num_workers+1):
-                dump_file =  output_dir + "/to_workers/" + str(iter) + "/" + str(w)
+                dump_file =  output_dir + "/to_workers/" + str(itern) + "/" + str(w)
                 #print(output_dir,"master dumping to file: " + str(dump_file))
                 seed = population[w % num_survive].copy()
                 randSeeds = os.urandom(sysRand().randint(0,1000000))
@@ -143,17 +143,17 @@ def evolve_from_seed(configs):
         t_end = time.time()
         t_elapsed = t_end-t_start
         print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.")
-        watch(configs, iter, num_workers, output_dir)
-        population = parse_worker_popn(num_workers, iter, output_dir, num_survive)
+        watch(configs, itern, num_workers, output_dir)
+        population = parse_worker_popn(num_workers, itern, output_dir, num_survive)
         size = len(population[0].net.nodes())
-        iter += 1
+        itern += 1
         total_gens += worker_gens
 
     with open(output_dir + "/progress.txt", 'w') as out:
         out.write("Done")
 
     #final outputs
-    nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(iter))
+    nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(itern))
 
     output.to_csv(population, output_dir, total_gens)
     output.deg_change_csv(population, output_dir)
@@ -176,10 +176,10 @@ def init_dirs(num_workers, output_dir):
             os.makedirs(output_dir+dirr)
 
 
-def parse_worker_popn (num_workers, iter, output_dir, num_survive):
+def parse_worker_popn (num_workers, itern, output_dir, num_survive):
     popn = []
     for w in range(1,num_workers+1): #assumes master is rank0, hence workers are [1,#workers+1]
-        dump_file = output_dir + "/to_master/" + str(iter) + "/" + str(w)
+        dump_file = output_dir + "/to_master/" + str(itern) + "/" + str(w)
         with open(dump_file, 'rb') as file:
             worker_pop = pickle.load(file)
         i=0
@@ -188,11 +188,11 @@ def parse_worker_popn (num_workers, iter, output_dir, num_survive):
             i+=1
 
     #del old gen dirs
-    prev_iter = iter - 1
-    if os.path.exists(output_dir + "/to_master/" + str(prev_iter)):
-        shutil.rmtree(output_dir + "/to_master/" + str(prev_iter))
-    if os.path.exists(output_dir + "/to_workers/" + str(prev_iter)):
-        shutil.rmtree(output_dir + "/to_workers/" + str(prev_iter))
+    prev_itern = itern - 1
+    if os.path.exists(output_dir + "/to_master/" + str(prev_itern)):
+        shutil.rmtree(output_dir + "/to_master/" + str(prev_itern))
+    if os.path.exists(output_dir + "/to_workers/" + str(prev_itern)):
+        shutil.rmtree(output_dir + "/to_workers/" + str(prev_itern))
 
     sorted_popn = fitness.eval_fitness(popn)
     return sorted_popn[:num_survive]
@@ -229,9 +229,9 @@ def debug(population):
 
 
 
-def watch(configs, iter, num_workers, output_dir):
+def watch(configs, itern, num_workers, output_dir):
 
-    dump_dir = output_dir + "/to_master/" + str(iter)
+    dump_dir = output_dir + "/to_master/" + str(itern)
 
     done, i = False, 1
 
@@ -252,19 +252,19 @@ def watch(configs, iter, num_workers, output_dir):
                 return
 
 
-def write_mpi_info(output_dir, iter):
+def write_mpi_info(output_dir, itern):
 
-    #os.rename(output_dir + "/progress*.txt", output_dir + "/progress_" + str(iter) + ":w.txt")
+    #os.rename(output_dir + "/progress*.txt", output_dir + "/progress_" + str(itern) + ":w.txt")
 
-    #if (iter ==0):
+    #if (itern ==0):
     #    with open(output_dir + "/progress.txt", 'w') as out:
     #        out.write(output_dir + "\n")
 
     with open(output_dir + "/progress.txt", 'a') as out:
-        out.write(str(iter))
+        out.write(str(itern))
 
-    if not os.path.exists(output_dir + "/to_workers/" + str(iter)):
-        os.makedirs(output_dir + "/to_workers/" + str(iter))
-    if not os.path.exists(output_dir + "/to_master/" + str(iter)):
-        os.makedirs(output_dir + "/to_master/" + str(iter))
-    #else: print(output_dir,"WARNING in master.write_mpi_info(): dir /to_master/" + str(iter) + " already exists...sensible if a continuation run.")
+    if not os.path.exists(output_dir + "/to_workers/" + str(itern)):
+        os.makedirs(output_dir + "/to_workers/" + str(itern))
+    if not os.path.exists(output_dir + "/to_master/" + str(itern)):
+        os.makedirs(output_dir + "/to_master/" + str(itern))
+    #else: print(output_dir,"WARNING in master.write_mpi_info(): dir /to_master/" + str(itern) + " already exists...sensible if a continuation run.")
