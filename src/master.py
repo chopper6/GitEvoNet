@@ -47,7 +47,7 @@ def evolve_from_seed(configs):
     cont=False
     if os.path.isfile(prog_path):
         with open(prog_path) as file:
-            itern = file.readline
+            itern = file.readline()
 
         if (itern): #IS CONTINUATION RUN
             itern = int(itern)

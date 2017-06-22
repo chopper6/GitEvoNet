@@ -97,13 +97,13 @@ if __name__ == "__main__":
         log_text = 'Evolve_root(): in dir ' + str(os.getcwd()) + ', config file = ' + str(config_file) + ', num_workers = ' + str(num_workers)
 
         import master
-        configs = init.initialize_configs(config_file, num_workers)
+        configs = init.initialize_configs(config_file, rank)
         util.cluster_print(configs['output_directory'], log_text)
         master.evolve_master(configs)
 
     else:
         import minion
-        configs = init.initialize_configs(config_file, num_workers)
+        configs = init.initialize_configs(config_file, rank)
         minion.work(configs, rank)
 
 
