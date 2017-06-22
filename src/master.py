@@ -263,8 +263,12 @@ def write_mpi_info(output_dir, itern):
     with open(output_dir + "/progress.txt", 'a') as out:
         out.write(str(itern))
 
+    util.cluster_print(output_dir, 'Master wrote progress.txt, now checking dir: ' + str(output_dir + "/to_workers/" + str(itern)))
+
     if not os.path.exists(output_dir + "/to_workers/" + str(itern)):
         os.makedirs(output_dir + "/to_workers/" + str(itern))
     if not os.path.exists(output_dir + "/to_master/" + str(itern)):
         os.makedirs(output_dir + "/to_master/" + str(itern))
+
+    util.cluster_print(output_dir, "Master finished setting up mpi directories")
     #else: util.cluster_print(output_dir,"WARNING in master.write_mpi_info(): dir /to_master/" + str(itern) + " already exists...sensible if a continuation run.")
