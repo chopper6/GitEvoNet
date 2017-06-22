@@ -142,7 +142,7 @@ def evolve_from_seed(configs):
 
         t_end = time.time()
         t_elapsed = t_end-t_start
-        util.cluster_print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.")
+        util.cluster_print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.\n")
         watch(configs, itern, num_workers, output_dir)
         population = parse_worker_popn(num_workers, itern, output_dir, num_survive)
         size = len(population[0].net.nodes())
@@ -163,7 +163,7 @@ def evolve_from_seed(configs):
     plot_nets.single_run_plots(output_dir)
     #instances.analyze(output_dir)
 
-    util.cluster_print(output_dir,"Master finished config file.")
+    util.cluster_print(output_dir,"Master finished config file.\n")
     return
 
 
@@ -229,27 +229,38 @@ def debug(population):
 
 
 
-def watch(configs, itern, num_workers, output_dir):
+def watch(configs, itern, num_workers, output_dir, estim_wait):
 
     dump_dir = output_dir + "/to_master/" + str(itern)
 
     done, i = False, 1
 
     t_start = time.time()
+    estim_used = False
     while not done:
-        time.sleep(.5*i)  #checks less and less freq
+        if (estim_wait != None and estim_used == False): 
+            time.sleep(estim_wait + .1)
+            estim_used = True
+        elif(estim_wait != None): 
+            time.sleep(.1)
+            estim_wait += .1
+        else: time.sleep(.1)  #freq checks for accurate estim_wait
         i += 1
         #util.cluster_print(output_dir,dump_dir)
         for root, dirs, files in os.walk(dump_dir):
             #util.cluster_print(output_dir,str(dump_dir) + " has " + str(len(files)) + " files in it.")
             if (len(files) == num_workers):
                 for f in files:
-                    if (os.path.getmtime(root + "/" + f) + 2 > time.time()): break #file may still be being written
+                    if (os.path.getmtime(root + "/" + f) + .5 > time.time()): break #file may still be being written
 
                 t_end = time.time()
                 time_elapsed = t_end - t_start
-                util.cluster_print(output_dir,"master continuing after waiting for " + str(time_elapsed) + " seconds.")
-                return
+                if (estim_wait == None): 
+                    estim_wait = time_elapsed
+                    print("master using estim_wait = " + str(estim_wait))
+                if (estim_used == True): print("master updated estim_wait to " + str(estim_wait))
+                util.cluster_print(output_dir,"master continuing after waiting for " + str(time_elapsed) + " seconds, and making " + str(i) + " dir checks.")
+                return estim_wait
 
 
 def write_mpi_info(output_dir, itern):
@@ -262,13 +273,10 @@ def write_mpi_info(output_dir, itern):
 
     with open(output_dir + "/progress.txt", 'a') as out:
         out.write(str(itern))
-
-    util.cluster_print(output_dir, 'Master wrote progress.txt, now checking dir: ' + str(output_dir + "/to_workers/" + str(itern)))
-
+    #util.cluster_print(output_dir, 'Master wrote progress.txt, now checking dir: ' + str(output_dir + "/to_workers/" + str(itern)))
     if not os.path.exists(output_dir + "/to_workers/" + str(itern)):
         os.makedirs(output_dir + "/to_workers/" + str(itern))
     if not os.path.exists(output_dir + "/to_master/" + str(itern)):
         os.makedirs(output_dir + "/to_master/" + str(itern))
 
-    util.cluster_print(output_dir, "Master finished setting up mpi directories")
     #else: util.cluster_print(output_dir,"WARNING in master.write_mpi_info(): dir /to_master/" + str(itern) + " already exists...sensible if a continuation run.")

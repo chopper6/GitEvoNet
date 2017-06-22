@@ -15,35 +15,39 @@ def work(configs, rank):
     #init, see if cont run
     t_start = time.time()
     while not os.path.isfile(progress):  # master will create this file
-        time.sleep(.2)
+        time.sleep(.5)
 
-    if (os.path.getmtime(progress) + .5 < time.time()):  # check that file has not been recently touched
+    while not (os.path.getmtime(progress) + .5 < time.time()):  # check that file has not been recently touched
+        time.sleep(.5)
+
+    if (True): #lol just to avoid re-indenting in vi
         with open(progress, 'r') as file:
             line = file.readline()
             if (line == 'Done' or line == 'Done\n'):
-                util.cluster_print(output_dir,"Worker #" + str(rank) + " + exiting.")
+                if (rank == 1 or rank==32 or rank==64): util.cluster_print(output_dir,"Worker #" + str(rank) + " + exiting.")
                 return  # no more work to be done
             else:
                 gen = int(line.strip())
+                #util.cluster_print(output_dir,"Worker #" + str(rank) + " got gen " + str(gen) + " from progress file.")
 
     t_end = time.time()
-    util.cluster_print(output_dir,"worker #" + str(rank) + " finished init in " + str(t_end-t_start) + " seconds.")
+    if (rank == 1 or rank==32 or rank==64): util.cluster_print(output_dir,"worker #" + str(rank) + " finished init in " + str(t_end-t_start) + " seconds.")
 
     while gen < max_gen:
         t_start = time.time()
 
         worker_file = str(output_dir) + "/to_workers/" + str(gen) + "/" + str(rank)
-        #util.cluster_print(output_dir,"worker looking for file: " + str(worker_args))
+        #util.cluster_print(output_dir,"worker #" + str(rank) + " looking for file: " + str(worker_file))
         i=1
         while not os.path.isfile(worker_file):
-            time.sleep(.1*i)
+            time.sleep(.5*i)
             i+=1
-        while (os.path.getmtime(worker_file) + .5 < time.time()):
-            time.sleep(.1)
+        while not (os.path.getmtime(worker_file) + .5 < time.time()):
+            time.sleep(.2)
 
         t_end = time.time()
         t_elapsed = t_end - t_start
-        util.cluster_print(output_dir,"Worker # " + str(rank) + " starting evolution after waiting " + str(t_elapsed) + " seconds. Starts at gen " + str(gen))
+        if (rank == 1 or rank==32 or rank==64): util.cluster_print(output_dir,"Worker #" + str(rank) + " starting evolution after waiting " + str(t_elapsed) + " seconds and checking dir " + str(i) + " times. Starts at gen " + str(gen))
         evolve_minion(worker_file, gen, rank, output_dir)
         gen+=1
 
@@ -109,7 +113,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
 
     t_end = time.time()
     time_elapsed = t_end - t_start
-    util.cluster_print(output_dir,"Worker #" + str(rank) + " finishing after " + str(time_elapsed) + " seconds")
+    if (rank == 1 or rank==32 or rank==64): util.cluster_print(output_dir,"Worker #" + str(rank) + " finishing after " + str(time_elapsed) + " seconds")
 
 
 def write_out_worker(worker_file, population, num_return):
