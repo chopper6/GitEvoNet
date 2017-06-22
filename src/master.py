@@ -2,7 +2,7 @@ import math, os, pickle, sys, time, shutil
 from random import SystemRandom as sysRand
 from time import sleep, process_time
 import networkx as nx
-import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, plot_fitness, node_fitness, mutate
+import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, plot_fitness, node_fitness, mutate, util
 
 def evolve_master(configs):
     protocol = configs['protocol']
@@ -10,7 +10,7 @@ def evolve_master(configs):
     if (protocol == 'from seed'):
         evolve_from_seed(configs)
     else:
-        print(output_dir,"ERROR in master(): unknown protocol " + str(protocol))
+        util.cluster_print(output_dir,"ERROR in master(): unknown protocol " + str(protocol))
     return
 
 def evolve_from_seed(configs):
@@ -41,7 +41,7 @@ def evolve_from_seed(configs):
     size, total_gens, itern, population, num_survive = None, None, None, None, None #just to avoid annoying warnings
 
     worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, -1, worker_pop_size_config)
-    print(output_dir,"Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
+    util.cluster_print(output_dir,"Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
 
     prog_path = output_dir + "/progress.txt"
     cont=False
@@ -54,7 +54,7 @@ def evolve_from_seed(configs):
             population = parse_worker_popn(num_workers, itern, output_dir, num_survive)
             size = len(population[0].net.nodes())
             total_gens = itern  # also temp, assumes worker gens = 1
-            print(output_dir,"master(): cont with global gen = " + str(itern))
+            util.cluster_print(output_dir,"master(): cont with global gen = " + str(itern))
             cont = True
 
     if cont==False: #FRESH START
@@ -82,9 +82,9 @@ def evolve_from_seed(configs):
         #OUTPUT INFO
         if (itern % int(max_gen / num_output) == 0):
             output.to_csv(population, output_dir, total_gens)
-            print(output_dir,"Master at gen " + str(total_gens) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
+            util.cluster_print(output_dir,"Master at gen " + str(total_gens) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
             worker_percent_survive = worker_pop_size #should match however workers handle %survive
-            print(output_dir,"Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
+            util.cluster_print(output_dir,"Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
 
             nx.write_edgelist(population[0].net, output_dir+"/fittest_net.edgelist")
 
@@ -125,7 +125,7 @@ def evolve_from_seed(configs):
         else:
             for w in range(1,num_workers+1):
                 dump_file =  output_dir + "/to_workers/" + str(itern) + "/" + str(w)
-                #print(output_dir,"master dumping to file: " + str(dump_file))
+                #util.cluster_print(output_dir,"master dumping to file: " + str(dump_file))
                 seed = population[w % num_survive].copy()
                 randSeeds = os.urandom(sysRand().randint(0,1000000))
                 assert(seed != population[w % num_survive])
@@ -136,13 +136,13 @@ def evolve_from_seed(configs):
 
         del population
         if (debug == True):
-            print(output_dir,"debug is ON")
+            util.cluster_print(output_dir,"debug is ON")
             num_workers, num_survive = 1,1
 
 
         t_end = time.time()
         t_elapsed = t_end-t_start
-        print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.")
+        util.cluster_print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.")
         watch(configs, itern, num_workers, output_dir)
         population = parse_worker_popn(num_workers, itern, output_dir, num_survive)
         size = len(population[0].net.nodes())
@@ -159,11 +159,11 @@ def evolve_from_seed(configs):
     output.deg_change_csv(population, output_dir)
     #draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
-    print(output_dir,"Evolution finished, generating images.")
+    util.cluster_print(output_dir,"Evolution finished, generating images.")
     plot_nets.single_run_plots(output_dir)
     #instances.analyze(output_dir)
 
-    print(output_dir,"Master finished config file.")
+    util.cluster_print(output_dir,"Master finished config file.")
     return
 
 
@@ -218,9 +218,9 @@ def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_surv
 
 def debug(population):
     '''
-    print(output_dir,"Master population fitness: ")
+    util.cluster_print(output_dir,"Master population fitness: ")
     for p in range(len(population)):
-        print(output_dir,population[p].fitness)
+        util.cluster_print(output_dir,population[p].fitness)
     '''
     # check that population is unique
     for p in range(len(population)):
@@ -239,16 +239,16 @@ def watch(configs, itern, num_workers, output_dir):
     while not done:
         time.sleep(.5*i)  #checks less and less freq
         i += 1
-        #print(output_dir,dump_dir)
+        #util.cluster_print(output_dir,dump_dir)
         for root, dirs, files in os.walk(dump_dir):
-            #print(output_dir,str(dump_dir) + " has " + str(len(files)) + " files in it.")
+            #util.cluster_print(output_dir,str(dump_dir) + " has " + str(len(files)) + " files in it.")
             if (len(files) == num_workers):
                 for f in files:
                     if (os.path.getmtime(root + "/" + f) + 2 > time.time()): break #file may still be being written
 
                 t_end = time.time()
                 time_elapsed = t_end - t_start
-                print(output_dir,"master continuing after waiting for " + str(time_elapsed) + " seconds.")
+                util.cluster_print(output_dir,"master continuing after waiting for " + str(time_elapsed) + " seconds.")
                 return
 
 
@@ -267,4 +267,4 @@ def write_mpi_info(output_dir, itern):
         os.makedirs(output_dir + "/to_workers/" + str(itern))
     if not os.path.exists(output_dir + "/to_master/" + str(itern)):
         os.makedirs(output_dir + "/to_master/" + str(itern))
-    #else: print(output_dir,"WARNING in master.write_mpi_info(): dir /to_master/" + str(itern) + " already exists...sensible if a continuation run.")
+    #else: util.cluster_print(output_dir,"WARNING in master.write_mpi_info(): dir /to_master/" + str(itern) + " already exists...sensible if a continuation run.")
