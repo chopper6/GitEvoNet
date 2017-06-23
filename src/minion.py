@@ -39,8 +39,12 @@ def work(configs, rank):
         worker_file = str(output_dir) + "/to_workers/" + str(gen) + "/" + str(rank)
         #util.cluster_print(output_dir,"worker #" + str(rank) + " looking for file: " + str(worker_file))
         i=1
+        first = True
         while not os.path.isfile(worker_file):
-            time.sleep(.5*i)
+            if (first==True):
+                time.sleep(9)
+                first = False
+            else: time.sleep(.5)
             i+=1
         while not (os.path.getmtime(worker_file) + .5 < time.time()):
             time.sleep(.2)
