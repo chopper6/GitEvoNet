@@ -123,7 +123,7 @@ def evolve_from_seed(configs):
             sleep(.0001)
 
         else:
-            for w in range(1,num_workers+1):
+            for w in range(0,num_workers):
                 dump_file =  output_dir + "/to_workers/" + str(itern) + "/" + str(w)
                 #util.cluster_print(output_dir,"master dumping to file: " + str(dump_file))
                 seed = population[w % num_survive].copy()
@@ -133,6 +133,10 @@ def evolve_from_seed(configs):
                 with open(dump_file, 'wb') as file:
                     pickle.dump(worker_args, file)
 
+            #don't waste threads, master exe a worker gen
+            dump_file = output_dir + "/to_workers/" + str(itern) + "/0"
+            return_file = output_dir + "/to_master/" + str(itern) + "/0"
+            minion.evolve_worker(dump_file, itern, 0, return_file)
 
         del population
         if (debug == True):
@@ -178,7 +182,7 @@ def init_dirs(num_workers, output_dir):
 
 def parse_worker_popn (num_workers, itern, output_dir, num_survive):
     popn = []
-    for w in range(1,num_workers+1): #assumes master is rank0, hence workers are [1,#workers+1]
+    for w in range(0,num_workers): #assumes master is rank0, hence workers are [1,#workers+1]
         dump_file = output_dir + "/to_master/" + str(itern) + "/" + str(w)
         with open(dump_file, 'rb') as file:
             worker_pop = pickle.load(file)

@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
-    num_workers = comm.Get_size() - 1  # dont count master
+    num_workers = comm.Get_size()  # includes master, so master should also exe 1 worker load
     config_file = sys.argv[1]
 
     if rank == 0:  # ie is master
@@ -98,6 +98,7 @@ if __name__ == "__main__":
 
         import master
         configs = init.initialize_configs(config_file, rank)
+        if (configs['num_workers'] != num_workers): print("\nWARNING in evolve_root(): mpi #workers != config #workers!\n")
         util.cluster_print(configs['output_directory'], log_text)
         master.evolve_master(configs)
 
