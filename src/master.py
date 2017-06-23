@@ -50,11 +50,11 @@ def evolve_from_seed(configs):
             itern = file.readline()
 
         if (itern): #IS CONTINUATION RUN
-            itern = int(itern)
+            itern = int(itern)-1 #fall back one, latest may not have finished
             population = parse_worker_popn(num_workers, itern, output_dir, num_survive)
             size = len(population[0].net.nodes())
             total_gens = itern  # also temp, assumes worker gens = 1
-            util.cluster_print(output_dir,"master(): cont with global gen = " + str(itern))
+            util.cluster_print(output_dir,"\nmaster(): CONTINUE RUN with global gen = " + str(itern) + " \n")
             cont = True
 
     if cont==False: #FRESH START
@@ -74,7 +74,7 @@ def evolve_from_seed(configs):
 
         total_gens, size, itern = 0, start_size, 0
 
-
+    estim_wait = None
     while (size <= end_size and total_gens < max_gen):
         t_start = time.time()
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive, worker_pop_size_config)
@@ -143,7 +143,7 @@ def evolve_from_seed(configs):
         t_end = time.time()
         t_elapsed = t_end-t_start
         util.cluster_print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.\n")
-        watch(configs, itern, num_workers, output_dir)
+        estim_wait = watch(configs, itern, num_workers, output_dir, estim_wait)
         population = parse_worker_popn(num_workers, itern, output_dir, num_survive)
         size = len(population[0].net.nodes())
         itern += 1
@@ -186,13 +186,6 @@ def parse_worker_popn (num_workers, itern, output_dir, num_survive):
         for indiv in worker_pop:
             popn.append(indiv)
             i+=1
-
-    #del old gen dirs
-    prev_itern = itern - 1
-    if os.path.exists(output_dir + "/to_master/" + str(prev_itern)):
-        shutil.rmtree(output_dir + "/to_master/" + str(prev_itern))
-    if os.path.exists(output_dir + "/to_workers/" + str(prev_itern)):
-        shutil.rmtree(output_dir + "/to_workers/" + str(prev_itern))
 
     sorted_popn = fitness.eval_fitness(popn)
     return sorted_popn[:num_survive]
@@ -271,12 +264,20 @@ def write_mpi_info(output_dir, itern):
     #    with open(output_dir + "/progress.txt", 'w') as out:
     #        out.write(output_dir + "\n")
 
-    with open(output_dir + "/progress.txt", 'a') as out:
+    with open(output_dir + "/progress.txt", 'w') as out:
         out.write(str(itern))
     #util.cluster_print(output_dir, 'Master wrote progress.txt, now checking dir: ' + str(output_dir + "/to_workers/" + str(itern)))
     if not os.path.exists(output_dir + "/to_workers/" + str(itern)):
         os.makedirs(output_dir + "/to_workers/" + str(itern))
     if not os.path.exists(output_dir + "/to_master/" + str(itern)):
         os.makedirs(output_dir + "/to_master/" + str(itern))
+
+
+    #del old gen dirs
+    prev_itern = itern - 1
+    if os.path.exists(output_dir + "/to_master/" + str(prev_itern)):
+        shutil.rmtree(output_dir + "/to_master/" + str(prev_itern))
+    if os.path.exists(output_dir + "/to_workers/" + str(prev_itern)):
+        shutil.rmtree(output_dir + "/to_workers/" + str(prev_itern))
 
     #else: util.cluster_print(output_dir,"WARNING in master.write_mpi_info(): dir /to_master/" + str(itern) + " already exists...sensible if a continuation run.")
