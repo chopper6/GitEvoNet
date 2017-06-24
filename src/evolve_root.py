@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import os,sys
 from mpi4py import MPI
-os.environ['lib'] = "/home/chopper/lib"
+os.environ['lib'] = '/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib'
 sys.path.insert(0, os.getenv('lib'))
 import init, util
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
         import master
         configs = init.initialize_configs(config_file, rank)
-        if (configs['num_workers'] != num_workers): print("\nWARNING in evolve_root(): mpi #workers != config #workers!\n")
+        if (configs['number_of_workers'] != num_workers): print("\nWARNING in evolve_root(): mpi #workers != config #workers! " + str(configs['num_workers']) + " vs " + str(num_workers) + "\n") #not sure why this doesn't correctly get # config workers...
         util.cluster_print(configs['output_directory'], log_text)
         master.evolve_master(configs)
 

@@ -50,9 +50,10 @@ def evolve_from_seed(configs):
             itern = file.readline()
 
         if (itern): #IS CONTINUATION RUN
-            itern = int(itern)-1 #fall back one, latest may not have finished
+            itern = int(itern)-2 #fall back one, latest may not have finished
             population = parse_worker_popn(num_workers, itern, output_dir, num_survive)
             size = len(population[0].net.nodes())
+            itern += 1
             total_gens = itern  # also temp, assumes worker gens = 1
             util.cluster_print(output_dir,"\nmaster(): CONTINUE RUN with global gen = " + str(itern) + " \n")
             cont = True
@@ -67,8 +68,7 @@ def evolve_from_seed(configs):
 
         #init fitness eval
         pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xitern0.csv")  # false: don't track node fitness, None: don't write instances to file
-        population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = \
-        pressure_results[0], pressure_results[1], pressure_results[2]
+        population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
         fitness.eval_fitness([population[0]])
         output.deg_change_csv([population[0]], output_dir)
 
@@ -136,7 +136,7 @@ def evolve_from_seed(configs):
             #don't waste threads, master exe a worker gen
             dump_file = output_dir + "/to_workers/" + str(itern) + "/0"
             return_file = output_dir + "/to_master/" + str(itern) + "/0"
-            minion.evolve_worker(dump_file, itern, 0, return_file)
+            minion.evolve_minion(dump_file, itern, 0, return_file)
 
         del population
         if (debug == True):
@@ -182,7 +182,8 @@ def init_dirs(num_workers, output_dir):
 
 def parse_worker_popn (num_workers, itern, output_dir, num_survive):
     popn = []
-    for w in range(0,num_workers): #assumes master is rank0, hence workers are [1,#workers+1]
+    print('master.parse_worker_popn(): num workers = ' + str(num_workers) + " and itern " + str(itern))
+    for w in range(0,num_workers): 
         dump_file = output_dir + "/to_master/" + str(itern) + "/" + str(w)
         with open(dump_file, 'rb') as file:
             worker_pop = pickle.load(file)
@@ -278,7 +279,7 @@ def write_mpi_info(output_dir, itern):
 
 
     #del old gen dirs
-    prev_itern = itern - 2 
+    prev_itern = itern - 3 #safe since cont starts at itern - 2
     if os.path.exists(output_dir + "/to_master/" + str(prev_itern)):
         shutil.rmtree(output_dir + "/to_master/" + str(prev_itern))
     if os.path.exists(output_dir + "/to_workers/" + str(prev_itern)):
