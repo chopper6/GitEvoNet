@@ -278,7 +278,7 @@ def write_mpi_info(output_dir, itern):
 
 
     #del old gen dirs
-    prev_itern = itern - 1
+    prev_itern = itern - 2 
     if os.path.exists(output_dir + "/to_master/" + str(prev_itern)):
         shutil.rmtree(output_dir + "/to_master/" + str(prev_itern))
     if os.path.exists(output_dir + "/to_workers/" + str(prev_itern)):
