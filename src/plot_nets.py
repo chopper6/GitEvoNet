@@ -304,12 +304,6 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
             ydata.append(net_info[j, i])
             xdata.append(net_info[j, 0])
 
-        if (titles[i] == ' Fitness'):
-            ydata2 = []
-            for y in ydata:
-                ydata2.append(math.log(y,10))
-            ydata = ydata2   
-            titles[i] += ' Log-Scaled'
         x_ticks = []
         max_gen = xdata[-1]
         for j in range(0, 11):
@@ -359,6 +353,35 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
         plt.xticks(x_ticks, x_ticks)
         plt.savefig(img_dirr + str(titles[i]) + ".png")
         plt.clf()
+
+        if (titles[i] == ' Fitness'): #redo, this time log-scaled
+            num_outputs = len(net_info)
+            ydata = []
+            xdata = []
+            for j in range(num_outputs):
+                ydata.append(net_info[j, i])
+                xdata.append(net_info[j, 0])
+
+            ydata2 = []
+            for y in ydata:
+                ydata2.append(math.log(y,10))
+            ydata = ydata2
+            titles[i] += ' Log-Scaled'
+
+            x_ticks = []
+            max_gen = xdata[-1]
+            for j in range(0, 11):
+                x_ticks.append(int((max_gen / 10) * j))
+            plt.plot(xdata, ydata)
+
+            plt.ylabel(titles[i])
+            plt.title(titles[i])
+            if (use_lims == True): plt.ylim(mins[i], maxs[i])
+            plt.xlabel("Generation")
+            plt.xticks(x_ticks, x_ticks)
+            plt.savefig(img_dirr + str(titles[i]) + ".png")
+            plt.clf()
+
     return
 
 def solver_time(dirr):

@@ -67,7 +67,7 @@ def advice (M, samples, biased, advice_upon, bias_on):
 #--------------------------------------------------------------------------------------------------
 
 def cluster_print(output_dir, text):
-    with open(output_dir + "/log_file.txt", 'a') as file:
+    with open(output_dir + "/thread_out.txt", 'a') as file:
         file.write(text + "\n")
         file.flush()
         file.close()
