@@ -102,7 +102,8 @@ def evolve_from_seed(configs):
         if (num_grow != 0): #WILL NOT WORK WELL WITH ISLAND ALGO, OR MULT WORKER GENS
             #NO LONGER: ASSUMES GROWTH ONLY FOR 1st HALF
             rate = int(max_gen/num_grow)
-            if ((itern-start_size) % rate ==0 and itern < (max_gen - start_size*rate)):
+            #if ((itern-start_size) % rate ==0 and itern < (max_gen - start_size*rate)):
+            if (itern % rate == 0 and itern < (max_gen-start_size*rate)):
                 for p in range(len(population)):
                     mutate.add_nodes(population[p].net, 1, edge_node_ratio)
 
