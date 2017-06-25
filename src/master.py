@@ -146,7 +146,7 @@ def evolve_from_seed(configs):
 
         t_end = time.time()
         t_elapsed = t_end-t_start
-        util.cluster_print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.\n")
+        if (itern % 100 == 0): util.cluster_print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.\n")
         estim_wait = watch(configs, itern, num_workers, output_dir, estim_wait)
         population = parse_worker_popn(num_workers, itern, output_dir, num_survive)
         size = len(population[0].net.nodes())
@@ -257,7 +257,7 @@ def watch(configs, itern, num_workers, output_dir, estim_wait):
                     estim_wait = time_elapsed
                     print("master using estim_wait = " + str(estim_wait))
                 if (estim_used == True): print("master updated estim_wait to " + str(estim_wait))
-                util.cluster_print(output_dir,"master continuing after waiting for " + str(time_elapsed) + " seconds, and making " + str(i) + " dir checks.")
+                if (itern % 100 == 0): util.cluster_print(output_dir,"master continuing after waiting for " + str(time_elapsed) + " seconds, and making " + str(i) + " dir checks.")
                 return estim_wait
 
 

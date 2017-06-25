@@ -31,7 +31,7 @@ def work(configs, rank):
                 #util.cluster_print(output_dir,"Worker #" + str(rank) + " got gen " + str(gen) + " from progress file.")
 
     t_end = time.time()
-    if (rank == 1 or rank==32 or rank==64): util.cluster_print(output_dir,"worker #" + str(rank) + " finished init in " + str(t_end-t_start) + " seconds.")
+    if ((rank == 1 or rank == 32 or rank == 64 or rank == 128) and gen % 100 == 0): util.cluster_print(output_dir,"worker #" + str(rank) + " finished init in " + str(t_end-t_start) + " seconds.")
 
     estim_time = 5
     while gen < max_gen:
@@ -55,7 +55,7 @@ def work(configs, rank):
 
         t_end = time.time()
         t_elapsed = t_end - t_start
-        if (rank == 1 or rank==32 or rank==64): util.cluster_print(output_dir,"Worker #" + str(rank) + " starting evolution after waiting " + str(t_elapsed) + " seconds and checking dir " + str(i) + " times. Starts at gen " + str(gen))
+        if ((rank == 1 or rank==32 or rank==64 or rank==128) and gen % 100 == 0): util.cluster_print(output_dir,"Worker #" + str(rank) + " starting evolution after waiting " + str(t_elapsed) + " seconds and checking dir " + str(i) + " times. Starts at gen " + str(gen))
         evolve_minion(worker_file, gen, rank, output_dir)
         gen+=1
 
