@@ -33,6 +33,7 @@ def work(configs, rank):
     t_end = time.time()
     if (rank == 1 or rank==32 or rank==64): util.cluster_print(output_dir,"worker #" + str(rank) + " finished init in " + str(t_end-t_start) + " seconds.")
 
+    estim_time = 5
     while gen < max_gen:
         t_start = time.time()
 
@@ -42,11 +43,14 @@ def work(configs, rank):
         first = True
         while not os.path.isfile(worker_file):
             if (first==True):
-                time.sleep(9)
+                time.sleep(estim_time)
                 first = False
-            else: time.sleep(.5)
+            else: 
+                time.sleep(.4)
+                estim_time += .4
             i+=1
-        while not (os.path.getmtime(worker_file) + .5 < time.time()):
+
+        while not (os.path.getmtime(worker_file) + .4 < time.time()):
             time.sleep(.2)
 
         t_end = time.time()
