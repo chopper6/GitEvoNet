@@ -2,7 +2,7 @@ import math, os, pickle, sys, time, shutil
 from random import SystemRandom as sysRand
 from time import sleep, process_time
 import networkx as nx
-import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, plot_fitness, node_fitness, mutate, util
+import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, mutate, util
 
 def evolve_master(configs):
     protocol = configs['protocol']
