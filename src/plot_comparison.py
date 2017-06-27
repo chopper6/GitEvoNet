@@ -48,12 +48,12 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             tot = float(sum(freqs))
             freqs = [(f / tot) * 100 for f in freqs]
 
-            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=colors[i], alpha=1, markersize=10, marker='.', markeredgecolor='None', )
+            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=colors[i], alpha=.7, markersize=10, marker='.', markeredgecolor='None', )
             # you can also scatter the in/out degrees on the same plot
             # plt.scatter( .... )
 
             # i think one patch per set of samples?
-            patch = mpatches.Patch(color=colors[i], label=title)
+            patch = mpatches.Patch(color=colors[i], label=name)
 
             H = H + [patch]
 
