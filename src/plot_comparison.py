@@ -48,7 +48,7 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             tot = float(sum(freqs))
             freqs = [(f / tot) * 100 for f in freqs]
 
-            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=2, color=colors[i], alpha=0.5, markersize=8, marker='.', markeredgecolor='None', )
+            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=colors[i], alpha=1, markersize=10, marker='.', markeredgecolor='None', )
             # you can also scatter the in/out degrees on the same plot
             # plt.scatter( .... )
 
@@ -65,7 +65,7 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             tot = float(sum(freqs))
             freqs = [(f / tot) * 100 for f in freqs]
 
-            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=.5, color='#000000', alpha=1, markersize=10, marker='.', markeredgecolor='None')
+            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color='#000000', alpha=1, markersize=10, marker='.', markeredgecolor='None')
 
             patch = mpatches.Patch(color='#000000', label="Simulation")
 
@@ -100,7 +100,7 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             # plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
 
             plt.tight_layout()
-            plt.savefig(str(plot_title) + " vs " + str(title) + ".png", dpi=300,bbox='tight')  # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
+            plt.savefig(str(title) + ".png", dpi=300,bbox='tight')  # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
             plt.clf()
             plt.cla()
             plt.close()
@@ -282,7 +282,7 @@ def update_rcParams():
 
 
 if __name__ == "__main__":
-    base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/conf2" #customize for curr work
+    base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/conf2/" #customize for curr work
     real_net_file = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/input_all_nets.txt" #check this is still on yamaska
 
     pairs = sys.argv[1:]
