@@ -12,11 +12,18 @@ import random as rd
 def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
     input_files = open(real_net_file,'r').readlines()
 
-    colors = ['#ADECD7', '#ADC0F3','#E4B2FB','#FBB2B2','#FFCC66','#C3F708']
+    colors = ['#ADECD7', '#ADC0F3','#E4B2FB','#FBB2B2','#FFCC66','#C3F708', '#34CEDC']
     i=0
     for line in input_files:
         name, network_file = line.strip().split(' ')
         if (name==real_net_name or real_net_name == 'all'):
+            color_choice = colors[i]
+            if (name=='Bacteria'): 
+                color_choice = colors[0]
+                name = 'Bacteria PPI'
+            elif(name=='BacteriaReg'): 
+                color_choice = colors[6]
+                name = 'Bacteria Regulatory'
             H = []
             sim_net = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
             # print("Simulated Net: \tnodes " + str(len(M.nodes())) + "\tedges " + str(len(M.edges())))
@@ -48,7 +55,7 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             tot = float(sum(freqs))
             freqs = [(f / tot) * 100 for f in freqs]
 
-            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=colors[i], alpha=.7, markersize=10, marker='.', markeredgecolor='None', )
+            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=colors[i], alpha=.7, markersize=10, marker='|', markeredgecolor='None', )
             # you can also scatter the in/out degrees on the same plot
             # plt.scatter( .... )
 
@@ -65,7 +72,7 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             tot = float(sum(freqs))
             freqs = [(f / tot) * 100 for f in freqs]
 
-            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color='#000000', alpha=1, markersize=10, marker='.', markeredgecolor='None')
+            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color='#000000', alpha=1, markersize=10, marker='_', markeredgecolor='None')
 
             patch = mpatches.Patch(color='#000000', label="Simulation")
 
