@@ -24,93 +24,80 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             elif(name=='BacteriaReg'): 
                 color_choice = colors[6]
                 name = 'Bacteria Regulatory'
-            H = []
+
+
             sim_net = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
             # print("Simulated Net: \tnodes " + str(len(M.nodes())) + "\tedges " + str(len(M.edges())))
             sim_nodes = sim_net.nodes()
-
-            # PLOT REAL NETS
-            title = plot_title + "_" + str(name)
-
-            # M = init.load_network ({'network_file':network_file.strip(), 'biased':False})
-            # M = nx.read_edgelist(network_file.strip(),nodetype=int,create_using=nx.DiGraph())
             real_net = nx.read_gpickle(network_file)
-
-
             real_nodes = real_net.nodes()
+
             if (len(real_nodes) != len(sim_nodes)): print("WARNING: real net does not have same number of nodes as simulation.")
             if (len(real_net.edges()) != len(sim_net.edges())): print("WARNING: real net does not have same number of edges as simulation.")
 
-            # if (j==0): print(title + " has ENR = " + str(len(M.edges())/float(len(M.nodes()))) + ".\n")
-            # with open (network_file,''
-            # print (network_file.split('/')[-1].strip()+"\tnodes "+str(len(M.nodes()))+"\tedges "+str(len(M.edges())))
+            real_degrees, real_in_degrees, real_out_degrees = list(real_net.degree().values()),  list(real_net.in_degree().values()), list(real_net.out_degree().values())
+            sim_degrees, sim_in_degrees, sim_out_degrees = list(sim_net.degree().values()),  list(sim_net.in_degree().values()), list(sim_net.out_degree().values())
 
-            degrees = list(real_net.degree().values())
-            #in_degrees, out_degrees = list(M.in_degree(sample_nodes).values()), list(M.out_degree(sample_nodes).values())
-            # degrees = in_degrees + out_degrees
 
-            # NP GET FREQS
-            # TODO: is % normz still nec? mmight be more astethic
-            degs, freqs = np.unique(degrees, return_counts=True)
-            tot = float(sum(freqs))
-            freqs = [(f / tot) * 100 for f in freqs]
+            for direction in ['in','out','both']:
 
-            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=colors[i], alpha=.7, markersize=10, marker='|', markeredgecolor='None', )
-            # you can also scatter the in/out degrees on the same plot
-            # plt.scatter( .... )
+                H = []
 
-            # i think one patch per set of samples?
-            patch = mpatches.Patch(color=colors[i], label=name)
+                # PLOT REAL NET
+                title = plot_title + "_" + str(name) + "_" + str(direction)
 
-            H = H + [patch]
+                real_deg, sim_deg = None
+                if (direction == 'in'): real_deg, sim_deg = real_in_degrees, sim_in_degrees
+                elif (direction == 'out'): real_deg, sim_deg = real_out_degrees, sim_out_degrees
+                elif (direction == 'both'): real_deg, sim_deg = real_degrees, sim_degrees
 
-            # PLOT SIM NET
-            degrees = list(sim_net.degree().values())
-            #in_degrees, out_degrees = list(sim_net.in_degree().values()), list(sim_net.out_degree().values())
-            # degrees = in_degrees + out_degrees
-            degs, freqs = np.unique(degrees, return_counts=True)
-            tot = float(sum(freqs))
-            freqs = [(f / tot) * 100 for f in freqs]
+                degs, freqs = np.unique(real_deg, return_counts=True)
+                tot = float(sum(freqs))
+                freqs = [(f / tot) * 100 for f in freqs]
 
-            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color='#000000', alpha=1, markersize=10, marker='_', markeredgecolor='None')
+                plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=color_choice, alpha=.6, markersize=10, marker='|', markeredgecolor='None', )
+                # you can also scatter the in/out degrees on the same plot
+                # plt.scatter( .... )
+                patch = mpatches.Patch(color=color_choice, label=name)
+                H = H + [patch]
 
-            patch = mpatches.Patch(color='#000000', label="Simulation")
+                # PLOT SIM NET
 
-            H = H + [patch]
+                degs, freqs = np.unique(sim_deg, return_counts=True)
+                tot = float(sum(freqs))
+                freqs = [(f / tot) * 100 for f in freqs]
 
-            # FORMAT PLOT
-            ax = plt.gca()  # gca = get current axes instance
+                plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color='#000000', alpha=1, markersize=10, marker='_', markeredgecolor='None')
 
-            # if you are plotting a single network, you can add a text describing the fitness function used:
-            # ax.text(.5,.7,r'$f(N)=\prod\frac {b}{b+d}\times\sum_{j=1}^{n} etc$', horizontalalignment='center', transform=ax.transAxes, size=20)
-            # change (x,y)=(.5, .7) to position the text in a good location; the "f(N)=\sum \frac{}" is a mathematical expression using latex, see this:
-            # https://www.sharelatex.com/learn/Mathematical_expressions
-            # http://matplotlib.org/users/usetex.html
+                patch = mpatches.Patch(color='#000000', label="Simulation")
+                H = H + [patch]
 
-            # ax.set_xscale('log')
-            # ax.set_yscale('log')
-            ax.set_xlim([0.7, 200]) #TODO: change these?
-            ax.set_ylim([.1, 100])
+                # FORMAT PLOT
+                ax = plt.gca()  # gca = get current axes instance
 
-            xfmatter = ticker.FuncFormatter(LogXformatter)
-            yfmatter = ticker.FuncFormatter(LogYformatter)
-            ax.get_xaxis().set_major_formatter(xfmatter)
-            ax.get_yaxis().set_major_formatter(yfmatter)
+                # ax.set_xscale('log') #for scatter i think
+                # ax.set_yscale('log')
+                ax.set_xlim([0.7, 200]) #TODO: change these?
+                ax.set_ylim([.1, 100])
 
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
-            plt.tick_params(axis='both', which='both', right='off',
-                            top='off')  # http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
-            plt.legend(loc='upper right', handles=H, frameon=False, fontsize=11)
-            plt.xlabel('degree  ')
-            plt.ylabel('% genes ')
-            # plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
+                xfmatter = ticker.FuncFormatter(LogXformatter)
+                yfmatter = ticker.FuncFormatter(LogYformatter)
+                ax.get_xaxis().set_major_formatter(xfmatter)
+                ax.get_yaxis().set_major_formatter(yfmatter)
 
-            plt.tight_layout()
-            plt.savefig(str(title) + ".png", dpi=300,bbox='tight')  # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
-            plt.clf()
-            plt.cla()
-            plt.close()
+                ax.spines["top"].set_visible(False)
+                ax.spines["right"].set_visible(False)
+                plt.tick_params(axis='both', which='both', right='off', top='off')  # http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
+                plt.legend(loc='upper right', handles=H, frameon=False, fontsize=11)
+                plt.xlabel('degree  ')
+                plt.ylabel('% genes ')
+                # plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
+
+                plt.tight_layout()
+                plt.savefig(str(title) + ".png", dpi=300,bbox='tight')  # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
+                plt.clf()
+                plt.cla()
+                plt.close()
 
             i += 1
 
