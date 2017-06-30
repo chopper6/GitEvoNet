@@ -2,7 +2,7 @@ import math, os, pickle, sys, time, shutil
 from random import SystemRandom as sysRand
 from time import sleep, process_time
 import networkx as nx
-import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, mutate, util
+import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, mutate, util, entropy_net_plots
 
 def evolve_master(configs):
     protocol = configs['protocol']
@@ -172,6 +172,7 @@ def evolve_from_seed(configs):
     util.cluster_print(output_dir,"Evolution finished, generating images.")
     plot_nets.single_run_plots(output_dir)
     #instances.analyze(output_dir)
+    if (configs['use_kp'] == (False or 'False')): entropy_net_plots.plot_dir(output_dir, configs)
 
     util.cluster_print(output_dir,"Master finished config file.\n")
     return

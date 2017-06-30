@@ -9,7 +9,13 @@ from matplotlib import rcParams
 import random as rd
 
 
-def undir_deg_distrib(net_file, destin_path, title):
+def plot_dir(output_dir, configs):
+    for root, dirs, files in os.walk(output_dir + "/nets/"):
+        for f in files:
+            undir_deg_distrib(root + "/" + f, output_dir + "/undirected_degree_distribution/", f, configs)
+
+
+def undir_deg_distrib(net_file, destin_path, title, configs):
     #update_rcParams()
     # each line in 'input.txt' should be: [network name (spaces allowed) followed by /path/to/edge/file.txt/or/pickled/network.dump]
 
@@ -26,9 +32,41 @@ def undir_deg_distrib(net_file, destin_path, title):
         tot = float(sum(freqs))
         freqs = [(f/tot)*100 for f in freqs]
 
-        if (type == 'loglog'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, color = color_choice, alpha=1, markersize=8, marker='D', markeredgecolor='None')
-        elif (type == 'scatter'): plt.scatter(degs, freqs, color = color_choice, alpha=1, s=s, marker='D')
-        patch =  mpatches.Patch(color=colors[i], label=title + "_" + type)
+
+
+        #derive vals from conservation scores
+        consv_vals = []
+        if (configs['biased'] == (True or 'True')):
+            for deg in degs: #deg consv is normalized by num nodes
+                avg_consv, num_nodes = 0,0
+                for node in net.nodes():
+                    if (net.degree(node) == deg):
+                        if (configs['bias_on'] == 'nodes'):
+                            avg_consv += net.node[node]['conservation_score']
+                        elif (configs['bias_on'] == 'edges'): #node consv is normalized by num edges
+                            node_consv, num_edges = 0, 0
+                            for edge in net.edges(node):
+                                node_consv += net[edge[0]][edge[1]]['conservation_score']
+                                num_edges += 1
+                            node_consv /= num_edges
+                        num_nodes += 1
+                avg_consv /= num_nodes
+                consv_vals.append(avg_consv)
+            assert(len(consv_vals) == len(degs))
+            cmap = plt.get_cmap('plasma')
+            consv_colors = cmap(consv_vals)
+
+            if (type == 'loglog'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, c = consv_colors, alpha=1, markersize=8, marker='D', markeredgecolor='None')
+            elif (type == 'scatter'):
+                sizes = [10 for i in range(len(degs))]
+                plt.scatter(degs, freqs, c = consv_colors, alpha=1, s=sizes, marker='D')
+
+        else:
+            if (type == 'loglog'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, color = color_choice, alpha=1, markersize=8, marker='D', markeredgecolor='None')
+            elif (type == 'scatter'):
+                sizes = [10 for i in range(len(degs))]
+                plt.scatter(degs, freqs, color = color_choice, alpha=1, s=sizes, marker='D')
+        patch =  mpatches.Patch(color=color_choice, label=title + "_" + type)
         H = H + [patch]
 
         #FORMAT PLOT

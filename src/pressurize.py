@@ -36,7 +36,7 @@ def pressurize(configs, net, instance_file_name):
         return
 
 
-    if (use_kp == 'True'):
+    if (use_kp == 'True' or use_kp == True):
         leaf_fitness, hub_fitness, solo_fitness = 0, 0, 0
         node_data.reset_fitness(net) #not actually used when kp = True
         node_data.reset_BDs(net)
@@ -60,7 +60,7 @@ def pressurize(configs, net, instance_file_name):
 
         return [leaf_fitness, hub_fitness, solo_fitness]
 
-    elif (use_kp == 'False'):
+    elif (use_kp == 'False' or use_kp == False):
         node_data.reset_fitness(net)
         node_data.reset_BDs(net)
 
