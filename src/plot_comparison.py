@@ -12,7 +12,7 @@ import random as rd
 def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
     input_files = open(real_net_file,'r').readlines()
 
-    colors = ['#ADECD7', '#ADC0F3','#E4B2FB','#FBB2B2','#FFCC66','#C3F708', '#34CEDC']
+    colors = ['#30cf9a', '#ADC0F3','#E4B2FB','#FBB2B2','#FFCC66','#C3F708', '#34CEDC', '#ff0066', '#ffb31a']
     i=0
     for line in input_files:
         name, network_file = line.strip().split(' ')
@@ -21,15 +21,29 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             if (name=='Bacteria'): 
                 color_choice = colors[0]
                 name = 'Bacteria PPI'
+                real_net = nx.read_gpickle(network_file)
+                real_alpha = .75
             elif(name=='BacteriaReg'): 
                 color_choice = colors[6]
                 name = 'Bacteria Regulatory'
+                real_net = custom_load(network_file.strip())
+                real_alpha = .75
+            elif(name=='Worm'):
+                color_choice = colors[8]
+                name = 'Worm PPI'
+                real_net = nx.read_gpickle(network_file)
+                real_alpha = .75
+            else:
+                real_net = nx.read_gpickle(network_file)
+                real_alpha = .75
 
 
             sim_net = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
             # print("Simulated Net: \tnodes " + str(len(M.nodes())) + "\tedges " + str(len(M.edges())))
             sim_nodes = sim_net.nodes()
-            real_net = nx.read_gpickle(network_file)
+            #real_net = custom_load(network_file.strip())
+            #real_net = nx.read_edgelist(network_file.strip(),create_using=nx.DiGraph())
+            #real_net = nx.read_gpickle(network_file)
             real_nodes = real_net.nodes()
 
             if (len(real_nodes) != len(sim_nodes)): print("WARNING: real net does not have same number of nodes as simulation.")
@@ -39,23 +53,23 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             sim_degrees, sim_in_degrees, sim_out_degrees = list(sim_net.degree().values()),  list(sim_net.in_degree().values()), list(sim_net.out_degree().values())
 
 
-            for direction in ['in','out','both']:
+            for direction in ['both']:
 
                 H = []
 
                 # PLOT REAL NET
                 title = plot_title + "_" + str(name) + "_" + str(direction)
 
-                real_deg, sim_deg = None
+                real_deg, sim_deg = None, None
                 if (direction == 'in'): real_deg, sim_deg = real_in_degrees, sim_in_degrees
                 elif (direction == 'out'): real_deg, sim_deg = real_out_degrees, sim_out_degrees
                 elif (direction == 'both'): real_deg, sim_deg = real_degrees, sim_degrees
-
+             
                 degs, freqs = np.unique(real_deg, return_counts=True)
                 tot = float(sum(freqs))
                 freqs = [(f / tot) * 100 for f in freqs]
-
-                plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=color_choice, alpha=.6, markersize=10, marker='|', markeredgecolor='None', )
+                plt.scatter(degs, freqs, color=color_choice, alpha=real_alpha)
+                #plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=color_choice, alpha=real_alpha, markersize=10, marker='|', markeredgecolor=color_choice, mew=5)
                 # you can also scatter the in/out degrees on the same plot
                 # plt.scatter( .... )
                 patch = mpatches.Patch(color=color_choice, label=name)
@@ -66,8 +80,8 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
                 degs, freqs = np.unique(sim_deg, return_counts=True)
                 tot = float(sum(freqs))
                 freqs = [(f / tot) * 100 for f in freqs]
-
-                plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color='#000000', alpha=1, markersize=10, marker='_', markeredgecolor='None')
+                plt.scatter(degs, freqs, color='#000000', alpha=1)
+                #plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color='#000000', alpha=1, markersize=10, marker='_', markeredgecolor='#000000', mew=5)
 
                 patch = mpatches.Patch(color='#000000', label="Simulation")
                 H = H + [patch]
@@ -77,9 +91,11 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
 
                 # ax.set_xscale('log') #for scatter i think
                 # ax.set_yscale('log')
-                ax.set_xlim([0.7, 200]) #TODO: change these?
-                ax.set_ylim([.1, 100])
-
+                #ax.set_xlim([0.7, 200]) #TODO: change these? 
+                #ax.set_ylim([.1, 100])
+                ax.set_xlim([0.7,40])
+                ax.set_ylim([.1,80]) 
+ 
                 xfmatter = ticker.FuncFormatter(LogXformatter)
                 yfmatter = ticker.FuncFormatter(LogYformatter)
                 ax.get_xaxis().set_major_formatter(xfmatter)
@@ -274,6 +290,26 @@ def update_rcParams():
     return prop
 ##################################################################
 
+def custom_load(net_path):
+    edges_file = open (net_path,'r') #note: with nx.Graph (undirected), there are 2951  edges, with nx.DiGraph (directed), there are 3272 edges
+    M=nx.DiGraph()     
+    next(edges_file) #ignore the first line
+    for e in edges_file: 
+        interaction = e.split()
+        assert len(interaction)>=2
+        source, target = str(interaction[0]).strip().replace("'",'').replace('(','').replace(')',''), str(interaction[1]).strip().replace("'",'').replace('(','').replace(')','')
+        if (len(interaction) >2):
+            if (str(interaction[2]) == '+'):
+                Ijk=1
+            elif  (str(interaction[2]) == '-'):
+                Ijk=-1
+            else:
+                print ("Error: bad interaction sign in file "+str(edges_file)+"\nExiting...")
+                sys.exit()
+        else:
+            Ijk=util.flip()     
+        M.add_edge(source, target, sign=Ijk)    
+    return M
 
 if __name__ == "__main__":
     base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/conf2/" #customize for curr work
