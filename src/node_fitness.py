@@ -4,14 +4,6 @@ import leaf_fitness, hub_fitness, fitness
 
 
 
-
-
-
-
-
-
-
-
 #OLD CRAP
 def calc(node_info, leaf_metric, hub_metric, fitness_operator, soln_bens, num_genes):
     max_size = len(node_info['freq']) #assumes all features have same size

@@ -33,6 +33,7 @@ def evolve_from_seed(configs):
     #instance_file = configs['instance_file']
     num_grow = int(configs['num_grows'])
     edge_node_ratio = float(configs['edge_to_node_ratio'])
+    fitness_direction = str(configs['fitness_direction'])
 
     num_instance_output = int(configs['num_instance_output'])
     instance_file = configs['instance_file']
@@ -69,7 +70,7 @@ def evolve_from_seed(configs):
         #init fitness eval
         pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xitern0.csv")  # false: don't track node fitness, None: don't write instances to file
         population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-        fitness.eval_fitness([population[0]])
+        fitness.eval_fitness([population[0]], fitness_direction)
         output.deg_change_csv([population[0]], output_dir)
 
         total_gens, size, itern = 0, start_size, 0
@@ -106,7 +107,7 @@ def evolve_from_seed(configs):
             #print("rate = " + str(rate) + ", itern % rate = " + str(itern%rate) + ", itern < " + str (max_gen-start_size*rate))
             if (itern % rate == 0 and itern < (max_gen-start_size*rate)):
                 for p in range(len(population)):
-                    mutate.add_nodes(population[p].net, 1, edge_node_ratio)
+                    mutate.add_nodes(population[p].net, 1, edge_node_ratio, configs)
 
 
         write_mpi_info(output_dir, itern)
@@ -149,8 +150,11 @@ def evolve_from_seed(configs):
         t_end = time.time()
         t_elapsed = t_end-t_start
         if (itern % 100 == 0): util.cluster_print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.\n")
-        estim_wait = watch(configs, itern, num_workers, output_dir, estim_wait)
-        population = parse_worker_popn(num_workers, itern, output_dir, num_survive)
+        estim_wait, worker_popn = watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitness_direction)
+        #sorted_popn = fitness.eval_fitness(worker_popn, fitness_direction)
+        #population = sorted_popn[:num_survive]
+        #del sorted_popn, worker_popn
+        #population = parse_worker_popn(num_workers, itern, output_dir, num_survive, fitness_direction)
         size = len(population[0].net.nodes())
         itern += 1
         total_gens += worker_gens
@@ -182,7 +186,7 @@ def init_dirs(num_workers, output_dir):
             os.makedirs(output_dir+dirr)
 
 
-def parse_worker_popn (num_workers, itern, output_dir, num_survive):
+def parse_worker_popn (num_workers, itern, output_dir, num_survive, fitness_direction):
     popn = []
     print('master.parse_worker_popn(): num workers = ' + str(num_workers) + " and itern " + str(itern))
     for w in range(0,num_workers): 
@@ -194,8 +198,17 @@ def parse_worker_popn (num_workers, itern, output_dir, num_survive):
             popn.append(indiv)
             i+=1
 
-    sorted_popn = fitness.eval_fitness(popn)
+    sorted_popn = fitness.eval_fitness(popn, fitness_direction)
     return sorted_popn[:num_survive]
+
+def parse_worker (worker_num, itern, output_dir, num_survive):
+
+    dump_file = output_dir + "/to_master/" + str(itern) + "/" + str(worker_num)
+    with open(dump_file, 'rb') as file:
+        worker_pop = pickle.load(file)
+
+    return worker_pop[:num_survive]
+
 
 
 def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_survive, worker_pop_size_config):
@@ -229,14 +242,15 @@ def debug(population):
 
 
 
-def watch(configs, itern, num_workers, output_dir, estim_wait):
+def watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitness_direction):
 
     dump_dir = output_dir + "/to_master/" + str(itern)
 
-    done, i = False, 1
+    #done, i = False, 1
 
     t_start = time.time()
     estim_used = False
+    '''
     while not done:
         if (estim_wait != None and estim_used == False): 
             time.sleep(estim_wait + .1)
@@ -247,21 +261,39 @@ def watch(configs, itern, num_workers, output_dir, estim_wait):
         else: time.sleep(.1)  #freq checks for accurate estim_wait
         i += 1
         #util.cluster_print(output_dir,dump_dir)
+        '''
+
+    popn = []
+    num_finished, dir_checks = 0,0
+
+    ids = [i for i in range(1, num_workers + 1)]
+    while (num_finished < num_workers):
+        time.sleep(1)
+        dir_checks+=1
         for root, dirs, files in os.walk(dump_dir):
-            #util.cluster_print(output_dir,str(dump_dir) + " has " + str(len(files)) + " files in it.")
-            if (len(files) == num_workers):
-                for f in files:
-                    if (os.path.getmtime(root + "/" + f) + .5 > time.time()): break #file may still be being written
+            for f in files:
+                if f in ids:
+                    if (os.path.getmtime(root + "/" + f) + .5 < time.time()):
+                        print("Master extracting worker #" +str(f))
+                        popn += parse_worker(f, itern, output_dir, num_survive)
+                        num_finished += 1
+                        ids.remove(f)
 
-                t_end = time.time()
-                time_elapsed = t_end - t_start
-                if (estim_wait == None): 
-                    estim_wait = time_elapsed
-                    print("master using estim_wait = " + str(estim_wait))
-                if (estim_used == True): print("master updated estim_wait to " + str(estim_wait))
-                if (itern % 100 == 0): util.cluster_print(output_dir,"master continuing after waiting for " + str(time_elapsed) + " seconds, and making " + str(i) + " dir checks.")
-                return estim_wait
+            #sort and delete some
+            sorted_popn = fitness.eval_fitness(popn, fitness_direction)
+            popn = sorted_popn[:num_survive]
+            del sorted_popn
+    assert (not ids)
 
+    t_end = time.time()
+    time_elapsed = t_end - t_start
+    if (estim_wait == None):
+        estim_wait = time_elapsed
+        print("master using estim_wait = " + str(estim_wait))
+    if (estim_used == True): print("master updated estim_wait to " + str(estim_wait))
+    if (itern % 100 == 0): util.cluster_print(output_dir,"master finished extracting workers after " + str(time_elapsed) + " seconds, and making " + str(dir_checks) + " dir checks.")
+
+    return estim_wait, popn
 
 def write_mpi_info(output_dir, itern):
 

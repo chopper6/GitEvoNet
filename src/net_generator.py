@@ -196,7 +196,7 @@ def init_population(init_type, start_size, pop_size, configs):
 
         if (len(init_net.edges()) < num_edges):
             num_add = num_edges - len(init_net.edges())
-            mutate.add_edges(init_net, num_add)
+            mutate.add_edges(init_net, num_add, configs)
 
         elif (len(init_net.edges()) > num_edges):
             num_rm = len(init_net.edges()) - num_edges
@@ -224,7 +224,9 @@ def assign_node_consv(population, distrib):
         net = population[p].net
         for n in net.nodes():
             if (distrib == 'uniform'): consv_score = sysRand().uniform(0,1)
-            elif (distrib == 'normal'): consv_score = sysRand().normalvariate(.5,.15)
+            elif (distrib == 'normal'):
+                consv_score = sysRand().normalvariate(0,1)
+                consv_score = (consv_score+.5)/2
             else:
                 print("ERROR in net_generator(): unknown bias distribution: " + str (distrib))
                 return 1
@@ -233,13 +235,27 @@ def assign_node_consv(population, distrib):
 
     return population
 
+def assign_a_node_consv(net, node, distrib):
+    if (distrib == 'uniform'):
+        consv_score = sysRand().uniform(0, 1)
+    elif (distrib == 'normal'):
+        consv_score = sysRand().normalvariate(.5, .15)
+    else:
+        print("ERROR in net_generator(): unknown bias distribution: " + str(distrib))
+        return 1
+
+    net.node[node]['conservation_score'] = consv_score
+
+
 def assign_edge_consv(population, distrib):
     # since assigns to whole population, will be biased since selection will occur on most fit distribution of conservation scores
     for p in range(len(population)):
         net = population[p].net
         for edge in net.edges():
             if (distrib == 'uniform'): consv_score = sysRand().uniform(0,1)
-            elif (distrib == 'normal'): consv_score = sysRand().normalvariate(.5,.15)
+            elif (distrib == 'normal'):
+                consv_score = sysRand().normalvariate(0,1)
+                consv_score = (consv_score+.5)/2
             else:
                 print("ERROR in net_generator(): unknown bias distribution: " + str (distrib))
                 return 1
@@ -247,6 +263,19 @@ def assign_edge_consv(population, distrib):
             net[edge[0]][edge[1]]['conservation_score'] = consv_score
 
     return population
+
+
+def assign_an_edge_consv(net, edge, distrib):
+    if (distrib == 'uniform'):
+        consv_score = sysRand().uniform(0, 1)
+    elif (distrib == 'normal'):
+        consv_score = sysRand().normalvariate(0, 1)
+        consv_score = (consv_score + .5) / 2
+    else:
+        print("ERROR in net_generator(): unknown bias distribution: " + str(distrib))
+        return 1
+
+    net[edge[0]][edge[1]]['conservation_score'] = consv_score
 
 
 def custom_to_directed(population):
@@ -264,9 +293,6 @@ def custom_to_directed(population):
             if (sysRand().random() < .5):  #50% chance of reverse edge
                 population[p].net.remove_edge(edge[0], edge[1])
                 population[p].net.add_edge(edge[1], edge[0])
-
-
-
 
 def sign_edges(population):
     for p in range(len(population)):

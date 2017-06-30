@@ -74,6 +74,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
     max_gen = int(configs['max_generations'])
     control = configs['control']
     if (control == "None"): control = None
+    fitness_direction = str(configs['fitness_direction'])
 
     node_edge_ratio = float(configs['edge_to_node_ratio'])
 
@@ -93,7 +94,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
 
         for p in range(pop_size):
             t0 = ptime()
-            mutate.mutate(configs, population[p].net, gen_percent, node_edge_ratio)
+            mutate.mutate(configs, population[p].net, gen_percent, node_edge_ratio, configs)
             t1 = ptime()
             mutate_time += t1-t0
 
@@ -104,7 +105,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
             else: util.cluster_print(output_dir,"ERROR in minion(): unknown control config: " + str(control))
 
         old_popn = population
-        population = fitness.eval_fitness(old_popn)
+        population = fitness.eval_fitness(old_popn, fitness_direction)
         del old_popn
         #debug(population,worker_ID, output_dir)
         curr_gen += 1

@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
-    num_workers = comm.Get_size()  # includes master, so master should also exe 1 worker load
+    num_workers = comm.Get_size()-1  # master not incld
     config_file = sys.argv[1]
 
     if rank == 0:  # ie is master

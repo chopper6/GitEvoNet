@@ -131,11 +131,16 @@ def node_score (leaf_metric, B, D):
     # MIN ENTROPY
     elif (leaf_metric == 'min_entropy'):
         #if (B+D==0): return 0
-        if (B==0): H_B = 0
-        else: H_B = -1*(B/(B+D)) * math.log2(B/(B+D))
+        if (B+D == 0): prB=prD=0
+        else:
+            prB = B/float(B+D)
+            prD = D/float(B+D)
 
-        if (D==0): H_D = 0
-        else: H_D = -1*(D/(B+D)) * math.log2(D/(B+D))
+        if (prB==0): H_B = 0
+        else: H_B = -1*prB * math.log2(prB)
+
+        if (prD==0): H_D = 0
+        else: H_D = -1*prD * math.log2(prD)
 
         return (H_B + H_D)
 

@@ -17,7 +17,7 @@ def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold,
 
 
 #--------------------------------------------------------------------------------------------------  
-def simple_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria, bias_on):
+def exp_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria, bias_on):
     #print ("in reducer, " + str(advice_sampling_threshold))
     if  advice_sampling_threshold <=0:
         print ("WARNING: reverse_reduction yields empty set.")
@@ -31,7 +31,29 @@ def simple_reduction(net, sample_size, T_percentage, advice_sampling_threshold, 
 
         Bs,Ds,tol = BDT_calculator   (net, util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon,bias_on), T_percentage, BD_criteria, advice_upon)
     return Bs,Ds,tol
-#--------------------------------------------------------------------------------------------------                
+
+
+
+# --------------------------------------------------------------------------------------------------
+def prob_reduction(net, global_ben_bias, distribn):
+    # assumes advice on edges
+
+    for edge in net.edges():
+        source, target = edge[0], edge[1]
+        indiv_bias = edge['conservation_score']
+        ben_pr = None
+        if (distribn == 'set'): ben_pr = .5 + global_ben_bias
+        if (distribn == 'uniform'): ben_pr = random.uniform(0,1) + global_ben_bias #same as rd.random() i think
+        elif (distribn == 'normal'):
+            ben_pr = random.normalvariate(0, 1)
+            ben_pr = (ben_pr + .5)/2 + global_ben_bias
+
+        for side in [source, target]:
+            net.node[side]['benefits'] = ben_pr + indiv_bias
+            net.node[side]['damages'] = 1-ben_pr - indiv_bias
+
+
+#--------------------------------------------------------------------------------------------------
 def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
     BENEFITS, DAMAGES = {}, {}
 

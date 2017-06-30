@@ -1,6 +1,7 @@
 import math
 import random as rd
 import networkx as nx
+import net_generator
 # from random import SystemRandom as rd
 
 def mutate(configs, net, gen_percent, edge_node_ratio):
@@ -81,7 +82,7 @@ def num_mutations(base_mutn_freq, mutn_type, gen_percent):
 
 
 
-def add_edges(net, num_add):
+def add_edges(net, num_add, configs):
 
     for j in range(num_add):
         pre_size = post_size = len(net.edges())
@@ -94,17 +95,22 @@ def add_edges(net, num_add):
 
             sign = rd.randint(0, 1)
             if (sign == 0):     sign = -1
+
             net.add_edge(node, node2, sign=sign)
             post_size = len(net.edges())
 
-def add_nodes(net, num_add, edge_node_ratio):
+        if (configs['biased'] == True and configs['bias_on'] == 'edges'): net_generator.assign_a_node_consv(net, [node,node2], configs['bias_distribution'])
+
+
+def add_nodes(net, num_add, edge_node_ratio, configs):
     # ADD NODE
     for i in range(num_add):
         pre_size = post_size = len(net.nodes())
         while (pre_size == post_size):
-            node_num = rd.randint(0, len(net.nodes()) * 10)  # hope to hit number that doesn't already exist
+            node_num = rd.randint(0, len(net.nodes()) * 100)  # hope to hit number that doesn't already exist
             net.add_node(node_num)
             post_size = len(net.nodes())
+        if (configs['biased'] == True and configs['bias_on'] == 'nodes'): net_generator.assign_a_node_consv(net, node_num,configs['bias_distribution'])
 
     if (num_add == 0): print("WARNING in mutate(): 0 nodes added in add_nodes\n")
 
@@ -118,9 +124,15 @@ def add_nodes(net, num_add, edge_node_ratio):
 
         sign = rd.randint(0, 1)
         if (sign == 0):     sign = -1
-        if (rd.random() < .5): net.add_edge(node, node2, sign=sign)
-        else: net.add_edge(node2, node, sign=sign)
+        if (rd.random() < .5):
+            net.add_edge(node, node2, sign=sign)
+            the_edge = [node,node2]
+        else:
+            net.add_edge(node2, node, sign=sign)
+            the_edge = [node2,node]
         post_size = len(net.edges())
+
+    if (configs['biased'] == True and configs['bias_on'] == 'edges'): net_generator.assign_a_node_consv(net, the_edge ,configs['bias_distribution'])
 
     # MAINTAIN NODE_EDGE RATIO
     # ASSUMES BTWN 1 & 2
@@ -130,7 +142,7 @@ def add_nodes(net, num_add, edge_node_ratio):
     #pr_second = edge_node_ratio -1
     #if (rd.random() < pr_second): num_edge_add += 1
 
-    add_edges(net, num_edge_add)
+    add_edges(net, num_edge_add, configs)
 
 def rm_edges(net, num_rm):
 
