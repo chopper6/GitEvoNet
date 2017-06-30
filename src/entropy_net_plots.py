@@ -48,7 +48,7 @@ def undir_deg_distrib(net_file, destin_path, title, configs):
                             for edge in net.edges(node):
                                 node_consv += net[edge[0]][edge[1]]['conservation_score']
                                 num_edges += 1
-                            node_consv /= num_edges
+                            if (num_edges != 0): node_consv /= num_edges
                         num_nodes += 1
                 avg_consv /= num_nodes
                 consv_vals.append(avg_consv)

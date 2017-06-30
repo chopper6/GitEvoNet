@@ -65,7 +65,7 @@ def pressurize(configs, net, instance_file_name):
         node_data.reset_BDs(net)
 
         if (edge_assignment == 'probabilistic'):
-            reducer.prob_reduction(net, global_edge_bias, edge_distribution)
+            reducer.prob_reduction(net, global_edge_bias, edge_distribution, configs['biased'], configs['bias_on'])
 
         elif (edge_assignment == 'experience'):
             for i in range(num_samples_relative):

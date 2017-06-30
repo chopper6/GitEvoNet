@@ -52,7 +52,7 @@ def evolve_from_seed(configs):
 
         if (itern): #IS CONTINUATION RUN
             itern = int(itern)-2 #fall back one, latest may not have finished
-            population = parse_worker_popn(num_workers, itern, output_dir, num_survive)
+            population = parse_worker_popn(num_workers, itern, output_dir, num_survive, fitness_direction)
             size = len(population[0].net.nodes())
             itern += 1
             total_gens = itern  # also temp, assumes worker gens = 1
@@ -68,7 +68,7 @@ def evolve_from_seed(configs):
         # init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
 
         #init fitness eval
-        pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xitern0.csv")  # false: don't track node fitness, None: don't write instances to file
+        pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xitern0.csv")  
         population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
         fitness.eval_fitness([population[0]], fitness_direction)
         output.deg_change_csv([population[0]], output_dir)
@@ -122,11 +122,11 @@ def evolve_from_seed(configs):
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
             #pool.map_async(minion.evolve_minion, (dump_file,))
-            minion.evolve_minion(dump_file)
+            minion.evolve_minion(dump_file, itern, 0, output_dir)
             sleep(.0001)
 
         else:
-            for w in range(0,num_workers):
+            for w in range(1,num_workers+1):
                 dump_file =  output_dir + "/to_workers/" + str(itern) + "/" + str(w)
                 #util.cluster_print(output_dir,"master dumping to file: " + str(dump_file))
                 seed = population[w % num_survive].copy()
@@ -136,10 +136,9 @@ def evolve_from_seed(configs):
                 with open(dump_file, 'wb') as file:
                     pickle.dump(worker_args, file)
 
-            #don't waste threads, master exe a worker gen
-            dump_file = output_dir + "/to_workers/" + str(itern) + "/0"
-            return_file = output_dir + "/to_master/" + str(itern) + "/0"
-            minion.evolve_minion(dump_file, itern, 0, return_file)
+            #dump_file = output_dir + "/to_workers/" + str(itern) + "/0"
+            #return_file = output_dir + "/to_master/" + str(itern) + "/0"
+            #minion.evolve_minion(dump_file, itern, 0, return_file)
 
         del population
         if (debug == True):
@@ -150,7 +149,7 @@ def evolve_from_seed(configs):
         t_end = time.time()
         t_elapsed = t_end-t_start
         if (itern % 100 == 0): util.cluster_print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.\n")
-        estim_wait, worker_popn = watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitness_direction)
+        estim_wait, population = watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitness_direction)
         #sorted_popn = fitness.eval_fitness(worker_popn, fitness_direction)
         #population = sorted_popn[:num_survive]
         #del sorted_popn, worker_popn
@@ -172,7 +171,7 @@ def evolve_from_seed(configs):
     util.cluster_print(output_dir,"Evolution finished, generating images.")
     plot_nets.single_run_plots(output_dir)
     #instances.analyze(output_dir)
-    if (configs['use_kp'] == (False or 'False')): entropy_net_plots.plot_dir(output_dir, configs)
+    #if (configs['use_knapsack'] == (False or 'False')): entropy_net_plots.plot_dir(output_dir, configs)
 
     util.cluster_print(output_dir,"Master finished config file.\n")
     return
@@ -190,6 +189,7 @@ def init_dirs(num_workers, output_dir):
 def parse_worker_popn (num_workers, itern, output_dir, num_survive, fitness_direction):
     popn = []
     print('master.parse_worker_popn(): num workers = ' + str(num_workers) + " and itern " + str(itern))
+    print("parse worker pop params: dir = " + str(output_dir) + ".")
     for w in range(0,num_workers): 
         dump_file = output_dir + "/to_master/" + str(itern) + "/" + str(w)
         with open(dump_file, 'rb') as file:
@@ -267,18 +267,17 @@ def watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitn
     popn = []
     num_finished, dir_checks = 0,0
 
-    ids = [i for i in range(1, num_workers + 1)]
+    ids = [str(i) for i in range(1, num_workers + 1)]
     while (num_finished < num_workers):
         time.sleep(1)
         dir_checks+=1
         for root, dirs, files in os.walk(dump_dir):
             for f in files:
                 if f in ids:
-                    if (os.path.getmtime(root + "/" + f) + .5 < time.time()):
-                        print("Master extracting worker #" +str(f))
-                        popn += parse_worker(f, itern, output_dir, num_survive)
-                        num_finished += 1
-                        ids.remove(f)
+                        if (os.path.getmtime(root + "/" + f) + .5 < time.time()):
+                            popn += parse_worker(f, itern, output_dir, num_survive)
+                            num_finished += 1
+                            ids.remove(f)
 
             #sort and delete some
             sorted_popn = fitness.eval_fitness(popn, fitness_direction)

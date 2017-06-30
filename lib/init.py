@@ -23,7 +23,7 @@ def initialize_worker(cl_args):
     return configs
 #--------------------------------------------------------------------------------------------------
 def load_simulation_configs (param_file, rank):
-
+    #print("i'm loading configs as rank " + str(rank))
     parameters = (open(param_file,'r')).readlines()
     assert len(parameters)>0
     configs = {}
@@ -35,7 +35,7 @@ def load_simulation_configs (param_file, rank):
                     key   = param[0].strip().replace (' ', '_')
                     value = param[1].strip()
                     configs[key] = value
-    
+    #print("in init.py num_workers = " + str(configs['number_of_workers']))
     #assert os.path.isfile(configs['network_file']) # the only mandatory parameters 
     configs['biased']              = configs['biased'] == 'True'
     bORu = 'u'
@@ -58,7 +58,7 @@ def load_simulation_configs (param_file, rank):
     configs ['output_directory'] += "/"
 
     configs['instance_file']    = (util.slash (configs['output_directory']) + "instances/" +configs['stamp'])
-    print("\nIn lib/init(): instance_file: " + str(configs['instance_file']))
+    #print("\nIn lib/init(): instance_file: " + str(configs['instance_file']))
     configs['stats_dir']           = configs['output_directory']+"00_network_stats/" 
     configs['datapoints_dir']      = configs['output_directory']+"02_raw_instances_simulation/data_points/"
     configs['params_save_dir']     = configs['output_directory']+"02_raw_instances_simulation/parameters/"
@@ -90,12 +90,12 @@ def load_simulation_configs (param_file, rank):
     #--------------------------------------------   
     if rank == 0: #only master should create dir, prevents workers from fighting over creating the same dir
         while not os.path.isdir (configs['output_directory']):
-            print (configs['output_directory'])
+            #print (configs['output_directory'])
             try:
                 os.makedirs (configs['output_directory']) # will raise an error if invalid path, which is good
             except:
                 time.sleep(5)
-                print ("In load_simulation_configs(), rank=0, and Im still trying to create "+configs['output_directory']+" .. is this a correct path?")
+                #print ("In load_simulation_configs(), rank=0, and Im still trying to create "+configs['output_directory']+" .. is this a correct path?")
                 continue
 
     return configs

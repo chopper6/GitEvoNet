@@ -94,7 +94,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
 
         for p in range(pop_size):
             t0 = ptime()
-            mutate.mutate(configs, population[p].net, gen_percent, node_edge_ratio, configs)
+            mutate.mutate(configs, population[p].net, gen_percent, node_edge_ratio)
             t1 = ptime()
             mutate_time += t1-t0
 

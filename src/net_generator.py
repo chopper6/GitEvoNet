@@ -213,7 +213,8 @@ def init_population(init_type, start_size, pop_size, configs):
     if (sign_edges_needed == True): sign_edges(population)
     if (configs['biased'] == True):
         if (configs['bias_on'] == 'nodes'): assign_node_consv(population, configs['bias_distribution'])
-        elif (configs['bias_on'] == 'edges'): assign_edge_consv(population, configs['bias_distribution'])
+        elif (configs['bias_on'] == 'edges'): 
+            assign_edge_consv(population, configs['bias_distribution'])
         else: print("ERROR in net_generator(): unknown bias_on: " + str (configs['bias_on']))
     return population
 
@@ -223,7 +224,7 @@ def assign_node_consv(population, distrib):
     for p in range(len(population)):
         net = population[p].net
         for n in net.nodes():
-            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,1)
+            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,.5)
             elif (distrib == 'normal'):
                 consv_score = sysRand().normalvariate(0,1)
                 consv_score = (consv_score+.5)/2
@@ -237,7 +238,7 @@ def assign_node_consv(population, distrib):
 
 def assign_a_node_consv(net, node, distrib):
     if (distrib == 'uniform'):
-        consv_score = sysRand().uniform(0, 1)
+        consv_score = sysRand().uniform(0, .5)
     elif (distrib == 'normal'):
         consv_score = sysRand().normalvariate(.5, .15)
     else:
@@ -252,7 +253,7 @@ def assign_edge_consv(population, distrib):
     for p in range(len(population)):
         net = population[p].net
         for edge in net.edges():
-            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,1)
+            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,.5)
             elif (distrib == 'normal'):
                 consv_score = sysRand().normalvariate(0,1)
                 consv_score = (consv_score+.5)/2
@@ -267,7 +268,7 @@ def assign_edge_consv(population, distrib):
 
 def assign_an_edge_consv(net, edge, distrib):
     if (distrib == 'uniform'):
-        consv_score = sysRand().uniform(0, 1)
+        consv_score = sysRand().uniform(0, .5)
     elif (distrib == 'normal'):
         consv_score = sysRand().normalvariate(0, 1)
         consv_score = (consv_score + .5) / 2

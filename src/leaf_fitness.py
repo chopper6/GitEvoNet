@@ -135,6 +135,8 @@ def node_score (leaf_metric, B, D):
         else:
             prB = B/float(B+D)
             prD = D/float(B+D)
+        try: assert(B+D == 1 and B>=0 and D>=0)
+        except: print("ERROR in leaf fitness: B=" + str(B) + ", D=" + str(D))
 
         if (prB==0): H_B = 0
         else: H_B = -1*prB * math.log2(prB)

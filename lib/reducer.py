@@ -35,12 +35,15 @@ def exp_reduction(net, sample_size, T_percentage, advice_sampling_threshold, adv
 
 
 # --------------------------------------------------------------------------------------------------
-def prob_reduction(net, global_ben_bias, distribn):
+def prob_reduction(net, global_ben_bias, distribn, biased, biased_on):
     # assumes advice on edges
 
     for edge in net.edges():
         source, target = edge[0], edge[1]
-        indiv_bias = edge['conservation_score']
+        if (biased == True and biased_on == 'edges'): indiv_bias = net[source][target]['conservation_score']
+        elif (biased == True and baised_on == 'nodes'): indiv_bias = (net.node[source]['conservation_score'] + net.node[target]['convservation_score']) / 2
+        else: indiv_bias = 0
+
         ben_pr = None
         if (distribn == 'set'): ben_pr = .5 + global_ben_bias
         if (distribn == 'uniform'): ben_pr = random.uniform(0,1) + global_ben_bias #same as rd.random() i think
@@ -48,9 +51,12 @@ def prob_reduction(net, global_ben_bias, distribn):
             ben_pr = random.normalvariate(0, 1)
             ben_pr = (ben_pr + .5)/2 + global_ben_bias
 
+        edge_ben = ben_pr + indiv_bias
+        if (edge_ben > 1): edge_ben=1
+        elif (edge_ben < 0): edge_ben=0
         for side in [source, target]:
-            net.node[side]['benefits'] = ben_pr + indiv_bias
-            net.node[side]['damages'] = 1-ben_pr - indiv_bias
+            net.node[side]['benefits'] = edge_ben
+            net.node[side]['damages'] = 1-edge_ben
 
 
 #--------------------------------------------------------------------------------------------------

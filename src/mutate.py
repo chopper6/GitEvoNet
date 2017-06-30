@@ -17,7 +17,7 @@ def mutate(configs, net, gen_percent, edge_node_ratio):
     # GROW (ADD NODE)
     # starts unconnected
     num_grow = num_mutations(grow_freq, mutn_type, gen_percent)
-    if (num_grow > 0): add_nodes(net, num_grow, edge_node_ratio)
+    if (num_grow > 0): add_nodes(net, num_grow, edge_node_ratio, configs)
 
 
     # SHRINK (REMOVE NODE)
@@ -38,7 +38,7 @@ def mutate(configs, net, gen_percent, edge_node_ratio):
 
         # MAINTAIN NODE:EDGE RATIO
         if (change_in_edges > 0): rm_edges(net,change_in_edges)
-        else: add_edges(net, -1*change_in_edges)
+        else: add_edges(net, -1*change_in_edges, configs)
 
 
     # REWIRE EDGE
@@ -99,7 +99,7 @@ def add_edges(net, num_add, configs):
             net.add_edge(node, node2, sign=sign)
             post_size = len(net.edges())
 
-        if (configs['biased'] == True and configs['bias_on'] == 'edges'): net_generator.assign_a_node_consv(net, [node,node2], configs['bias_distribution'])
+        if (configs['biased'] == True and configs['bias_on'] == 'edges'): net_generator.assign_an_edge_consv(net, [node,node2], configs['bias_distribution'])
 
 
 def add_nodes(net, num_add, edge_node_ratio, configs):
@@ -132,7 +132,7 @@ def add_nodes(net, num_add, edge_node_ratio, configs):
             the_edge = [node2,node]
         post_size = len(net.edges())
 
-    if (configs['biased'] == True and configs['bias_on'] == 'edges'): net_generator.assign_a_node_consv(net, the_edge ,configs['bias_distribution'])
+    if (configs['biased'] == True and configs['bias_on'] == 'edges'): net_generator.assign_an_edge_consv(net, the_edge ,configs['bias_distribution'])
 
     # MAINTAIN NODE_EDGE RATIO
     # ASSUMES BTWN 1 & 2
