@@ -1,2 +1,0 @@
-Pressure,Tolerance,Max Sampling Rounds, Generations, Population Size, Percent Survive, Mutation Bias, Mutation Frequency, Crossover Frequency, Crossover Percent, Starting Size, Output Frequency, Growth Frequency, Fitness Type
-[100.0],[10.0],100,10000,40,10,False,.05,0,0,10,.002,.2,5
