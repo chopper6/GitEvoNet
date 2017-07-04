@@ -190,7 +190,7 @@ def parse_worker_popn (num_workers, itern, output_dir, num_survive, fitness_dire
     popn = []
     print('master.parse_worker_popn(): num workers = ' + str(num_workers) + " and itern " + str(itern))
     print("parse worker pop params: dir = " + str(output_dir) + ".")
-    for w in range(0,num_workers): 
+    for w in range(1,num_workers+1):
         dump_file = output_dir + "/to_master/" + str(itern) + "/" + str(w)
         with open(dump_file, 'rb') as file:
             worker_pop = pickle.load(file)

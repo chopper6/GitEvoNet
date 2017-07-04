@@ -62,16 +62,18 @@ def pressurize(configs, net, instance_file_name):
 
     elif (use_kp == 'False' or use_kp == False):
         node_data.reset_fitness(net)
-        node_data.reset_BDs(net)
 
+        #TODO: fix this
         if (edge_assignment == 'probabilistic'):
             reducer.prob_reduction(net, global_edge_bias, edge_distribution, configs['biased'], configs['bias_on'])
 
         elif (edge_assignment == 'experience'):
             for i in range(num_samples_relative):
+                node_data.reset_BDs(net)
                 reducer.exp_reduction(net, pressure_relative, tolerance, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'], configs['bias_on'])
+                fitness.node_fitness(net, leaf_metric)
 
-        fitness.node_fitness(net, leaf_metric)
+        fitness.node_normz(net, num_samples_relative)
         fitness_score = fitness.node_product(net)
 
 

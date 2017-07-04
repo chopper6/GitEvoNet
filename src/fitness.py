@@ -33,6 +33,11 @@ def node_product(net):
     if (num_0 > 0): print("WARNING: fitness.node_product(): " + str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
     return fitness_score
 
+def node_normz(net, denom):
+    if (denom != 0):
+        for n in net.nodes():
+            net.node[n]['fitness'] /= denom
+
 #use_kp only
 def kp_instance_properties(a_result, leaf_metric, leaf_operator, leaf_pow, hub_metric, hub_operator, fitness_operator, net, instance_file_name):
 
