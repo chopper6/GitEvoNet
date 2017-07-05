@@ -9,19 +9,24 @@ from matplotlib import rcParams
 import random as rd
 
 
-def plot_dir(output_dir, configs):
+def plot_dir(output_dir, biased, bias_on):
+    if not os.path.exists(output_dir + "/undirected_degree_distribution/"):
+        os.makedirs(output_dir+"/undirected_degree_distribution/")
+    #files = os.walk(output_dir + "/nets/")
     for root, dirs, files in os.walk(output_dir + "/nets/"):
         for f in files:
-            undir_deg_distrib(root + "/" + f, output_dir + "/undirected_degree_distribution/", f, configs)
+            print("plot_dir(): file " + str(f))
+            undir_deg_distrib(root + "/" + f, output_dir + "/undirected_degree_distribution/", f, biased, bias_on)
 
 
-def undir_deg_distrib(net_file, destin_path, title, configs):
+def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
+    print('undir_deg_distrib: biased=' + str(biased) + ', bias_on=' + str(bias_on))
     #update_rcParams()
     # each line in 'input.txt' should be: [network name (spaces allowed) followed by /path/to/edge/file.txt/or/pickled/network.dump]
 
     net = nx.read_edgelist(net_file, nodetype=int, create_using=nx.DiGraph())
 
-    colors = ['#ff5050', '#6699ff']
+    colors = ['#0099cc','#ff5050', '#6699ff']
     color_choice = colors[0]
 
     for type in ['loglog', 'scatter']:
@@ -36,14 +41,15 @@ def undir_deg_distrib(net_file, destin_path, title, configs):
 
         #derive vals from conservation scores
         consv_vals = []
-        if (configs['biased'] == (True or 'True')):
+        if (biased == True or biased == 'True'):
+            print('using bias')
             for deg in degs: #deg consv is normalized by num nodes
                 avg_consv, num_nodes = 0,0
                 for node in net.nodes():
                     if (net.degree(node) == deg):
-                        if (configs['bias_on'] == 'nodes'):
+                        if (bias_on == 'nodes'):
                             avg_consv += net.node[node]['conservation_score']
-                        elif (configs['bias_on'] == 'edges'): #node consv is normalized by num edges
+                        elif (bias_on == 'edges'): #node consv is normalized by num edges
                             node_consv, num_edges = 0, 0
                             for edge in net.edges(node):
                                 node_consv += net[edge[0]][edge[1]]['conservation_score']
@@ -72,8 +78,8 @@ def undir_deg_distrib(net_file, destin_path, title, configs):
         #FORMAT PLOT
         ax = plt.gca() # gca = get current axes instance
 
-        ax.set_xlim([0,16])
-        ax.set_ylim([0,200])
+        ax.set_xlim([0,1000])
+        ax.set_ylim([0,1000])
 
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
@@ -93,10 +99,13 @@ def undir_deg_distrib(net_file, destin_path, title, configs):
 
 
 if __name__ == "__main__":
-    base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/conf2/" #customize for curr work
+    base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/entropy2_again/" #customize for curr work
     real_net_file = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/input_all_nets.txt" #check this is still on yamaska
 
-    print("plotting " + sys.argv[1] + " and " + sys.argv[2])
-    plot_em(sys.argv[1], sys.argv[2])
+    biased = False #sys.argv[2]
+    bias_on = None #sys.argv[3]
+    for dirr in sys.argv[1:]:
+        print("plotting " + base_dir + dirr)
+        plot_dir(base_dir + dirr, biased, bias_on)
 
     print("\nDone.\n")
