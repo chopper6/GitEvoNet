@@ -190,7 +190,7 @@ def parse_worker_popn (num_workers, itern, output_dir, num_survive, fitness_dire
     popn = []
     print('master.parse_worker_popn(): num workers = ' + str(num_workers) + " and itern " + str(itern))
     print("parse worker pop params: dir = " + str(output_dir) + ".")
-    for w in range(1,num_workers+1):
+    for w in range(1,num_workers+1): 
         dump_file = output_dir + "/to_master/" + str(itern) + "/" + str(w)
         with open(dump_file, 'rb') as file:
             worker_pop = pickle.load(file)
@@ -274,7 +274,7 @@ def watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitn
         for root, dirs, files in os.walk(dump_dir):
             for f in files:
                 if f in ids:
-                        if (os.path.getmtime(root + "/" + f) + .5 < time.time()):
+                        if (os.path.getmtime(root + "/" + f) + 1 < time.time()):
                             popn += parse_worker(f, itern, output_dir, num_survive)
                             num_finished += 1
                             ids.remove(f)
@@ -287,11 +287,14 @@ def watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitn
 
     t_end = time.time()
     time_elapsed = t_end - t_start
+    '''
     if (estim_wait == None):
         estim_wait = time_elapsed
         print("master using estim_wait = " + str(estim_wait))
-    if (estim_used == True): print("master updated estim_wait to " + str(estim_wait))
-    if (itern % 100 == 0): util.cluster_print(output_dir,"master finished extracting workers after " + str(time_elapsed) + " seconds, and making " + str(dir_checks) + " dir checks.")
+    if (estim_used == True): util.cluster_print(output_dir,"master updated estim_wait to " + str(estim_wait))
+    '''
+    #if (itern % 100 == 0): 
+    util.cluster_print(output_dir,"master finished extracting workers after " + str(time_elapsed) + " seconds, and making " + str(dir_checks) + " dir checks.")
 
     return estim_wait, popn
 
