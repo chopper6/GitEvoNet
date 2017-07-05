@@ -73,7 +73,7 @@ def pressurize(configs, net, instance_file_name):
             tot = float(sum(freqs))
             freqs = [(f / tot) * 100 for f in freqs]
 
-            fitness_score = 0
+            fitness_score = 1
 
             for i in range(len(degs)):
                 deg_fitness = 0
@@ -83,7 +83,7 @@ def pressurize(configs, net, instance_file_name):
                     assert (prBD >= 0 and prBD <= 1)
                     fitBD = leaf_fitness.node_score(leaf_metric, B, D)
                     deg_fitness += prBD * fitBD
-                fitness_score += deg_fitness * freqs[i]
+                fitness_score *= math.pow(deg_fitness,freqs[i]) #as per node product rule
 
                 #reducer.prob_reduction(net, global_edge_bias, edge_distribution, configs['biased'], configs['bias_on'])
 
