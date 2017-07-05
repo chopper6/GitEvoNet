@@ -1,5 +1,5 @@
 import math
-import reducer, solver, node_data, fitness, leaf_fitness
+import reducer, solver, node_data, fitness, leaf_fitness as l_fitness
 from ctypes import cdll
 import numpy as np
 
@@ -25,6 +25,7 @@ def pressurize(configs, net, instance_file_name):
     edge_assignment = str(configs['edge_state'])
     global_edge_bias = float(configs['global_edge_bias'])
     edge_distribution = str(configs['edge_state_distribution'])
+    biased = str(configs['biased'])
 
     num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
     num_samples_relative = max(10, int(len(net.nodes())/10))
@@ -73,15 +74,22 @@ def pressurize(configs, net, instance_file_name):
             tot = float(sum(freqs))
             freqs = [(f / tot) * 100 for f in freqs]
 
+            if (biased == True):
+                p = global_edge_bias
+                if (global_edge_bias < 0 or global_edge_bias > 1):
+                    print("ERROR in pressurize: out of bounds global_edge_bias")
+                    p = .5
+            else: p = .5
+
             fitness_score = 1
 
             for i in range(len(degs)):
                 deg_fitness = 0
                 for B in range(degs[i]):
                     D = degs[i] - B
-                    prBD = (math.factorial(B + D) / (math.factorial(B) * math.factorial(D))) * math.pow(.5, B + D)
+                    prBD = (math.factorial(B + D) / (math.factorial(B) * math.factorial(D))) * math.pow(p, B) * math.pow(1-p, D)
                     assert (prBD >= 0 and prBD <= 1)
-                    fitBD = leaf_fitness.node_score(leaf_metric, B, D)
+                    fitBD = l_fitness.node_score(leaf_metric, B, D)
                     deg_fitness += prBD * fitBD
                 fitness_score *= math.pow(deg_fitness,freqs[i]) #as per node product rule
 

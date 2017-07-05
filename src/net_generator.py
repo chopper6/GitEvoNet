@@ -257,6 +257,8 @@ def assign_edge_consv(population, distrib):
             elif (distrib == 'normal'):
                 consv_score = sysRand().normalvariate(0,1)
                 consv_score = (consv_score+.5)/2
+            elif (distrib == 'global_small'): consv_score = .75
+            elif (distrib == 'global_extreme'): consv_score = 1
             else:
                 print("ERROR in net_generator(): unknown bias distribution: " + str (distrib))
                 return 1
@@ -272,6 +274,10 @@ def assign_an_edge_consv(net, edge, distrib):
     elif (distrib == 'normal'):
         consv_score = sysRand().normalvariate(0, 1)
         consv_score = (consv_score + .5) / 2
+    elif (distrib == 'global_small'):
+        consv_score = .75
+    elif (distrib == 'global_extreme'):
+        consv_score = 1
     else:
         print("ERROR in net_generator(): unknown bias distribution: " + str(distrib))
         return 1
