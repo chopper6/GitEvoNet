@@ -1,6 +1,7 @@
 import math
-import reducer, solver, node_data, fitness
+import reducer, solver, node_data, fitness, leaf_fitness
 from ctypes import cdll
+import numpy as np
 
 def pressurize(configs, net, instance_file_name):
     # configs:
@@ -61,20 +62,40 @@ def pressurize(configs, net, instance_file_name):
         return [leaf_fitness, hub_fitness, solo_fitness]
 
     elif (use_kp == 'False' or use_kp == False):
-        node_data.reset_fitness(net)
 
-        #TODO: fix this
+        #TODO: keep working on this
         if (edge_assignment == 'probabilistic'):
-            reducer.prob_reduction(net, global_edge_bias, edge_distribution, configs['biased'], configs['bias_on'])
+            # assumes no conservation score or global bias, and bernouille pr distribution
+            # global bias: change prBD
+            # local bias (consv score)...? calc base prBD sep, then for each node or something
+            degrees = list(net.degree().values())
+            degs, freqs = np.unique(degrees, return_counts=True)
+            tot = float(sum(freqs))
+            freqs = [(f / tot) * 100 for f in freqs]
+
+            fitness_score = 0
+
+            for i in range(len(degs)):
+                deg_fitness = 0
+                for B in range(degs[i]):
+                    D = degs[i] - B
+                    prBD = (math.factorial(B + D) / (math.factorial(B) * math.factorial(D))) * math.pow(.5, B + D)
+                    assert (prBD >= 0 and prBD <= 1)
+                    fitBD = leaf_fitness.node_score(leaf_metric, B, D)
+                    deg_fitness += prBD * fitBD
+                fitness_score += deg_fitness * freqs[i]
+
+                #reducer.prob_reduction(net, global_edge_bias, edge_distribution, configs['biased'], configs['bias_on'])
 
         elif (edge_assignment == 'experience'):
+            node_data.reset_fitness(net)
             for i in range(num_samples_relative):
                 node_data.reset_BDs(net)
                 reducer.exp_reduction(net, pressure_relative, tolerance, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'], configs['bias_on'])
                 fitness.node_fitness(net, leaf_metric)
 
-        fitness.node_normz(net, num_samples_relative)
-        fitness_score = fitness.node_product(net)
+            fitness.node_normz(net, num_samples_relative)
+            fitness_score = fitness.node_product(net)
 
 
         return [0,0, fitness_score] #weird as all hell, but [2] is used as the actual fitness

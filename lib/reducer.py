@@ -1,4 +1,5 @@
 import random, util, math, time, numpy as np
+import leaf_fitness
 
 #--------------------------------------------------------------------------------------------------
 def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria, bias_on):
@@ -35,8 +36,7 @@ def exp_reduction(net, sample_size, T_percentage, advice_sampling_threshold, adv
 
 
 # --------------------------------------------------------------------------------------------------
-def prob_reduction(net, global_ben_bias, distribn, biased, biased_on):
-    # assumes advice on edges
+def prob_reduction(net, global_ben_bias, distribn, biased, biased_on, leaf_metric):
 
     for edge in net.edges():
         source, target = edge[0], edge[1]
