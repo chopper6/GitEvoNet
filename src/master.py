@@ -21,7 +21,6 @@ def evolve_from_seed(configs):
     survive_fraction = float(survive_percent) / 100
     num_output = int(configs['num_output'])
     num_net_output = int(configs['num_net_output'])
-    num_draw =  int(configs['num_drawings'])
     max_gen = int(configs['max_generations'])
     debug = (configs['debug'])
     if (debug == 'True'): debug = True
@@ -50,7 +49,7 @@ def evolve_from_seed(configs):
         with open(prog_path) as file:
             itern = file.readline()
 
-        if (itern): #IS CONTINUATION RUN
+        if (itern and itern!=0): #IS CONTINUATION RUN
             itern = int(itern)-2 #fall back one, latest may not have finished
             population = parse_worker_popn(num_workers, itern, output_dir, num_survive, fitness_direction)
             size = len(population[0].net.nodes())
@@ -93,9 +92,6 @@ def evolve_from_seed(configs):
             if (itern % int(max_gen / num_instance_output) == 0):
                 # if first gen, have already pressurized w/net[0]
                 if (itern != 0): pressure_results = pressurize.pressurize(configs, population[0].net, instance_file + "Xitern" + str( itern) + ".csv")
-
-        #if (itern % int(max_gen / num_draw) == 0 and num_draw != 0 ):
-            #draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
         if (itern % int(max_gen/num_net_output) ==0):
             nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(itern))
