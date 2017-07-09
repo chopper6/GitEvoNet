@@ -103,8 +103,9 @@ def pressurize(configs, net, instance_file_name):
                 fitness.node_fitness(net, leaf_metric)
 
             fitness.node_normz(net, num_samples_relative)
-            fitness_score = fitness.node_product(net)
-
+            if (fitness_operator == 'product'): fitness_score = fitness.node_product(net)
+            elif (fitness_operator == 'entropy'): fitness_score = fitness.node_entropy(net)
+            else: print("Error in pressurize(): unknown fitness_op: " + str(fitness_operator))
 
         return [0,0, fitness_score] #weird as all hell, but [2] is used as the actual fitness
 
