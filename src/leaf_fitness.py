@@ -159,6 +159,31 @@ def node_score (leaf_metric, B, D):
 
     else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric: " + str(leaf_metric))
 
+def directed_node_score(leaf_metric, Bin, Bout, Din, Dout):
+
+    if (leaf_metric == 'entropy_conserved'):
+
+        Bs = [Bin,Bout]
+        Ds = [Din, Dout]
+        S = [0,0] #ENTROPY
+        for i in range(2):
+            B,D = Bs[i],Ds[i]
+
+            if (B==0): H_B = 0
+            else: H_B = -1*(B/(B+D)) * math.log2(B/(B+D))
+
+            if (D==0): H_D = 0
+            else: H_D = -1*(D/(B+D)) * math.log2(D/(B+D))
+
+            S[i] = H_B + H_D
+
+        Sin, Sout = S[0], S[1]
+
+        return Sin - Sout
+
+
+    else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric: " + str(leaf_metric))
+
 
 def assign_denom(leaf_metric, num_genes):
     #if (leaf_metric == 'ratio 11'): return math.pow(combo_sum,2)

@@ -30,6 +30,8 @@ def node_product(net):
             #print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
             num_0 += 1
         else: fitness_score *= net.node[n]['fitness']
+
+    fitness_score = math.pow(fitness_score, 1/float(len(net.nodes()))) #normalization
     if (num_0 > 0): print("WARNING: fitness.node_product(): " + str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
     return fitness_score
 
