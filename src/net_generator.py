@@ -2,12 +2,12 @@ import networkx as nx
 from random import SystemRandom as sysRand
 import perturb, init
 import mutate
-import pickle
+import pickle, decimal
 
 # maybe rename to reduce confusion
 class Net:
     def __init__(self, net, id):
-        self.fitness = 0    #aim to max
+        self.fitness = decimal.Decimal(0)    #aim to max
         self.fitness_parts = [0]*3   #leaf-fitness, hub-fitness
         self.net = net.copy()
         assert(self.net != net)
@@ -15,7 +15,7 @@ class Net:
 
     def copy(self):
         copy = Net(self.net, self.id)
-        copy.fitness = self.fitness
+        copy.fitness = decimal.Decimal(self.fitness)
         self.fitness_parts = [0]*3   #leaf-fitness, hub-fitness
         assert (copy != self and copy.net != self.net)
         #assert (copy.fitness_parts != self.fitness_parts)
