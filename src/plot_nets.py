@@ -365,7 +365,8 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
 
             ydata2 = []
             for y in ydata:
-                ydata2.append(Decimal(math.log(Decimal(y),10)))
+                if (y==0): ydata2.append(0)
+                else: ydata2.append(Decimal(math.log(Decimal(y),10)))
             ydata = ydata2
             titles[i] += ' Log-Scaled'
 
