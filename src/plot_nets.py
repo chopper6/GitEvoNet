@@ -4,6 +4,7 @@ matplotlib.use('Agg') # This must be done before importing matplotlib.pyplot
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
+from decimal import Decimal
 
 
 #ORGANIZER
@@ -30,7 +31,7 @@ def single_run_plots (dirr):
 
     print("Generating degree distribution plots.")
     degree_distrib(dirr)
-    degree_distrib_change(dirr)
+    #degree_distrib_change(dirr)
 
 
 
@@ -364,7 +365,7 @@ def features_over_time(dirr, net_info, titles, mins, maxs, use_lims):
 
             ydata2 = []
             for y in ydata:
-                ydata2.append(math.log(y,10))
+                ydata2.append(Decimal(math.log(Decimal(y),10)))
             ydata = ydata2
             titles[i] += ' Log-Scaled'
 
