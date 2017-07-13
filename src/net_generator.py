@@ -252,7 +252,7 @@ def assign_a_node_consv(net, node, distrib):
 def assign_edge_consv(population, distrib):
     # since assigns to whole population, will be biased since selection will occur on most fit distribution of conservation scores
     for p in range(len(population)):
-        net = population[p].netd
+        net = population[p].net
         for edge in net.edges():
             if (distrib == 'uniform'): consv_score = sysRand().uniform(0,.5)
             elif (distrib == 'normal'):
