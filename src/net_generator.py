@@ -250,7 +250,7 @@ def assign_a_node_consv(net, node, distrib):
 def assign_edge_consv(population, distrib):
     # since assigns to whole population, will be biased since selection will occur on most fit distribution of conservation scores
     for p in range(len(population)):
-        net = population[p].net
+        net = population[p].netd
         for edge in net.edges():
             if (distrib == 'uniform'): consv_score = sysRand().uniform(0,.5)
             elif (distrib == 'normal'):
@@ -258,6 +258,7 @@ def assign_edge_consv(population, distrib):
                 consv_score = (consv_score+.5)/2
             elif (distrib == 'global_small'): consv_score = .75
             elif (distrib == 'global_extreme'): consv_score = 1
+            elif (distrib == 'global_extreme01'): consv_score = sysRand().choice([0,1])
             else:
                 print("ERROR in net_generator(): unknown bias distribution: " + str (distrib))
                 return 1

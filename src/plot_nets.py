@@ -445,4 +445,3 @@ if __name__ == "__main__":
         dirr_addon = arg
         dirr= dirr_base + dirr_addon
         single_run_plots(dirr)
-        growth_deg_change(dirr)
