@@ -34,11 +34,13 @@ def advice (M, samples, biased, advice_upon, bias_on):
                 ele = element
                 source = int(ele[0])
                 target = int(ele[1])
-                if (bias_on == 'nodes'):
-                    biased_center = (M.node[source]['conservation_score'] + M.node[target]['conservation_score'])/2
-                elif (bias_on == 'edges'):
-                    biased_center = M[source][target]['conservation_score']
-                else: print("ERROR  util.advice(): unknown bias_on: " + str(bias_on))
+                if (M.has_edge(source, target)):
+                    if (bias_on == 'nodes'):
+                        biased_center = (M.node[source]['conservation_score'] + M.node[target]['conservation_score'])/2
+                    elif (bias_on == 'edges'):
+                        biased_center = M[source][target]['conservation_score']
+                    else: print("ERROR  util.advice(): unknown bias_on: " + str(bias_on))
+                else: biased_center = .5 #doesn't really matter
 
             else:
                 print("ERROR util.advice(): unknown advice_upon: " + str(advice_upon))

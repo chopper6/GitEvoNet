@@ -3,7 +3,7 @@ from random import SystemRandom as sysRand
 from time import sleep, process_time
 import networkx as nx
 import numpy as np
-import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, mutate, util, entropy_net_plots
+import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, mutate, util, plot_undir
 
 
 
@@ -17,9 +17,23 @@ def evolve_master(configs):
 
     num_data = 3 #num_gens, net_size, fitness
     sim_data = np.empty((num_sims, num_data))
+    sims_so_far = 0
+
+    if (num_sims > 1):
+        mult_prog_path = output_dir + "/mult_sims_progress.txt"
+        if os.path.isfile(mult_prog_path):
+            with open(mult_prog_path) as mult_file:
+                lines = mult_file.readlines()
+                sims_so_far = int(lines[0])
+                sim_data = np.array(lines[1])
+                print("master(): continuing run with mult simulations: sim data so far = " + str(sim_data) + ".\n")
+
     #if num != 1: init obj
-    for i in range(int(configs['num_sims'])):
+    for i in range(sims_so_far, int(configs['num_sims'])):
         sim_data[i] = evolve_population(configs) #poss return or alter data obj
+        if (num_sims > 1):
+            with open(output_dir + "/mult_sims_progress.txt", 'w') as out:
+                out.write(str(i) + "\n" + str(sim_data))
 
     if (num_sims > 1):
         avg_data = np.mean(sim_data)
@@ -46,7 +60,7 @@ def protocol_configs(protocol, configs):
         configs['num_sims'] = 1
         configs['advice_creation'] = 'each'
 
-    elif (protocol == 'direct evo'):
+    elif (protocol == 'direct evo' or protocol == 'direct evolution' or protocol == 'direct'):
         configs['hub_metric'] = 'Bin'
         configs['hub_operation'] = 'Btot'
         configs['fitness_operation'] = 'hub'
@@ -109,7 +123,11 @@ def evolve_population(configs):
         with open(prog_path) as file:
             itern = file.readline()
 
-        if (itern and itern!=0): #IS CONTINUATION RUN
+        if (itern == 'Done'):
+            util.cluster_print(output_dir, "Run already finished, exiting...")
+            return
+
+        elif (itern and itern!=0): #IS CONTINUATION RUN
             itern = int(itern)-2 #fall back one, latest may not have finished
             population = parse_worker_popn(num_workers, itern, output_dir, num_survive, fitness_direction)
             size = len(population[0].net.nodes())
@@ -228,7 +246,7 @@ def evolve_population(configs):
     #final outputs
     nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(itern))
 
-    output.popn_data(population, output_dir, total_gens)
+    output.popn_data(population, output_dir, total_gens, sim_data, num_sims)
     output.deg_change_csv(population, output_dir)
     #draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
@@ -403,7 +421,7 @@ def build_advice(net, configs):
             samples = net.nodes()
             sample_size = int(pressure * len(net.nodes()))
         elif (advice_upon == 'edges'):
-            samples = [[net[node_i][node_j] for node_i in net.nodes()] for node_j in net.nodes()] #all possible edges
+            samples = [[str(node_i), str(node_j)] for node_i in net.nodes() for node_j in net.nodes()]  # all possible edges
             #samples = net.edges()
             sample_size = int(pressure * len(net.edges())) #sample size based on all existing edges
         advice = util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon, bias_on)

@@ -4,6 +4,7 @@ import os, csv, math
 import numpy as np
 np.set_printoptions(formatter={'int_kind': lambda x:' {0:d}'.format(x)})
 import networkx as nx
+from decimal import Decimal
 
 
 def init_csv(out_dir, configs):
@@ -63,10 +64,17 @@ def popn_data(population, output_dir, gen, sim_data, num_sims):
         with open(output_csv, 'a') as output_file:
             output = csv.writer(output_file)
 
-            all_fitness = [population[p].net.fitness for p in range(len(population))]
-            mean_fitness, var_fitness = np.mean(all_fitness), np.var(all_fitness)
-            net = population[0].net #most fit net
-            nets_info = [gen, len(net.nodes()), net.fitness, net.fitness_parts[0], net.fitness_parts[1], net.fitness_parts[2], sum(net.degree().values())/len(net.nodes()),len(net.edges())/len(net.nodes()), mean_fitness, var_fitness]
+            all_fitness = [population[p].fitness for p in range(len(population))]
+            sum_fitness = Decimal(0)
+            for fitness in all_fitness: sum_fitness = Decimal(sum_fitness) +  Decimal(fitness)
+            mean_fitness = sum_fitness/Decimal(len(all_fitness))
+            vars = [math.pow(Decimal(all_fitness[i]) - Decimal(mean_fitness),2) for i in range(len(all_fitness))]
+            var_fitness = Decimal(0)
+            for var in vars: var_fitness = Decimal(var_fitness) + Decimal(var)
+
+            Net = population[0] #most fit net
+            net = Net.net
+            nets_info = [gen, len(net.nodes()), Net.fitness, Net.fitness_parts[0], Net.fitness_parts[1], Net.fitness_parts[2], sum(net.degree().values())/len(net.nodes()),len(net.edges())/len(net.nodes()), mean_fitness, var_fitness]
 
             if (num_sims == 1):output.writerow(nets_info)
             else: sim_data.append(nets_info)

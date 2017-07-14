@@ -23,7 +23,7 @@ def node_fitness(net, leaf_metric):
         #print(net[node]['fitness'])
 
 def node_product(net):
-    decimal.getcontext().prec = 20
+    decimal.getcontext().prec = 40
     fitness_score = 1
     num_0 = 0
     for n in net.nodes():
