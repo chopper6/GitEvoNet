@@ -71,6 +71,7 @@ def cluster_print(output_dir, text):
         file.write(text + "\n")
         file.flush()
         file.close()
+    print(text)
 
 
 def cleanPaths(path):

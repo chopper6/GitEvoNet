@@ -2,18 +2,74 @@ import math, os, pickle, sys, time, shutil
 from random import SystemRandom as sysRand
 from time import sleep, process_time
 import networkx as nx
+import numpy as np
 import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, mutate, util, entropy_net_plots
+
+
 
 def evolve_master(configs):
     protocol = configs['protocol']
     output_dir = configs['output_directory']
-    if (protocol == 'from seed'):
-        evolve_from_seed(configs)
-    else:
-        util.cluster_print(output_dir,"ERROR in master(): unknown protocol " + str(protocol))
-    return
+    num_sims = int(configs['num_sims'])
 
-def evolve_from_seed(configs):
+    protocol_configs(protocol, configs) #basically just auto-sets certain params
+    assert (num_sims > 0)
+
+    num_data = 3 #num_gens, net_size, fitness
+    sim_data = np.empty((num_sims, num_data))
+    #if num != 1: init obj
+    for i in range(int(configs['num_sims'])):
+        sim_data[i] = evolve_population(configs) #poss return or alter data obj
+
+    if (num_sims > 1):
+        avg_data = np.mean(sim_data)
+        print("avg_data shape = " + str(np.shape(avg_data)))
+        print("avg_data vals = " + str(avg_data))
+        plot_nets.single_run_plots(output_dir)
+
+
+
+def protocol_configs(protocol, configs):
+    output_dir = configs['output_directory']
+
+    if (protocol == 'mLmH'):
+        configs['leaf_metric'] = 'RGAR'
+        configs['leaf_operation'] = 'sum'
+        configs['leaf_power'] = 2
+
+        configs['hub_metric'] = 'ETB'
+        configs['hub_operation'] = 'Btot'
+
+        configs['fitness_operation'] = 'multiply'
+        configs['fitness_direction'] = 'max'
+
+        configs['num_sims'] = 1
+        configs['advice_creation'] = 'each'
+
+    elif (protocol == 'direct evo'):
+        configs['hub_metric'] = 'Bin'
+        configs['hub_operation'] = 'Btot'
+        configs['fitness_operation'] = 'hub'
+        configs['fitness_direction'] = 'max'
+        configs['advice_creation'] = 'once'
+
+    elif (protocol == 'entropy'):
+        configs['leaf_metric'] = 'capacity'
+        configs['fitness_operation'] = 'product'
+        configs['fitness_direction'] = 'max'
+
+        configs['num_sims'] = 1
+        configs['advice_creation'] = 'each'
+
+    elif (protocol == 'custom'):
+         util.cluster_print(output_dir, "Custom run, careful to define all parameters.\n")
+
+    else:
+        util.cluster_print(output_dir, "ERROR: in master: unknown protocol " + str(protocol))
+
+
+
+def evolve_population(configs):
     # get configs
     num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory']
@@ -33,10 +89,14 @@ def evolve_from_seed(configs):
     num_grow = int(configs['num_grows'])
     edge_node_ratio = float(configs['edge_to_node_ratio'])
     fitness_direction = str(configs['fitness_direction'])
-
     num_instance_output = int(configs['num_instance_output'])
     instance_file = configs['instance_file']
     if (num_instance_output==0): instance_file = None
+
+    #NEW ocnfigs
+    stopping_condn = configs['stopping_condition'] #TODO: implement this
+    num_sims = int(configs['num_sims'])
+
 
     size, total_gens, itern, population, num_survive = None, None, None, None, None #just to avoid annoying warnings
 
@@ -55,7 +115,12 @@ def evolve_from_seed(configs):
             size = len(population[0].net.nodes())
             itern += 1
             total_gens = itern  # also temp, assumes worker gens = 1
-            util.cluster_print(output_dir,"\nmaster(): CONTINUE RUN with global gen = " + str(itern) + " \n")
+
+            #just need ADVICE from a worker dump
+            a_worker_file = output_dir + "to_workers/" + str(itern) + "/1"
+            a_worker_ID, a_seed, a_worker_gens, a_pop_size, a_num_return, a_randSeed, a_curr_gen, advice, a_configs = pickle.load(a_worker_file)
+
+            util.cluster_print(output_dir,"\nmaster(): CONTINUE RUN with global gen = " + str(itern) + ", len advice = " + str(len(advice)) + "\n")
             cont = True
 
     if cont==False: #FRESH START
@@ -65,15 +130,18 @@ def evolve_from_seed(configs):
 
         population = net_generator.init_population(init_type, start_size, pop_size, configs)
         # init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
+        advice = build_advice(population[0].net, configs)
 
         #init fitness eval
-        pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xitern0.csv")  
+        pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xitern0.csv", advice)
         population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
         fitness.eval_fitness([population[0]], fitness_direction)
         output.deg_change_csv([population[0]], output_dir)
 
         total_gens, size, itern = 0, start_size, 0
 
+
+    sim_data = []
     estim_wait = None
     while (size <= end_size and total_gens < max_gen):
         t_start = time.time()
@@ -81,7 +149,7 @@ def evolve_from_seed(configs):
 
         #OUTPUT INFO
         if (itern % int(max_gen / num_output) == 0):
-            output.to_csv(population, output_dir, total_gens)
+            output.popn_data(population, output_dir, total_gens, sim_data, num_sims)
             util.cluster_print(output_dir,"Master at gen " + str(total_gens) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
             worker_percent_survive = worker_pop_size #should match however workers handle %survive
             util.cluster_print(output_dir,"Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
@@ -91,7 +159,7 @@ def evolve_from_seed(configs):
         if (num_instance_output != 0):
             if (itern % int(max_gen / num_instance_output) == 0):
                 # if first gen, have already pressurized w/net[0]
-                if (itern != 0): pressure_results = pressurize.pressurize(configs, population[0].net, instance_file + "Xitern" + str( itern) + ".csv")
+                if (itern != 0): pressure_results = pressurize.pressurize(configs, population[0].net, instance_file + "Xitern" + str( itern) + ".csv", advice)
 
         if (itern % int(max_gen/num_net_output) ==0):
             nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(itern))
@@ -111,10 +179,10 @@ def evolve_from_seed(configs):
 
         # distribute workers
         if (debug == True): #sequential debug, may be outdated
-            dump_file = output_dir + "to_workers/" + str(itern) + "/0"
+            dump_file = output_dir + "to_workers/" + str(itern) + "/1"
             seed = population[0].copy()
             randSeeds = os.urandom(sysRand().randint(0, 1000000))
-            worker_args = [0, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds,total_gens, configs]
+            worker_args = [0, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds,total_gens, advice, configs]
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
             #pool.map_async(minion.evolve_minion, (dump_file,))
@@ -128,7 +196,7 @@ def evolve_from_seed(configs):
                 seed = population[w % num_survive].copy()
                 randSeeds = os.urandom(sysRand().randint(0,1000000))
                 assert(seed != population[w % num_survive])
-                worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, total_gens, configs]
+                worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, total_gens, advice, configs]
                 with open(dump_file, 'wb') as file:
                     pickle.dump(worker_args, file)
 
@@ -160,17 +228,18 @@ def evolve_from_seed(configs):
     #final outputs
     nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(itern))
 
-    output.to_csv(population, output_dir, total_gens)
+    output.popn_data(population, output_dir, total_gens)
     output.deg_change_csv(population, output_dir)
     #draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
     util.cluster_print(output_dir,"Evolution finished, generating images.")
-    plot_nets.single_run_plots(output_dir)
+    if (num_sims == 1): plot_nets.single_run_plots(output_dir)
     #instances.analyze(output_dir)
     #if (configs['use_knapsack'] == (False or 'False')): entropy_net_plots.plot_dir(output_dir, configs)
 
     util.cluster_print(output_dir,"Master finished config file.\n")
-    return
+
+    return sim_data
 
 
 def init_dirs(num_workers, output_dir):
@@ -319,3 +388,25 @@ def write_mpi_info(output_dir, itern):
         shutil.rmtree(output_dir + "/to_workers/" + str(prev_itern))
 
     #else: util.cluster_print(output_dir,"WARNING in master.write_mpi_info(): dir /to_master/" + str(itern) + " already exists...sensible if a continuation run.")
+
+
+def build_advice(net, configs):
+    if (configs['advice_creation'] == 'once'):
+        #assumes no growth
+        advice_upon = configs['advice_upon']
+        biased = str(configs['biased'])
+        bias_on = str(configs['bias_on'])
+        pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
+        samples, sample_size = None, None
+
+        if (advice_upon == 'nodes'):
+            samples = net.nodes()
+            sample_size = int(pressure * len(net.nodes()))
+        elif (advice_upon == 'edges'):
+            samples = [[net[node_i][node_j] for node_i in net.nodes()] for node_j in net.nodes()] #all possible edges
+            #samples = net.edges()
+            sample_size = int(pressure * len(net.edges())) #sample size based on all existing edges
+        advice = util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon, bias_on)
+    else: advice = None #will generate during reduction each time instead
+
+    return advice

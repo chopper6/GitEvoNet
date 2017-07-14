@@ -28,6 +28,7 @@ def assign_numer (hub_metric, soln_bens, soln_dmgs, soln_bens_sq):
 
     elif(hub_metric=='control'): return max(soln_bens)
 
+    elif(hub_metric == 'Bin'): return sum(soln_bens)
 
     elif (hub_metric=='combo'):
         numer=0

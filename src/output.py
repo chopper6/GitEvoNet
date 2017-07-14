@@ -8,7 +8,7 @@ import networkx as nx
 
 def init_csv(out_dir, configs):
  
-    csv_title = "Generation, Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio\n"
+    csv_title = "Generation, Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Mean Fitness, Variance in Fitness\n"
     #csv_title = "Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Clustering Coefficient, # Triangle Communities\n"
     deg_distrib_title = "Generation, Net Size, In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
 
@@ -55,7 +55,7 @@ def deg_change_csv(population, output_dir):
         output.writerow(distrib_info)
 
 
-def to_csv(population, output_dir, gen):
+def popn_data(population, output_dir, gen, sim_data, num_sims):
 
     if (population[0].net.edges()):
         output_csv = output_dir + "/info.csv"
@@ -63,58 +63,41 @@ def to_csv(population, output_dir, gen):
         with open(output_csv, 'a') as output_file:
             output = csv.writer(output_file)
 
-            #now only most fit new
-            for p in range(1):
-                net = population[p].net
-                net_info = []
-                net_info.append(gen)
-                net_info.append(len(net.nodes()))
-                #net_info.append(population[p].id)
-                net_info.append(population[p].fitness)
-                #net_info.append(population[p].fitness_parts[0])
-                net_info.append(population[p].fitness_parts[0])
-                net_info.append(population[p].fitness_parts[1])
-                net_info.append(population[p].fitness_parts[2])
-                net_info.append(sum(net.degree().values())/len(net.nodes()))
-                net_info.append(len(net.edges())/len(net.nodes()))
+            all_fitness = [population[p].net.fitness for p in range(len(population))]
+            mean_fitness, var_fitness = np.mean(all_fitness), np.var(all_fitness)
+            net = population[0].net #most fit net
+            nets_info = [gen, len(net.nodes()), net.fitness, net.fitness_parts[0], net.fitness_parts[1], net.fitness_parts[2], sum(net.degree().values())/len(net.nodes()),len(net.edges())/len(net.nodes()), mean_fitness, var_fitness]
 
-                #undir = net.to_undirected()
-                #net_info.append(nx.average_clustering(undir))
-
-                #clique_size = int(math.floor(len(net.nodes())/50))
-                #net_info.append(len(list(nx.k_clique_communities(undir, clique_size))))
-                #net_info.append(len(list(nx.k_clique_communities(undir, 3))))
-
-                output.writerow(net_info)
-                #write rows more concisely?
+            if (num_sims == 1):output.writerow(nets_info)
+            else: sim_data.append(nets_info)
 
         with open(output_dir + "/degree_distrib.csv", 'a') as deg_file:
-                #only distribution of most fit net
-                output = csv.writer(deg_file)
+            #only distribution of most fit net
+            output = csv.writer(deg_file)
 
-                distrib_info = []
-                distrib_info.append(gen)
-                distrib_info.append(len(population[0].net.nodes()))
+            distrib_info = []
+            distrib_info.append(gen)
+            distrib_info.append(len(population[0].net.nodes()))
 
-                in_degrees, out_degrees = list(population[0].net.in_degree().values()), list(population[0].net.out_degree().values())
+            in_degrees, out_degrees = list(population[0].net.in_degree().values()), list(population[0].net.out_degree().values())
 
-                indegs, indegs_freqs = np.unique(in_degrees, return_counts=True)
-                indegs = np.array2string(indegs).replace('\n', '')
-                indegs_freqs = np.array2string(indegs_freqs).replace('\n', '')
-                #tmp = itemfreq(in_degrees)
-                #indegs, indegs_freqs = tmp[:, 0], tmp[:, 1]  # 0 = unique values in data, 1 = frequencies
-                distrib_info.append(indegs)
-                distrib_info.append(indegs_freqs)
+            indegs, indegs_freqs = np.unique(in_degrees, return_counts=True)
+            indegs = np.array2string(indegs).replace('\n', '')
+            indegs_freqs = np.array2string(indegs_freqs).replace('\n', '')
+            #tmp = itemfreq(in_degrees)
+            #indegs, indegs_freqs = tmp[:, 0], tmp[:, 1]  # 0 = unique values in data, 1 = frequencies
+            distrib_info.append(indegs)
+            distrib_info.append(indegs_freqs)
 
-                outdegs, outdegs_freqs = np.unique(out_degrees, return_counts=True)
-                outdegs = np.array2string(outdegs).replace('\n', '')
-                outdegs_freqs = np.array2string(outdegs_freqs).replace('\n', '')
-                #tmp = itemfreq(out_degrees)
-                #outdegs, outdegs_freqs = tmp[:, 0], tmp[:, 1]
-                distrib_info.append(outdegs)
-                distrib_info.append(outdegs_freqs)
+            outdegs, outdegs_freqs = np.unique(out_degrees, return_counts=True)
+            outdegs = np.array2string(outdegs).replace('\n', '')
+            outdegs_freqs = np.array2string(outdegs_freqs).replace('\n', '')
+            #tmp = itemfreq(out_degrees)
+            #outdegs, outdegs_freqs = tmp[:, 0], tmp[:, 1]
+            distrib_info.append(outdegs)
+            distrib_info.append(outdegs_freqs)
 
-                output.writerow(distrib_info)
+            output.writerow(distrib_info)
 
 
 def minion_csv(output_dir, pressurize_time, num_growth, end_size):

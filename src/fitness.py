@@ -125,7 +125,7 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, leaf_pow, hub_m
         hub_score /= float(hub_denom)
         if (hub_operator == 'pow'): hub_score = math.pow(hub_score, 1/len(GENES_in))
         elif (hub_operator == 'mult'): hub_score /= len(GENES_in)
-        elif (hub_operator == 'sum all'):
+        elif (hub_operator == 'Btot'):
             if (sum(all_ben)>0): hub_score /= float(sum(all_ben))
         elif (hub_operator == 'inv sum'): hub_score = 1/hub_score
         elif (hub_operator == 'inv leaf'): hub_score = leaf_score/hub_score

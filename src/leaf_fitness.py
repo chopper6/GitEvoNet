@@ -146,7 +146,7 @@ def node_score (leaf_metric, B, D):
 
         return (H_B + H_D)
 
-    elif (leaf_metric == 'max_min_entropy'):
+    elif (leaf_metric == 'capacity'): #used to be max_min_entropy
         #if (B+D==0): return 0
         if (B==0): H_B = 0
         else: H_B = -1*(B/(B+D)) * math.log2(B/(B+D))
