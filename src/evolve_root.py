@@ -97,9 +97,8 @@ def evolve(rank, config_file):
         extract_and_combine(orig_output_dir, num_sims)
         plot_nets.feature_plots_only(orig_output_dir)
         for i in range(num_sims-1):
-            shutil.rmtree(orig_output_dir + "_" + str(i)) #clean up, leave last run as sample
-
-
+            if (os.path.exists(orig_output_dir + "sim_" + str(i))):
+                shutil.rmtree(orig_output_dir + "sim_" + str(i)) #clean up, leave last run as sample
 
 
 if __name__ == "__main__":

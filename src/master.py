@@ -3,7 +3,7 @@ from random import SystemRandom as sysRand
 from time import sleep, process_time
 import networkx as nx
 import numpy as np
-import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, mutate, util, plot_undir
+import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, mutate, util, plot_undir, init
 
 
 
@@ -117,7 +117,7 @@ def evolve_population(configs):
 
         population = net_generator.init_population(init_type, start_size, pop_size, configs)
         # init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
-        advice = build_advice(population[0].net, configs)
+        advice = init.build_advice(population[0].net, configs)
 
         #init fitness eval
         pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xitern0.csv", advice)
