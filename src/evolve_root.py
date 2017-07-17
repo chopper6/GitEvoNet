@@ -1,9 +1,10 @@
 #!/usr/bin/python3
-import os,sys
+import os,sys, csv
 from mpi4py import MPI
 os.environ['lib'] = '/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib'
 sys.path.insert(0, os.getenv('lib'))
 import init, util
+import numpy as np
 
 def batch_run(dirr, num_workers):
     #OBSOLETE, now handled by batch_root
@@ -85,26 +86,93 @@ def single_run(config_file):
     #master.evolve_master(configs)
 
 
+def extract_and_combine(output_dir, num_sims):
+    # takes info.csv from mult runs and combines into one info.csv in main dir
+
+    all_data, titles = None, None #just for warnings
+
+    for i in range(num_sims):
+        info_file = output_dir + "_" + str(i) + "/info.csv"
+
+        if (os.path.isfile(info_file)):
+            with open(info_file) as info:
+                lines = info.readlines()
+
+                if (i==0):
+                    titles = lines[0].split(',')
+                    all_data = np.empty((num_sims, len(lines), len(titles)))
+
+                j=0
+                for line in lines[1:]:
+                    data = line.split(',')
+                    all_data[i][j] = data
+                    j+=1
+
+        else: print("ERROR evolve_root.extract(): no file found: " + str(info_file))
+
+    mean_data = np.empty(len(titles))
+    for i in range(len(titles)):
+        mean_data = np.mean(all_data[:][i][:])
+
+    with open(output_dir + "/info.csv") as final_info:
+        file = csv.writer(final_info)
+        file.writerow(titles)
+        for row in mean_data:
+            file.writerow(row)
+
+
+def evolve(rank, config_file):
+
+    configs = init.initialize_configs(config_file, rank)
+    orig_output_dir = configs['output_dir']
+    num_sims = int(configs['num_sims'])
+
+    for i in range(num_sims):
+        if (num_sims > 1):  #check where to pick up the run
+            this_dir = False
+            while(not this_dir):
+
+                if (i >= num_sims):
+                    util.cluster_print(orig_output_dir, "All simulations already finished, exiting...\n")
+                    return
+
+                configs['output_dir'] = orig_output_dir + "_" + str(i)
+                this_dir = True #remains true if any of the following fail
+
+                if os.path.exists(configs['output_dir'] + "/progress.txt"):
+                    with open(configs['output_dir'] + "/progress.txt") as progress:
+                        line = progress.readline()
+                        if (line.strip() == 'Done' or line.strip() == 'done'):
+                            this_dir = False
+                            i += 1
+
+        if rank == 0:  # ie is master
+            log_text = 'Evolve_root(): in dir ' + str(os.getcwd()) + ', config file = ' + str(config_file) + ', num_workers = ' + str(num_workers)
+
+            import master
+            if (configs['number_of_workers'] != num_workers): print("\nWARNING in evolve_root(): mpi #workers != config #workers! " + str(configs['num_workers']) + " vs " + str(num_workers) + "\n") #not sure why this doesn't correctly get # config workers...
+            util.cluster_print(configs['output_directory'], log_text)
+            master.evolve_master(configs)
+
+        else:
+            import minion
+            minion.work(configs, rank)
+
+
+    if (num_sims > 1):
+        extract_and_combine(orig_output_dir, num_sims)
+        for i in range(num_sims-1):
+            os.removedirs(orig_output_dir + "_" + str(i)) #clean up, leave last run as sample
+
+
+
 
 if __name__ == "__main__":
-
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     num_workers = comm.Get_size()-1  # master not incld
     config_file = sys.argv[1]
 
-    if rank == 0:  # ie is master
-        log_text = 'Evolve_root(): in dir ' + str(os.getcwd()) + ', config file = ' + str(config_file) + ', num_workers = ' + str(num_workers)
+    evolve(rank, config_file)
 
-        import master
-        configs = init.initialize_configs(config_file, rank)
-        if (configs['number_of_workers'] != num_workers): print("\nWARNING in evolve_root(): mpi #workers != config #workers! " + str(configs['num_workers']) + " vs " + str(num_workers) + "\n") #not sure why this doesn't correctly get # config workers...
-        util.cluster_print(configs['output_directory'], log_text)
-        master.evolve_master(configs)
-
-    else:
-        import minion
-        configs = init.initialize_configs(config_file, rank)
-        minion.work(configs, rank)
-
-
+    print("\nFinished Evolution.\n")

@@ -1,13 +1,12 @@
 import networkx as nx
 from random import SystemRandom as sysRand
-import perturb, init
-import mutate
-import pickle, decimal
+import perturb, init, mutate, bias
+import pickle
 
 # maybe rename to reduce confusion
 class Net:
     def __init__(self, net, id):
-        self.fitness = decimal.Decimal(0)    #aim to max
+        self.fitness = 0  #aim to max
         self.fitness_parts = [0]*3   #leaf-fitness, hub-fitness
         self.net = net.copy()
         assert(self.net != net)
@@ -15,7 +14,7 @@ class Net:
 
     def copy(self):
         copy = Net(self.net, self.id)
-        copy.fitness = decimal.Decimal(self.fitness)
+        copy.fitness = self.fitness
         self.fitness_parts = [0]*3   #leaf-fitness, hub-fitness
         assert (copy != self and copy.net != self.net)
         #assert (copy.fitness_parts != self.fitness_parts)
@@ -72,36 +71,6 @@ def init_population(init_type, start_size, pop_size, configs):
     elif (init_type == 'star'):
         population = [Net(nx.star_graph(start_size-1), i) for i in range(pop_size)]
         custom_to_directed(population)
-
-    elif (init_type == 'sparse erdos-renyi'):
-        num_cc = 2
-        num_tries = 0
-        while(num_cc != 1):
-            num_tries += 1
-            init_net = (nx.erdos_renyi_graph(start_size,.004, directed=True, seed=None))
-            num_added = 0
-            for node in init_net.nodes():
-                if (init_net.degree(node) == 0):
-                    pre_edges = len(init_net.edges())
-                    num_added += 1
-                    sign = sysRand().randint(0, 1)
-                    if (sign == 0):     sign = -1
-                    node2 = node
-                    while (node2 == node):
-                        node2 = sysRand().sample(init_net.nodes(), 1)
-                        node2 = node2[0]
-                    if (sysRand().random() < .5): init_net.add_edge(node, node2, sign=sign)
-                    else: init_net.add_edge(node2, node, sign=sign)
-                    assert (len(init_net.edges()) > pre_edges)
-                else:
-                    if (init_net.in_edges(node) + init_net.out_edges(node) == 0): print("ERROR in net_generator(): hit a 0 deg node that is unrecognized.")
-
-            net_undir = init_net.to_undirected()
-            num_cc = nx.number_connected_components(net_undir)
-
-        print("Number of added edges to avoid 0 degree = " + str(num_added) + ", num attempts to create suitable net = " + str(num_cc) + ".\n")
-        population = [Net(init_net.copy(), i) for i in range(pop_size)]
-
 
     elif (init_type == 'v sparse erdos-renyi'):
         num_cc = 2
@@ -212,81 +181,11 @@ def init_population(init_type, start_size, pop_size, configs):
 
     if (sign_edges_needed == True): sign_edges(population)
     if (configs['biased'] == True):
-        if (configs['bias_on'] == 'nodes'): assign_node_consv(population, configs['bias_distribution'])
-        elif (configs['bias_on'] == 'edges'): assign_edge_consv(population, configs['bias_distribution'])
+        if (configs['bias_on'] == 'nodes'): bias.assign_node_consv(population, configs['bias_distribution'])
+        elif (configs['bias_on'] == 'edges'): bias.assign_edge_consv(population, configs['bias_distribution'])
         else: print("ERROR in net_generator(): unknown bias_on: " + str (configs['bias_on']))
     return population
 
-
-def assign_node_consv(population, distrib):
-    # since assigns to whole population, will be biased since selection will occur on most fit distribution of conservation scores
-    for p in range(len(population)):
-        net = population[p].net
-        for n in net.nodes():
-            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,.5)
-            elif (distrib == 'normal'):
-                consv_score = sysRand().normalvariate(0,1)
-                consv_score = (consv_score+.5)/2
-            else:
-                print("ERROR in net_generator(): unknown bias distribution: " + str (distrib))
-                return 1
-
-            net.node[n]['conservation_score'] = consv_score
-
-    return population
-
-def assign_a_node_consv(net, node, distrib):
-    if (distrib == 'uniform'):
-        consv_score = sysRand().uniform(0, .5)
-    elif (distrib == 'normal'):
-        consv_score = sysRand().normalvariate(.5, .15)
-    elif (distrib == 'global_extreme01'):
-        consv_score = sysRand().choice([0, 1])
-    else:
-        print("ERROR in net_generator(): unknown bias distribution: " + str(distrib))
-        return 1
-
-    net.node[node]['conservation_score'] = consv_score
-
-
-def assign_edge_consv(population, distrib):
-    # since assigns to whole population, will be biased since selection will occur on most fit distribution of conservation scores
-    for p in range(len(population)):
-        net = population[p].net
-        for edge in net.edges():
-            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,.5)
-            elif (distrib == 'normal'):
-                consv_score = sysRand().normalvariate(0,1)
-                consv_score = (consv_score+.5)/2
-            elif (distrib == 'global_small'): consv_score = .75
-            elif (distrib == 'global_extreme'): consv_score = 1
-            elif (distrib == 'global_extreme01'): consv_score = sysRand().choice([0,1])
-            else:
-                print("ERROR in net_generator(): unknown bias distribution: " + str (distrib))
-                return 1
-
-            net[edge[0]][edge[1]]['conservation_score'] = consv_score
-
-    return population
-
-
-def assign_an_edge_consv(net, edge, distrib):
-    if (distrib == 'uniform'):
-        consv_score = sysRand().uniform(0, .5)
-    elif (distrib == 'normal'):
-        consv_score = sysRand().normalvariate(0, 1)
-        consv_score = (consv_score + .5) / 2
-    elif (distrib == 'global_small'):
-        consv_score = .75
-    elif (distrib == 'global_extreme'):
-        consv_score = 1
-    elif (distrib == 'global_extreme01'):
-        consv_score = sysRand().choice([0, 1])
-    else:
-        print("ERROR in net_generator(): unknown bias distribution: " + str(distrib))
-        return 1
-
-    net[edge[0]][edge[1]]['conservation_score'] = consv_score
 
 
 def custom_to_directed(population):

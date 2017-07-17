@@ -1,4 +1,4 @@
-import math, random, decimal
+import math, random
 from operator import attrgetter
 import networkx as nx
 import hub_fitness, leaf_fitness
@@ -23,16 +23,20 @@ def node_fitness(net, leaf_metric):
         #print(net[node]['fitness'])
 
 def node_product(net):
-    decimal.getcontext().prec = 40
-    fitness_score = 1
+    #now uses log-likelihood estimation: product --> sum log
+    #decimal.getcontext().prec = 40
+    #fitness_score = 1
+    fitness_score = 0
     num_0 = 0
     for n in net.nodes():
         if net.node[n]['fitness'] == 0: 
             #print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
             num_0 += 1
-        else: fitness_score = decimal.Decimal(str(fitness_score)) * decimal.Decimal(str(net.node[n]['fitness']))
+        else:
+            fitness_score += math.log2(str(net.node[n]['fitness']))
+            #fitness_score = decimal.Decimal(str(fitness_score)) * decimal.Decimal(str(net.node[n]['fitness']))
 
-    fitness_score = decimal.Decimal(math.pow(fitness_score, 1/decimal.Decimal(len(net.nodes())))) #normalization
+    fitness_score = math.pow(fitness_score , 1/float(len(net.nodes())))#further normalization
     if (num_0 > 0): print("WARNING: fitness.node_product(): " + str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
     return fitness_score
 

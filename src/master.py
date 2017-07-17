@@ -9,38 +9,8 @@ import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, d
 
 def evolve_master(configs):
     protocol = configs['protocol']
-    output_dir = configs['output_directory']
-    num_sims = int(configs['num_sims'])
-
     protocol_configs(protocol, configs) #basically just auto-sets certain params
-    assert (num_sims > 0)
-
-    num_data = 3 #num_gens, net_size, fitness
-    sim_data = np.empty((num_sims, num_data))
-    sims_so_far = 0
-
-    if (num_sims > 1):
-        mult_prog_path = output_dir + "/mult_sims_progress.txt"
-        if os.path.isfile(mult_prog_path):
-            with open(mult_prog_path) as mult_file:
-                lines = mult_file.readlines()
-                sims_so_far = int(lines[0])
-                sim_data = np.array(lines[1])
-                print("master(): continuing run with mult simulations: sim data so far = " + str(sim_data) + ".\n")
-
-    #if num != 1: init obj
-    for i in range(sims_so_far, int(configs['num_sims'])):
-        sim_data[i] = evolve_population(configs) #poss return or alter data obj
-        if (num_sims > 1):
-            with open(output_dir + "/mult_sims_progress.txt", 'w') as out:
-                out.write(str(i) + "\n" + str(sim_data))
-
-    if (num_sims > 1):
-        avg_data = np.mean(sim_data)
-        print("avg_data shape = " + str(np.shape(avg_data)))
-        print("avg_data vals = " + str(avg_data))
-        plot_nets.single_run_plots(output_dir)
-
+    evolve_population(configs)
 
 
 def protocol_configs(protocol, configs):
@@ -159,7 +129,6 @@ def evolve_population(configs):
         total_gens, size, itern = 0, start_size, 0
 
 
-    sim_data = []
     estim_wait = None
     while (size <= end_size and total_gens < max_gen):
         t_start = time.time()
@@ -167,7 +136,7 @@ def evolve_population(configs):
 
         #OUTPUT INFO
         if (itern % int(max_gen / num_output) == 0):
-            output.popn_data(population, output_dir, total_gens, sim_data, num_sims)
+            output.popn_data(population, output_dir, total_gens)
             util.cluster_print(output_dir,"Master at gen " + str(total_gens) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
             worker_percent_survive = worker_pop_size #should match however workers handle %survive
             util.cluster_print(output_dir,"Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
@@ -246,7 +215,7 @@ def evolve_population(configs):
     #final outputs
     nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(itern))
 
-    output.popn_data(population, output_dir, total_gens, sim_data, num_sims)
+    output.popn_data(population, output_dir, total_gens)
     output.deg_change_csv(population, output_dir)
     #draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
@@ -257,7 +226,6 @@ def evolve_population(configs):
 
     util.cluster_print(output_dir,"Master finished config file.\n")
 
-    return sim_data
 
 
 def init_dirs(num_workers, output_dir):

@@ -1,7 +1,7 @@
 import math
 import random as rd
 import networkx as nx
-import net_generator
+import bias
 # from random import SystemRandom as rd
 
 def mutate(configs, net, gen_percent, edge_node_ratio):
@@ -84,6 +84,8 @@ def num_mutations(base_mutn_freq, mutn_type, gen_percent):
 
 def add_edges(net, num_add, configs):
 
+    if (num_add == 0): print("WARNING in mutate(): 0 nodes added in add_nodes\n")
+
     for j in range(num_add):
         pre_size = post_size = len(net.edges())
         while (pre_size == post_size):  # ensure that net adds
@@ -99,7 +101,7 @@ def add_edges(net, num_add, configs):
             net.add_edge(node, node2, sign=sign)
             post_size = len(net.edges())
 
-        if (configs['biased'] == True and configs['bias_on'] == 'edges'): net_generator.assign_an_edge_consv(net, [node,node2], configs['bias_distribution'])
+        if (configs['biased'] == True and configs['bias_on'] == 'edges'): bias.assign_an_edge_consv(net, [node,node2], configs['bias_distribution'])
 
 
 def add_nodes(net, num_add, edge_node_ratio, configs):
@@ -107,32 +109,30 @@ def add_nodes(net, num_add, edge_node_ratio, configs):
     for i in range(num_add):
         pre_size = post_size = len(net.nodes())
         while (pre_size == post_size):
-            node_num = rd.randint(0, len(net.nodes()) * 100)  # hope to hit number that doesn't already exist
+            node_num = rd.randint(0, len(net.nodes()) * 1000)  # hope to hit number that doesn't already exist
             net.add_node(node_num)
             post_size = len(net.nodes())
-        if (configs['biased'] == True and configs['bias_on'] == 'nodes'): net_generator.assign_a_node_consv(net, node_num,configs['bias_distribution'])
+        if (configs['biased'] == True and configs['bias_on'] == 'nodes'): bias.assign_a_node_consv(net, node_num,configs['bias_distribution'])
 
-    if (num_add == 0): print("WARNING in mutate(): 0 nodes added in add_nodes\n")
+        # ADD EDGE TO NEW NODE TO KEEP CONNECTED
+        pre_size = post_size = len(net.edges())
+        while (pre_size == post_size):  # ensure that net adds
+            node2 = node = node_num
+            while (node2 == node):
+                node2 = rd.sample(net.nodes(), 1)
+                node2 = node2[0]
 
-    # ADD EDGE TO NEW NODE TO KEEP CONNECTED
-    pre_size = post_size = len(net.edges())
-    while (pre_size == post_size):  # ensure that net adds
-        node2 = node = node_num
-        while (node2 == node):
-            node2 = rd.sample(net.nodes(), 1)
-            node2 = node2[0]
+            sign = rd.randint(0, 1)
+            if (sign == 0):     sign = -1
+            if (rd.random() < .5):
+                net.add_edge(node, node2, sign=sign)
+                the_edge = [node,node2]
+            else:
+                net.add_edge(node2, node, sign=sign)
+                the_edge = [node2,node]
+            post_size = len(net.edges())
 
-        sign = rd.randint(0, 1)
-        if (sign == 0):     sign = -1
-        if (rd.random() < .5):
-            net.add_edge(node, node2, sign=sign)
-            the_edge = [node,node2]
-        else:
-            net.add_edge(node2, node, sign=sign)
-            the_edge = [node2,node]
-        post_size = len(net.edges())
-
-    if (configs['biased'] == True and configs['bias_on'] == 'edges'): net_generator.assign_an_edge_consv(net, the_edge ,configs['bias_distribution'])
+        if (configs['biased'] == True and configs['bias_on'] == 'edges'): bias.assign_an_edge_consv(net, the_edge ,configs['bias_distribution'])
 
     # MAINTAIN NODE_EDGE RATIO
     # ASSUMES BTWN 1 & 2

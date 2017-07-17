@@ -4,7 +4,6 @@ import os, csv, math
 import numpy as np
 np.set_printoptions(formatter={'int_kind': lambda x:' {0:d}'.format(x)})
 import networkx as nx
-from decimal import Decimal
 
 
 def init_csv(out_dir, configs):
@@ -56,7 +55,7 @@ def deg_change_csv(population, output_dir):
         output.writerow(distrib_info)
 
 
-def popn_data(population, output_dir, gen, sim_data, num_sims):
+def popn_data(population, output_dir, gen):
 
     if (population[0].net.edges()):
         output_csv = output_dir + "/info.csv"
@@ -64,20 +63,15 @@ def popn_data(population, output_dir, gen, sim_data, num_sims):
         with open(output_csv, 'a') as output_file:
             output = csv.writer(output_file)
 
-            all_fitness = [population[p].fitness for p in range(len(population))]
-            sum_fitness = Decimal(0)
-            for fitness in all_fitness: sum_fitness = Decimal(sum_fitness) +  Decimal(fitness)
-            mean_fitness = sum_fitness/Decimal(len(all_fitness))
-            vars = [math.pow(Decimal(all_fitness[i]) - Decimal(mean_fitness),2) for i in range(len(all_fitness))]
-            var_fitness = Decimal(0)
-            for var in vars: var_fitness = Decimal(var_fitness) + Decimal(var)
+            all_fitness = np.array([population[p].fitness for p in range(len(population))])
+            mean_fitness = np.mean(all_fitness)
+            var_fitness = np.var(all_fitness)
 
             Net = population[0] #most fit net
             net = Net.net
             nets_info = [gen, len(net.nodes()), Net.fitness, Net.fitness_parts[0], Net.fitness_parts[1], Net.fitness_parts[2], sum(net.degree().values())/len(net.nodes()),len(net.edges())/len(net.nodes()), mean_fitness, var_fitness]
 
-            if (num_sims == 1):output.writerow(nets_info)
-            else: sim_data.append(nets_info)
+            output.writerow(nets_info)
 
         with open(output_dir + "/degree_distrib.csv", 'a') as deg_file:
             #only distribution of most fit net
