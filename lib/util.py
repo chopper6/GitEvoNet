@@ -54,29 +54,39 @@ def advice (M, samples, biased, advice_upon, bias_on):
 #--------------------------------------------------------------------------------------------------
 
 def indiv_conserv_score(element, M, advice_upon, biased, bias_on):
-    biased_center=None
-    if (advice_upon == 'nodes'):
-        biased_center = M.node[element]['conservation_score']
-    elif (advice_upon == 'edges'):
-        ele = element
-        source = int(ele[0])
-        target = int(ele[1])
-        if (M.has_edge(source, target)):
-            if (bias_on == 'nodes'):
-                biased_center = (M.node[source]['conservation_score'] + M.node[target]['conservation_score']) / 2
-            elif (bias_on == 'edges'):
-                biased_center = M[source][target]['conservation_score']
+
+
+    if (biased == True):
+        biased_center=None
+
+
+        if (advice_upon == 'nodes'):
+            biased_center = M.node[element]['conservation_score']
+        elif (advice_upon == 'edges'):
+            ele = element
+            source = int(ele[0])
+            target = int(ele[1])
+            if (M.has_edge(source, target)):
+                if (bias_on == 'nodes'):
+                    biased_center = (M.node[source]['conservation_score'] + M.node[target]['conservation_score']) / 2
+                elif (bias_on == 'edges'):
+                    biased_center = M[source][target]['conservation_score']
+                else:
+                    print("ERROR  util.advice(): unknown bias_on: " + str(bias_on))
             else:
-                print("ERROR  util.advice(): unknown bias_on: " + str(bias_on))
+                biased_center = .5  # doesn't really matter
+
         else:
-            biased_center = .5  # doesn't really matter
+            print("ERROR util.advice(): unknown advice_upon: " + str(advice_upon))
+            return None
 
-    else:
-        print("ERROR util.advice(): unknown advice_upon: " + str(advice_upon))
-        return None
+        return biased_center
 
-    return biased_center
+    elif (biased==False):
+        unbiased_center = .5
+        return unbiased_center
 
+    else: print("ERROR in util: unknown config biased = " + str(biased))
 
 def cluster_print(output_dir, text):
     with open(output_dir + "/thread_out.txt", 'a') as file:

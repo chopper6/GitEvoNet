@@ -124,7 +124,7 @@ def extract_and_combine(output_dir, num_sims):
 def evolve(rank, config_file):
 
     configs = init.initialize_configs(config_file, rank)
-    orig_output_dir = configs['output_dir']
+    orig_output_dir = configs['output_directory']
     num_sims = int(configs['num_sims'])
 
     for i in range(num_sims):
