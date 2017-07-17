@@ -1,5 +1,5 @@
 import math
-import reducer, solver, node_data, fitness, leaf_fitness as l_fitness
+import reducer, solver, node_data, fitness, util, leaf_fitness as l_fitness
 from ctypes import cdll
 import numpy as np
 
@@ -13,7 +13,8 @@ def pressurize(configs, net, instance_file_name, advice):
     advice_upon = configs['advice_upon']
     max_B_plot = int(configs['max_B_plot'])
 
-    use_kp = bool(configs['use_knapsack'])
+    use_kp = util.boool(configs['use_knapsack'])
+
 
     leaf_metric = str(configs['leaf_metric'])
     leaf_operator = str(configs['leaf_operation'])
@@ -25,7 +26,7 @@ def pressurize(configs, net, instance_file_name, advice):
     edge_assignment = str(configs['edge_state'])
     global_edge_bias = float(configs['global_edge_bias'])
     edge_distribution = str(configs['edge_state_distribution'])
-    biased = bool(configs['biased'])
+    biased = util.boool(configs['biased'])
 
     #num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
     num_samples_relative = max(10, int(len(net.nodes())/10))

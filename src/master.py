@@ -62,8 +62,7 @@ def evolve_population(configs):
     num_output = int(configs['num_output'])
     num_net_output = int(configs['num_net_output'])
     max_gen = int(configs['max_generations'])
-    debug = (configs['debug'])
-    if (debug == 'True'): debug = True
+    debug = util.boool(configs['debug'])
     worker_pop_size_config = int(configs['num_worker_nets'])
     worker_survive_fraction = float(configs['worker_percent_survive'])/100
     init_type = str(configs['initial_net_type'])
