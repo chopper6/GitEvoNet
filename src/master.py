@@ -96,7 +96,7 @@ def evolve_population(configs):
             util.cluster_print(output_dir, "Run already finished, exiting...")
             return
 
-        elif (itern and itern!=0): #IS CONTINUATION RUN
+        elif (itern and itern!=0 and itern!=1 and itern!=2): #IS CONTINUATION RUN
             itern = int(itern)-2 #fall back one, latest may not have finished
             population = parse_worker_popn(num_workers, itern, output_dir, num_survive, fitness_direction)
             size = len(population[0].net.nodes())
@@ -374,24 +374,3 @@ def write_mpi_info(output_dir, itern):
 
     #else: util.cluster_print(output_dir,"WARNING in master.write_mpi_info(): dir /to_master/" + str(itern) + " already exists...sensible if a continuation run.")
 
-
-def build_advice(net, configs):
-    if (configs['advice_creation'] == 'once'):
-        #assumes no growth
-        advice_upon = configs['advice_upon']
-        biased = str(configs['biased'])
-        bias_on = str(configs['bias_on'])
-        pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
-        samples, sample_size = None, None
-
-        if (advice_upon == 'nodes'):
-            samples = net.nodes()
-            sample_size = int(pressure * len(net.nodes()))
-        elif (advice_upon == 'edges'):
-            samples = [[str(node_i), str(node_j)] for node_i in net.nodes() for node_j in net.nodes()]  # all possible edges
-            #samples = net.edges()
-            sample_size = int(pressure * len(net.edges())) #sample size based on all existing edges
-        advice = util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon, bias_on)
-    else: advice = None #will generate during reduction each time instead
-
-    return advice

@@ -14,9 +14,9 @@ def init_csv(out_dir, configs):
 
     deg_summary_title = "In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
 
-    with open(out_dir+"info.csv",'w') as csv_out:
+    with open(out_dir+"/info.csv",'w') as csv_out:
         csv_out.write(csv_title)
-    with open(out_dir+"degree_distrib.csv",'w') as csv_out:
+    with open(out_dir+"/degree_distrib.csv",'w') as csv_out:
         csv_out.write(deg_distrib_title) #just blanking the file
 
     out_configs = out_dir + "/configs_used.csv"

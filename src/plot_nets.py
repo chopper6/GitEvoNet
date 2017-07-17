@@ -33,6 +33,24 @@ def single_run_plots (dirr):
     degree_distrib(dirr)
     #degree_distrib_change(dirr)
 
+def feature_plots_only (dirr):
+    #plots features_over_time and degree_distrib
+    #only uses most fit indiv in population
+    if not os.path.exists(dirr):
+        print("ERROR plot_nets(): given directory not found: " + str(dirr))
+        return
+
+    net_info, titles = parse_info(dirr)
+
+    if not os.path.exists(dirr + "/images_by_size/"):
+        os.makedirs(dirr + "/images_by_size/")
+    if not os.path.exists(dirr + "/images_by_time/"):
+        os.makedirs(dirr + "/images_by_time/")
+
+
+    mins, maxs = 0,0
+    features_over_size(dirr, net_info, titles, mins, maxs, False)
+    features_over_time(dirr, net_info, titles, mins, maxs, False)
 
 
 #IMAGE GENERATION FNS()
