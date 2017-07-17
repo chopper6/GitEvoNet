@@ -84,7 +84,7 @@ def evolve(rank, config_file):
             log_text = 'Evolve_root(): in dir ' + str(os.getcwd()) + ', config file = ' + str(config_file) + ', num_workers = ' + str(num_workers)
 
             import master
-            if (configs['number_of_workers'] != num_workers): util.cluster_print("\nWARNING in evolve_root(): mpi #workers != config #workers! " + str(configs['num_workers']) + " vs " + str(num_workers) + "\n") #not sure why this doesn't correctly get # config workers...
+            if (configs['number_of_workers'] != num_workers): util.cluster_print(configs['output_directory'], "\nWARNING in evolve_root(): mpi #workers != config #workers! " + str(configs['num_workers']) + " vs " + str(num_workers) + "\n") #not sure why this doesn't correctly get # config workers...
             util.cluster_print(configs['output_directory'], log_text)
             master.evolve_master(configs)
 
