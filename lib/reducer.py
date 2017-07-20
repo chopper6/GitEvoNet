@@ -47,11 +47,13 @@ def prob_reduction(net, global_ben_bias, distribn, biased, biased_on, leaf_metri
         source, target = edge[0], edge[1]
         if (biased == True and biased_on == 'edges'): indiv_bias = net[source][target]['conservation_score']
         elif (biased == True and biased_on == 'nodes'): indiv_bias = (net.node[source]['conservation_score'] + net.node[target]['convservation_score']) / 2
-        else: indiv_bias = 0
+        else: indiv_bias = .5
+
+        indiv_bias -= .5 #so btwn -.5,.5
 
         ben_pr = None
         if (distribn == 'set'): ben_pr = .5 + global_ben_bias
-        if (distribn == 'uniform'): ben_pr = random.uniform(0,1) + global_ben_bias #same as rd.random() i think
+        if (distribn == 'uniform'): ben_pr = random.uniform(0,1) + global_ben_bias
         elif (distribn == 'normal'):
             ben_pr = random.normalvariate(0, 1)
             ben_pr = (ben_pr + .5)/2 + global_ben_bias
@@ -60,8 +62,8 @@ def prob_reduction(net, global_ben_bias, distribn, biased, biased_on, leaf_metri
         if (edge_ben > 1): edge_ben=1
         elif (edge_ben < 0): edge_ben=0
         for side in [source, target]:
-            net.node[side]['benefits'] = edge_ben
-            net.node[side]['damages'] = 1-edge_ben
+            net.node[side]['benefits'] = edge_ben   #p
+            net.node[side]['damages'] = 1-edge_ben  #q
 
 
 #--------------------------------------------------------------------------------------------------
@@ -72,7 +74,7 @@ def BDT_calculator (M, Advice, T_percentage, BD_criteria, advice_upon):
         print("ERROR in reducer.BDT_calc_node: unknown BD_criteria: " + str(BD_criteria))
     
     for element in Advice.keys():
-        if (advice_upon=='nodes'): #TODO: add node advice version, if nec
+        if (advice_upon=='nodes'): #TODO: for ENTROPY version - add node advice version, if nec
             target = element
             sources = M.predecessors(target)
 

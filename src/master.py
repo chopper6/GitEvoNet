@@ -38,9 +38,9 @@ def protocol_configs(protocol, configs):
         configs['advice_creation'] = 'once'
 
     elif (protocol == 'entropy'):
-        configs['leaf_metric'] = 'capacity'
+        configs['leaf_metric'] = 'entropy'
         configs['fitness_operation'] = 'product'
-        configs['fitness_direction'] = 'max'
+        configs['fitness_direction'] = 'min'
 
         configs['num_sims'] = 1
         configs['advice_creation'] = 'each'
@@ -324,7 +324,7 @@ def watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitn
         for root, dirs, files in os.walk(dump_dir):
             for f in files:
                 if f in ids:
-                        if (os.path.getmtime(root + "/" + f) + 1 < time.time()):
+                        if (os.path.getmtime(root + "/" + f) + 4 < time.time()):
                             popn += parse_worker(f, itern, output_dir, num_survive)
                             num_finished += 1
                             ids.remove(f)

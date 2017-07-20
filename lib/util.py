@@ -90,7 +90,7 @@ def indiv_conserv_score(element, M, advice_upon, biased, bias_on):
 
 def cluster_print(output_dir, text):
     with open(output_dir + "/thread_out.txt", 'a') as file:
-        file.write(text + "\n")
+        file.write(str(text) + "\n")
         file.flush()
         file.close()
     print(text)

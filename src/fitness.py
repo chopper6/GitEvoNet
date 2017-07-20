@@ -33,11 +33,11 @@ def node_product(net):
             #print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
             num_0 += 1
         else:
-            fitness_score += math.log2(str(net.node[n]['fitness']))
+            fitness_score += math.log(net.node[n]['fitness'],2)
             #fitness_score = decimal.Decimal(str(fitness_score)) * decimal.Decimal(str(net.node[n]['fitness']))
 
     fitness_score = math.pow(fitness_score , 1/float(len(net.nodes())))#further normalization
-    if (num_0 > 0): print("WARNING: fitness.node_product(): " + str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
+    #if (num_0 > 0): print("WARNING: fitness.node_product(): " + str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
     return fitness_score
 
 def node_entropy(net):
@@ -45,7 +45,7 @@ def node_entropy(net):
     for n in net.nodes():
         S = net.node[n]['fitness']
         if S != 0:
-            fitness_score += S * math.log2(S)
+            fitness_score += S * math.log(S,2)
     return fitness_score
 
 

@@ -65,24 +65,24 @@ def pressurize(configs, net, instance_file_name, advice):
 
     elif (use_kp == 'False' or use_kp == False):
 
-        #TODO: keep working on this
         if (edge_assignment == 'probabilistic'):
-            # assumes no conservation score or global bias, and bernouille pr distribution
-            # global bias: change prBD
-            # local bias (consv score)...? calc base prBD sep, then for each node or something
+            # assumes no conservation score and bernouille pr distribution
+            # also uses log-likelihood normz
+
+            if (biased == True):
+                p = .5+global_edge_bias
+                if (global_edge_bias < 0 or global_edge_bias > 1):
+                    print("ERROR in pressurize: out of bounds global_edge_bias, p = .5 instead")
+                    p = .5
+            else: p = .5
+
+            #fitness_score = 1
+            fitness_score = 0
+
             degrees = list(net.degree().values())
             degs, freqs = np.unique(degrees, return_counts=True)
             tot = float(sum(freqs))
             freqs = [(f / tot) * 100 for f in freqs]
-
-            if (biased == True):
-                p = global_edge_bias
-                if (global_edge_bias < 0 or global_edge_bias > 1):
-                    print("ERROR in pressurize: out of bounds global_edge_bias")
-                    p = .5
-            else: p = .5
-
-            fitness_score = 1
 
             for i in range(len(degs)):
                 deg_fitness = 0
@@ -92,7 +92,8 @@ def pressurize(configs, net, instance_file_name, advice):
                     assert (prBD >= 0 and prBD <= 1)
                     fitBD = l_fitness.node_score(leaf_metric, B, D)
                     deg_fitness += prBD * fitBD
-                fitness_score *= math.pow(deg_fitness,freqs[i]) #as per node product rule
+                #fitness_score *= math.pow(deg_fitness,freqs[i]) #as per node product rule
+                if (deg_fitness != 0): fitness_score += freqs[i]*math.log(deg_fitness)
 
                 #reducer.prob_reduction(net, global_edge_bias, edge_distribution, configs['biased'], configs['bias_on'])
 
