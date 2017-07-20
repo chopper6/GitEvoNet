@@ -3,7 +3,7 @@ from random import SystemRandom as sysRand
 from time import sleep, process_time
 import networkx as nx
 import numpy as np
-import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, mutate, util, plot_undir, init
+import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, mutate, util, plot_undir, init, probabilistic_entropy
 
 
 
@@ -88,6 +88,11 @@ def evolve_population(configs):
 
     prog_path = output_dir + "/progress.txt"
     cont=False
+
+
+    if (configs['edge_state'] == 'probabilistic' and configs['use_knapsack'] == False): BD_table = probabilistic_entropy.build_BD_table(configs['leaf_metric'], configs['biased'], configs['global_edge_bias'])
+    else: BD_table = None
+
     if os.path.isfile(prog_path):
         with open(prog_path) as file:
             itern = file.readline()
@@ -120,7 +125,7 @@ def evolve_population(configs):
         advice = init.build_advice(population[0].net, configs)
 
         #init fitness eval
-        pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xitern0.csv", advice)
+        pressure_results = pressurize.pressurize(configs, population[0].net,instance_file + "Xitern0.csv", advice, BD_table)
         population[0].fitness_parts[0], population[0].fitness_parts[1], population[0].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
         fitness.eval_fitness([population[0]], fitness_direction)
         output.deg_change_csv([population[0]], output_dir)
@@ -145,7 +150,7 @@ def evolve_population(configs):
         if (num_instance_output != 0):
             if (itern % int(max_gen / num_instance_output) == 0):
                 # if first gen, have already pressurized w/net[0]
-                if (itern != 0): pressure_results = pressurize.pressurize(configs, population[0].net, instance_file + "Xitern" + str( itern) + ".csv", advice)
+                if (itern != 0): pressure_results = pressurize.pressurize(configs, population[0].net, instance_file + "Xitern" + str( itern) + ".csv", advice, BD_table)
 
         if (itern % int(max_gen/num_net_output) ==0):
             nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(itern))
@@ -168,7 +173,7 @@ def evolve_population(configs):
             dump_file = output_dir + "to_workers/" + str(itern) + "/1"
             seed = population[0].copy()
             randSeeds = os.urandom(sysRand().randint(0, 1000000))
-            worker_args = [0, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds,total_gens, advice, configs]
+            worker_args = [0, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds,total_gens, advice, BD_table, configs]
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
             #pool.map_async(minion.evolve_minion, (dump_file,))

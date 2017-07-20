@@ -1,9 +1,10 @@
 import math
-import reducer, solver, node_data, fitness, util, leaf_fitness as l_fitness
+import reducer, solver, node_data, fitness, util, leaf_fitness as l_fitness, probabilistic_entropy
 from ctypes import cdll
 import numpy as np
 
-def pressurize(configs, net, instance_file_name, advice):
+
+def pressurize(configs, net, instance_file_name, advice, BD_table):
     # configs:
     pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
     tolerance = int(configs['PT_pairs_dict'][1][1])
@@ -23,7 +24,7 @@ def pressurize(configs, net, instance_file_name, advice):
     hub_operator = str(configs['hub_operation'])
     fitness_operator = str(configs['fitness_operation'])
 
-    edge_assignment = str(configs['edge_state'])
+    edge_state = str(configs['edge_state'])
     global_edge_bias = float(configs['global_edge_bias'])
     edge_distribution = str(configs['edge_state_distribution'])
     biased = util.boool(configs['biased'])
@@ -65,39 +66,10 @@ def pressurize(configs, net, instance_file_name, advice):
 
     elif (use_kp == 'False' or use_kp == False):
 
-        if (edge_assignment == 'probabilistic'):
-            # assumes no conservation score and bernouille pr distribution
-            # also uses log-likelihood normz
+        if (edge_state == 'probabilistic'):
+            fitness_score = probabilistic_entropy.calc_fitness(net, BD_table)
 
-            if (biased == True):
-                p = .5+global_edge_bias
-                if (global_edge_bias < 0 or global_edge_bias > 1):
-                    print("ERROR in pressurize: out of bounds global_edge_bias, p = .5 instead")
-                    p = .5
-            else: p = .5
-
-            #fitness_score = 1
-            fitness_score = 0
-
-            degrees = list(net.degree().values())
-            degs, freqs = np.unique(degrees, return_counts=True)
-            tot = float(sum(freqs))
-            freqs = [(f / tot) * 100 for f in freqs]
-
-            for i in range(len(degs)):
-                deg_fitness = 0
-                for B in range(degs[i]):
-                    D = degs[i] - B
-                    prBD = (math.factorial(B + D) / (math.factorial(B) * math.factorial(D))) * math.pow(p, B) * math.pow(1-p, D)
-                    assert (prBD >= 0 and prBD <= 1)
-                    fitBD = l_fitness.node_score(leaf_metric, B, D)
-                    deg_fitness += prBD * fitBD
-                #fitness_score *= math.pow(deg_fitness,freqs[i]) #as per node product rule
-                if (deg_fitness != 0): fitness_score += freqs[i]*math.log(deg_fitness)
-
-                #reducer.prob_reduction(net, global_edge_bias, edge_distribution, configs['biased'], configs['bias_on'])
-
-        elif (edge_assignment == 'experience'):
+        elif (edge_state == 'experience'):
             node_data.reset_fitness(net)
             for i in range(num_samples_relative):
                 node_data.reset_BDs(net)

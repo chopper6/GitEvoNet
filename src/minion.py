@@ -64,7 +64,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
     t_start = time.time()
 
     with open(str(worker_file), 'rb') as file:
-        worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, advice, configs = pickle.load(file)
+        worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, advice, BD_table, configs = pickle.load(file)
         file.close()
 
     survive_fraction = float(configs['worker_percent_survive'])/100
@@ -99,7 +99,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
             mutate_time += t1-t0
 
             if (control == None):
-                pressure_results = pressurize.pressurize(configs, population[p].net, None, advice)  # false: don't track node fitness, None: don't write instances to file
+                pressure_results = pressurize.pressurize(configs, population[p].net, None, advice, BD_table)  # false: don't track node fitness, None: don't write instances to file
                 population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
 
             else: util.cluster_print(output_dir,"ERROR in minion(): unknown control config: " + str(control))
