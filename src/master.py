@@ -110,7 +110,7 @@ def evolve_population(configs):
 
             #just need ADVICE from a worker dump
             a_worker_file = output_dir + "to_workers/" + str(itern) + "/1"
-            a_worker_ID, a_seed, a_worker_gens, a_pop_size, a_num_return, a_randSeed, a_curr_gen, advice, a_configs = pickle.load(a_worker_file)
+            a_worker_ID, a_seed, a_worker_gens, a_pop_size, a_num_return, a_randSeed, a_curr_gen, advice, BD_table, a_configs = pickle.load(a_worker_file)
 
             util.cluster_print(output_dir,"\nmaster(): CONTINUE RUN with global gen = " + str(itern) + ", len advice = " + str(len(advice)) + "\n")
             cont = True
