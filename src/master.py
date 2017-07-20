@@ -90,7 +90,7 @@ def evolve_population(configs):
     cont=False
 
 
-    if (configs['edge_state'] == 'probabilistic' and configs['use_knapsack'] == False): BD_table = probabilistic_entropy.build_BD_table(configs['leaf_metric'], configs['biased'], configs['global_edge_bias'])
+    if (configs['edge_state'] == 'probabilistic' and (configs['use_knapsack'] == False or configs['use_knapsack'] == 'False')): BD_table = probabilistic_entropy.build_BD_table(configs['leaf_metric'], configs['biased'], configs['global_edge_bias'])
     else: BD_table = None
 
     if os.path.isfile(prog_path):
@@ -187,7 +187,7 @@ def evolve_population(configs):
                 seed = population[w % num_survive].copy()
                 randSeeds = os.urandom(sysRand().randint(0,1000000))
                 assert(seed != population[w % num_survive])
-                worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, total_gens, advice, configs]
+                worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, total_gens, advice, BD_table, configs]
                 with open(dump_file, 'wb') as file:
                     pickle.dump(worker_args, file)
 
