@@ -42,6 +42,7 @@ def exp_reduction(net, sample_size, T_percentage, advice_sampling_threshold, adv
 
 # --------------------------------------------------------------------------------------------------
 def prob_reduction(net, global_ben_bias, distribn, biased, biased_on, leaf_metric):
+    #NOT USED
 
     for edge in net.edges():
         source, target = edge[0], edge[1]

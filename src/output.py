@@ -8,7 +8,7 @@ import networkx as nx
 
 def init_csv(out_dir, configs):
  
-    csv_title = "Generation, Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Mean Fitness, Variance in Fitness\n"
+    csv_title = "Generation, Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Mean Fitness, Variance in Fitness, Fitness/#Edges, Fitness/#Nodes\n"
     #csv_title = "Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Clustering Coefficient, # Triangle Communities\n"
     deg_distrib_title = "Generation, Net Size, In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
 
@@ -69,7 +69,7 @@ def popn_data(population, output_dir, gen):
 
             Net = population[0] #most fit net
             net = Net.net
-            nets_info = [gen, len(net.nodes()), Net.fitness, Net.fitness_parts[0], Net.fitness_parts[1], Net.fitness_parts[2], sum(net.degree().values())/len(net.nodes()),len(net.edges())/len(net.nodes()), mean_fitness, var_fitness]
+            nets_info = [gen, len(net.nodes()), Net.fitness, Net.fitness_parts[0], Net.fitness_parts[1], Net.fitness_parts[2], sum(net.degree().values())/len(net.nodes()),len(net.edges())/len(net.nodes()), mean_fitness, var_fitness, Net.fitness/float(len(net.edges())), Net.fitness/float(len(net.nodes()))]
 
             output.writerow(nets_info)
 
