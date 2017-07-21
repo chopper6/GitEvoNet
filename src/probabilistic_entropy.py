@@ -12,10 +12,11 @@ def calc_fitness(net, BD_table):
     degrees = list(net.degree().values())
     degs, freqs = np.unique(degrees, return_counts=True)
     tot = float(sum(freqs))
-    freqs = [(f / tot) * 100 for f in freqs]
+    #freqs = [(f / tot) * 100 for f in freqs]
 
     for i in range(len(degs)):
-        deg_fitness = BD_table[i] #already log-scaled
+        deg = degs[i]
+        deg_fitness = BD_table[deg] #already log-scaled
         # fitness_score *= math.pow(deg_fitness,freqs[i]) #as per node product rule
         if (deg_fitness != 0): fitness_score += freqs[i] * deg_fitness
 
@@ -28,6 +29,7 @@ def build_BD_table(leaf_metric, biased, global_edge_bias, max_deg=100):
     # incld log-normz
 
     if (biased == True):
+        global_edge_bias = float(global_edge_bias)
         p = .5 + global_edge_bias
         if (global_edge_bias < 0 or global_edge_bias > 1):
             print("ERROR in pressurize: out of bounds global_edge_bias, p = .5 instead")
