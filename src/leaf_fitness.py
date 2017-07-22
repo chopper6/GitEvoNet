@@ -158,10 +158,10 @@ def node_score (leaf_metric, B, D):
 
     elif (leaf_metric == 'entropy'):
         if (B==0): H_B = 0
-        else: H_B = -1*(B/(B+D)) * math.log2(B/(B+D))
+        else: H_B = -1*(B/(B+D)) * math.log(B/float(B+D),2)
 
         if (D==0): H_D = 0
-        else: H_D = -1*(D/(B+D)) * math.log2(D/(B+D))
+        else: H_D = -1*(D/(B+D)) * math.log(D/float(B+D),2)
 
         return (H_B + H_D)
 

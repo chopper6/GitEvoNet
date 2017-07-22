@@ -38,9 +38,9 @@ def protocol_configs(protocol, configs):
         configs['advice_creation'] = 'once'
 
     elif (protocol == 'entropy'):
-        configs['leaf_metric'] = 'entropy'
+        configs['leaf_metric'] = 'capacity'
         configs['fitness_operation'] = 'product'
-        configs['fitness_direction'] = 'min'
+        configs['fitness_direction'] = 'max'
 
         configs['num_sims'] = 1
         configs['advice_creation'] = 'each'

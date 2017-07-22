@@ -36,7 +36,7 @@ def node_product(net):
             fitness_score += math.log(net.node[n]['fitness'],2)
             #fitness_score = decimal.Decimal(str(fitness_score)) * decimal.Decimal(str(net.node[n]['fitness']))
 
-    fitness_score = math.pow(fitness_score , 1/float(len(net.nodes())))#further normalization
+    #fitness_score = math.pow(fitness_score , 1/float(len(net.nodes())))#further normalization
     #if (num_0 > 0): print("WARNING: fitness.node_product(): " + str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
     return fitness_score
 
