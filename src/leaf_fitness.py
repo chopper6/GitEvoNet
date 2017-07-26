@@ -163,7 +163,8 @@ def node_score (leaf_metric, B, D):
         if (D==0): H_D = 0
         else: H_D = -1*(D/(B+D)) * math.log(D/float(B+D),2)
 
-        return (H_B + H_D)
+        if (B+D==0): return 0
+        else: return math.pow(2,(H_B + H_D))
 
 
 
