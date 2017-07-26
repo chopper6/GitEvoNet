@@ -41,7 +41,7 @@ def build_BD_table(leaf_metric, biased, global_edge_bias, max_deg=100):
     for i in range(max_deg):
         deg_fitness = 0
         for B in range(i):
-            D = max_deg - B
+            D = i - B
             prBD = (math.factorial(B + D) / (math.factorial(B) * math.factorial(D))) * math.pow(p, B) * math.pow(1 - p,D)
             assert (prBD >= 0 and prBD <= 1)
             fitBD = l_fitness.node_score(leaf_metric, B, D)
