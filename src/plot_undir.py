@@ -175,7 +175,7 @@ def comparison_undir_deg_distrib(net_file1, net_file2, destin_path, title, biase
 
 
 if __name__ == "__main__":
-    base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/entropy2_again/" #customize for curr work
+    base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/" #customize for curr work
     real_net_file = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/input_all_nets.txt" #check this is still on yamaska
 
     if sys.argv[1] == 'comparison':
@@ -197,7 +197,7 @@ if __name__ == "__main__":
     parent_dir = sys.argv[1]
 
     for dirr in sys.argv[2:]:
-        print("plotting " + base_dir + dirr)
+        print("plotting " + base_dir + parent_dir + dirr)
         plot_dir(base_dir + parent_dir + dirr, biased, bias_on)
 
     print("\nDone.\n")

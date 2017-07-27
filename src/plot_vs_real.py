@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg') # you need this line if you're running this code on rupert
 import sys, os, matplotlib.pyplot as plt, matplotlib.patches as mpatches, networkx as nx, numpy as np
-import math
+import math, re
 #from scipy.stats import itemfreq
 import matplotlib.ticker as ticker
 import matplotlib.font_manager as font_manager
@@ -18,30 +18,27 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
         name, network_file = line.strip().split(' ')
         if (name==real_net_name or real_net_name == 'all'):
             color_choice = colors[i]
-            if (name=='Bacteria'): 
+            if (re.match(re.compile("*PPI"), name)):
                 color_choice = colors[0]
-                name = 'Bacteria PPI'
-                real_net = nx.read_gpickle(network_file)
-                real_alpha = .75
-            elif(name=='BacteriaReg'): 
-                color_choice = colors[6]
-                name = 'Bacteria Regulatory'
-                real_net = custom_load(network_file.strip())
-                real_alpha = .75
-            elif(name=='Worm'):
-                color_choice = colors[8]
-                name = 'Worm PPI'
-                real_net = nx.read_gpickle(network_file)
-                real_alpha = .75
+                name = name.replace('PPI', ' PPI')
+            elif (re.match(re.compile("*BG"), name)):
+                color_choice = colors[1]
+                name = name.replace('BG', ' BioGrid')
+            elif (re.match(re.compile("*PQ"), name)):
+                color_choice = colors[2]
+                name = name.replace('PQ', ' PSICQUIC')
+            elif (re.match(re.compile("*EN-*"), name)):
+                color_choice = colors[3]
+                name = name.replace('EN-', ' ENCODE-')
             else:
-                real_net = nx.read_gpickle(network_file)
-                real_alpha = .75
+                color_choice = colors[4]
 
 
             sim_net = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
             # print("Simulated Net: \tnodes " + str(len(M.nodes())) + "\tedges " + str(len(M.edges())))
             sim_nodes = sim_net.nodes()
-            #real_net = custom_load(network_file.strip())
+            real_net = custom_load(network_file.strip())
+            real_alpha = .75
             #real_net = nx.read_edgelist(network_file.strip(),create_using=nx.DiGraph())
             #real_net = nx.read_gpickle(network_file)
             real_nodes = real_net.nodes()
@@ -312,16 +309,18 @@ def custom_load(net_path):
     return M
 
 if __name__ == "__main__":
-    base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/conf2/" #customize for curr work
-    real_net_file = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/input_all_nets.txt" #check this is still on yamaska
+    base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
+    real_net_file = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/input_nets.txt"
 
-    pairs = sys.argv[1:]
+    parent_dir = sys.argv[1]
+    pairs = sys.argv[2:]
+
     print("plotting " + str(len(pairs)) + " dirs for comparison.\n")
 
     for pair in pairs:
-        sim, real_name = pair.split('/')
+        sim, real_name = pair.split(':')
         print("Plotting sim dir " + str(sim) + " vs real " + str(real_name) + "\n")
-        sim_dirr = str(base_dir + sim)
+        sim_dirr = str(base_dir + parent_dir + sim)
 
         if not os.path.exists(sim_dirr + "/comparison_plots/"):
             os.makedirs(sim_dirr + "/comparison_plots/")
