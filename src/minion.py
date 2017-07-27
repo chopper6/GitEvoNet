@@ -50,7 +50,7 @@ def work(configs, rank):
                 estim_time += 4
             i+=1
 
-        while not (os.path.getmtime(worker_file) + .4 < time.time()):
+        while not (os.path.getmtime(worker_file) + 1 < time.time()):
             time.sleep(.5)
 
         t_end = time.time()

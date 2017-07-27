@@ -193,8 +193,11 @@ if __name__ == "__main__":
 
     biased = False #sys.argv[2]
     bias_on = None #sys.argv[3]
-    for dirr in sys.argv[1:]:
+
+    parent_dir = sys.argv[1]
+
+    for dirr in sys.argv[2:]:
         print("plotting " + base_dir + dirr)
-        plot_dir(base_dir + dirr, biased, bias_on)
+        plot_dir(base_dir + parent_dir + dirr, biased, bias_on)
 
     print("\nDone.\n")
