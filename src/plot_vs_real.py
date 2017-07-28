@@ -18,16 +18,16 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
         name, network_file = line.strip().split(' ')
         if (name==real_net_name or real_net_name == 'all'):
             color_choice = colors[i]
-            if (re.match(re.compile("*PPI"), name)):
+            if (re.match(re.compile("[a-zA-Z0-9]*PPI"), name)):
                 color_choice = colors[0]
                 name = name.replace('PPI', ' PPI')
-            elif (re.match(re.compile("*BG"), name)):
+            elif (re.match(re.compile("[a-zA-Z0-9]*BG"), name)):
                 color_choice = colors[1]
                 name = name.replace('BG', ' BioGrid')
-            elif (re.match(re.compile("*PQ"), name)):
+            elif (re.match(re.compile("[a-zA-Z0-9]*PQ"), name)):
                 color_choice = colors[2]
                 name = name.replace('PQ', ' PSICQUIC')
-            elif (re.match(re.compile("*EN-*"), name)):
+            elif (re.match(re.compile("[a-zA-Z0-9]*EN-[a-zA-Z0-9]*"), name)):
                 color_choice = colors[3]
                 name = name.replace('EN-', ' ENCODE-')
             else:
