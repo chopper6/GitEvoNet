@@ -43,8 +43,8 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             #real_net = nx.read_gpickle(network_file)
             real_nodes = real_net.nodes()
 
-            if (len(real_nodes) != len(sim_nodes)): print("WARNING: real net does not have same number of nodes as simulation.")
-            if (len(real_net.edges()) != len(sim_net.edges())): print("WARNING: real net does not have same number of edges as simulation.")
+            #if (len(real_nodes) != len(sim_nodes)): print("WARNING: real net does not have same number of nodes as simulation.")
+            #if (len(real_net.edges()) != len(sim_net.edges())): print("WARNING: real net does not have same number of edges as simulation.")
 
             real_degrees, real_in_degrees, real_out_degrees = list(real_net.degree().values()),  list(real_net.in_degree().values()), list(real_net.out_degree().values())
             sim_degrees, sim_in_degrees, sim_out_degrees = list(sim_net.degree().values()),  list(sim_net.in_degree().values()), list(sim_net.out_degree().values())
@@ -65,8 +65,8 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
                 degs, freqs = np.unique(real_deg, return_counts=True)
                 tot = float(sum(freqs))
                 freqs = [(f / tot) * 100 for f in freqs]
-                plt.scatter(degs, freqs, color=color_choice, alpha=real_alpha)
-                #plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=color_choice, alpha=real_alpha, markersize=10, marker='|', markeredgecolor=color_choice, mew=5)
+                #plt.scatter(degs, freqs, color=color_choice, alpha=real_alpha)
+                plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=color_choice, alpha=real_alpha, markersize=10, marker='|', markeredgecolor=color_choice, mew=5)
                 # you can also scatter the in/out degrees on the same plot
                 # plt.scatter( .... )
                 patch = mpatches.Patch(color=color_choice, label=name)
@@ -77,8 +77,8 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
                 degs, freqs = np.unique(sim_deg, return_counts=True)
                 tot = float(sum(freqs))
                 freqs = [(f / tot) * 100 for f in freqs]
-                plt.scatter(degs, freqs, color='#000000', alpha=1)
-                #plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color='#000000', alpha=1, markersize=10, marker='_', markeredgecolor='#000000', mew=5)
+                #plt.scatter(degs, freqs, color='#000000', alpha=1)
+                plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color='#000000', alpha=1, markersize=10, marker='_', markeredgecolor='#000000', mew=5)
 
                 patch = mpatches.Patch(color='#000000', label="Simulation")
                 H = H + [patch]

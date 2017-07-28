@@ -40,7 +40,7 @@ def build_BD_table(leaf_metric, biased, global_edge_bias, max_deg=100):
     BD_table = [None for i in range(max_deg)]
     for i in range(max_deg):
         deg_fitness = 0
-        for B in range(i):
+        for B in range(i+1):
             D = i - B
             prBD = (math.factorial(B + D) / (math.factorial(B) * math.factorial(D))) * math.pow(p, B) * math.pow(1 - p,D)
             assert (prBD >= 0 and prBD <= 1)
