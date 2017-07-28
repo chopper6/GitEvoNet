@@ -12,7 +12,7 @@ import random as rd
 def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
     input_files = open(real_net_file,'r').readlines()
 
-    colors = ['#30cf9a', '#ADC0F3','#E4B2FB','#FBB2B2','#FFCC66','#C3F708', '#34CEDC', '#ff0066', '#ffb31a']
+    colors = ['#30cf9a', '#ADC0F3','#E4B2FB','#FBB2B2', '#C3F708', '#34CEDC', '#ff0066', '#ffb31a']
     i=0
     for line in input_files:
         name, network_file = line.strip().split(' ')
@@ -90,8 +90,8 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
                 # ax.set_yscale('log')
                 #ax.set_xlim([0.7, 200]) #TODO: change these? 
                 #ax.set_ylim([.1, 100])
-                ax.set_xlim([0.7,40])
-                ax.set_ylim([.1,80]) 
+                ax.set_xlim([0.7,60])
+                ax.set_ylim([.01,100])
  
                 xfmatter = ticker.FuncFormatter(LogXformatter)
                 yfmatter = ticker.FuncFormatter(LogYformatter)
