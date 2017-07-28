@@ -12,7 +12,7 @@ import random as rd
 def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
     input_files = open(real_net_file,'r').readlines()
 
-    colors = ['#30cf9a', '#ADC0F3','#E4B2FB','#FBB2B2', '#C3F708', '#34CEDC', '#ff0066', '#ffb31a']
+    colors = ['#30cf9a', '#ADC0F3','#E4B2FB','#FBB2B2', '#34CEDC', '#ff0066', '#ffb31a']
     i=0
     for line in input_files:
         name, network_file = line.strip().split(' ')
@@ -50,67 +50,67 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             sim_degrees, sim_in_degrees, sim_out_degrees = list(sim_net.degree().values()),  list(sim_net.in_degree().values()), list(sim_net.out_degree().values())
 
 
-            for direction in ['both']:
+            #for direction in ['both']:
+            direction = 'both'
+            H = []
 
-                H = []
+            # PLOT REAL NET
+            title = plot_title + "_" + str(name) + "_" + str(direction)
 
-                # PLOT REAL NET
-                title = plot_title + "_" + str(name) + "_" + str(direction)
+            real_deg, sim_deg = None, None
+            if (direction == 'in'): real_deg, sim_deg = real_in_degrees, sim_in_degrees
+            elif (direction == 'out'): real_deg, sim_deg = real_out_degrees, sim_out_degrees
+            elif (direction == 'both'): real_deg, sim_deg = real_degrees, sim_degrees
 
-                real_deg, sim_deg = None, None
-                if (direction == 'in'): real_deg, sim_deg = real_in_degrees, sim_in_degrees
-                elif (direction == 'out'): real_deg, sim_deg = real_out_degrees, sim_out_degrees
-                elif (direction == 'both'): real_deg, sim_deg = real_degrees, sim_degrees
-             
-                degs, freqs = np.unique(real_deg, return_counts=True)
-                tot = float(sum(freqs))
-                freqs = [(f / tot) * 100 for f in freqs]
-                #plt.scatter(degs, freqs, color=color_choice, alpha=real_alpha)
-                plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=color_choice, alpha=real_alpha, markersize=10, marker='|', markeredgecolor=color_choice, mew=5)
-                # you can also scatter the in/out degrees on the same plot
-                # plt.scatter( .... )
-                patch = mpatches.Patch(color=color_choice, label=name)
-                H = H + [patch]
+            degs, freqs = np.unique(real_deg, return_counts=True)
+            tot = float(sum(freqs))
+            freqs = [(f / tot) * 100 for f in freqs]
+            #plt.scatter(degs, freqs, color=color_choice, alpha=real_alpha)
+            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color=color_choice, alpha=real_alpha, markersize=10, marker='|', markeredgecolor=color_choice, mew=5)
+            # you can also scatter the in/out degrees on the same plot
+            # plt.scatter( .... )
+            patch = mpatches.Patch(color=color_choice, label=name)
+            H = H + [patch]
 
-                # PLOT SIM NET
+            # PLOT SIM NET
 
-                degs, freqs = np.unique(sim_deg, return_counts=True)
-                tot = float(sum(freqs))
-                freqs = [(f / tot) * 100 for f in freqs]
-                #plt.scatter(degs, freqs, color='#000000', alpha=1)
-                plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color='#000000', alpha=1, markersize=10, marker='_', markeredgecolor='#000000', mew=5)
+            degs, freqs = np.unique(sim_deg, return_counts=True)
+            tot = float(sum(freqs))
+            freqs = [(f / tot) * 100 for f in freqs]
+            #plt.scatter(degs, freqs, color='#000000', alpha=1)
+            plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=1, color='#000000', alpha=1, markersize=10, marker='_', markeredgecolor='#000000', mew=5)
 
-                patch = mpatches.Patch(color='#000000', label="Simulation")
-                H = H + [patch]
+            patch = mpatches.Patch(color='#000000', label="Simulation")
+            H = H + [patch]
 
-                # FORMAT PLOT
-                ax = plt.gca()  # gca = get current axes instance
+            # FORMAT PLOT
+            ax = plt.gca()  # gca = get current axes instance
 
-                # ax.set_xscale('log') #for scatter i think
-                # ax.set_yscale('log')
-                #ax.set_xlim([0.7, 200]) #TODO: change these? 
-                #ax.set_ylim([.1, 100])
-                ax.set_xlim([0.7,60])
-                ax.set_ylim([.01,100])
- 
-                xfmatter = ticker.FuncFormatter(LogXformatter)
-                yfmatter = ticker.FuncFormatter(LogYformatter)
-                ax.get_xaxis().set_major_formatter(xfmatter)
-                ax.get_yaxis().set_major_formatter(yfmatter)
+            # ax.set_xscale('log') #for scatter i think
+            # ax.set_yscale('log')
+            #ax.set_xlim([0.7, 200]) #TODO: change these?
+            #ax.set_ylim([.1, 100])
+            ax.set_xlim([.5,100])
+            ax.set_ylim([.05,100])
 
-                ax.spines["top"].set_visible(False)
-                ax.spines["right"].set_visible(False)
-                plt.tick_params(axis='both', which='both', right='off', top='off')  # http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
-                plt.legend(loc='upper right', handles=H, frameon=False, fontsize=11)
-                plt.xlabel('degree  ')
-                plt.ylabel('% genes ')
-                # plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
+            xfmatter = ticker.FuncFormatter(LogXformatter)
+            yfmatter = ticker.FuncFormatter(LogYformatter)
+            ax.get_xaxis().set_major_formatter(xfmatter)
+            ax.get_yaxis().set_major_formatter(yfmatter)
 
-                plt.tight_layout()
-                plt.savefig(str(title) + ".png", dpi=300,bbox='tight')  # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
-                plt.clf()
-                plt.cla()
-                plt.close()
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            plt.tick_params(axis='both', which='both', right='off', top='off')  # http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
+            plt.legend(loc='upper right', handles=H, frameon=False, fontsize=11)
+            plt.xlabel('degree  ')
+            plt.ylabel('% genes ')
+            # plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
+
+            plt.tight_layout()
+            plt.savefig(str(title) + ".png", dpi=300,bbox='tight')  # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
+            plt.clf()
+            plt.cla()
+            plt.close()
 
             i += 1
 
