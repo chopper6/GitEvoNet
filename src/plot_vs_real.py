@@ -12,7 +12,7 @@ import random as rd
 def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
     input_files = open(real_net_file,'r').readlines()
 
-    colors = ['#30cf9a', '#ADC0F3','#E4B2FB','#FBB2B2', '#34CEDC', '#ff0066', '#ffb31a']
+    colors = ['#30cf9a', '#ADC0F3','#E4B2FB','#FBB2B2', '#34CEDC', '#ff0066', '#ffb31a', 'purple']
     i=0
     for line in input_files:
         name, network_file = line.strip().split(' ')
@@ -40,8 +40,12 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
                 color_choice = colors[5]
                 name = name.replace('TRRUST', ' TRRUST')
                 ymin, xmax = .02, 500
-            else:
+            elif (re.match(re.compile("[a-zA-Z0-9]*miRT"), name)):
                 color_choice = colors[6]
+                name = name.replace('miRT', ' miRT')
+                ymin, xmax = .02, 210
+            else:
+                color_choice = colors[7]
 
 
             sim_net = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
