@@ -40,9 +40,9 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
                 color_choice = colors[5]
                 name = name.replace('TRRUST', ' TRRUST')
                 ymin, xmax = .02, 500
-            elif (re.match(re.compile("[a-zA-Z0-9]*miRT"), name)):
+            elif (re.match(re.compile("[a-zA-Z0-9]*Mi"), name)):
                 color_choice = colors[6]
-                name = name.replace('miRT', ' miRT')
+                name = name.replace('Mi', ' miRT')
                 ymin, xmax = .02, 210
             else:
                 color_choice = colors[7]
