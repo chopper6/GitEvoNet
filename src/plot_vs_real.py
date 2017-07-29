@@ -18,6 +18,7 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
         name, network_file = line.strip().split(' ')
         if (name==real_net_name or real_net_name == 'all'):
             color_choice = colors[i]
+            xmax = 200
             if (re.match(re.compile("[a-zA-Z0-9]*PPI"), name)):
                 color_choice = colors[0]
                 name = name.replace('PPI', ' PPI')
@@ -29,9 +30,18 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
                 name = name.replace('PQ', ' PSICQUIC')
             elif (re.match(re.compile("[a-zA-Z0-9]*EN-[a-zA-Z0-9]*"), name)):
                 color_choice = colors[3]
+                xmax = 500
                 name = name.replace('EN-', ' ENCODE-')
-            else:
+            elif (re.match(re.compile("[a-zA-Z0-9]*Liu"), name)):
                 color_choice = colors[4]
+                name = name.replace('Liu', ' Liu')
+                xmax = 850
+            elif (re.match(re.compile("[a-zA-Z0-9]*TRRUST"), name)):
+                color_choice = colors[5]
+                name = name.replace('TRRUST', ' TRRUST')
+                xmax = 500
+            else:
+                color_choice = colors[6]
 
 
             sim_net = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
@@ -90,8 +100,8 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             # ax.set_yscale('log')
             #ax.set_xlim([0.7, 200]) #TODO: change these?
             #ax.set_ylim([.1, 100])
-            ax.set_xlim([.5,100])
-            ax.set_ylim([.05,100])
+            ax.set_xlim([.5,int(xmax)])
+            ax.set_ylim([.02,100])
 
             xfmatter = ticker.FuncFormatter(LogXformatter)
             yfmatter = ticker.FuncFormatter(LogYformatter)
