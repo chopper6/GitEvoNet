@@ -1,7 +1,7 @@
 import math
 import random as rd
 import networkx as nx
-import bias
+import bias, util
 # from random import SystemRandom as rd
 
 def mutate(configs, net, gen_percent, edge_node_ratio):
@@ -42,7 +42,6 @@ def mutate(configs, net, gen_percent, edge_node_ratio):
 
 
     # REWIRE EDGE
-    # TODO: try changing to rm, then add
     num_rewire = num_mutations(rewire_freq, mutn_type, gen_percent)
     rewire(net, num_rewire, configs['biased'], configs['bias_on'])
 
@@ -84,6 +83,8 @@ def num_mutations(base_mutn_freq, mutn_type, gen_percent):
 
 def add_edges(net, num_add, configs):
 
+    biased = util.boool(configs['biased'])
+
     if (num_add == 0): print("WARNING in mutate(): 0 nodes added in add_nodes\n")
 
     for j in range(num_add):
@@ -101,10 +102,12 @@ def add_edges(net, num_add, configs):
             net.add_edge(node, node2, sign=sign)
             post_size = len(net.edges())
 
-        if (configs['biased'] == True and configs['bias_on'] == 'edges'): bias.assign_an_edge_consv(net, [node,node2], configs['bias_distribution'])
+        if (biased == True and configs['bias_on'] == 'edges'): bias.assign_an_edge_consv(net, [node,node2], configs['bias_distribution'])
 
 
 def add_nodes(net, num_add, edge_node_ratio, configs):
+    biased = util.boool(configs['biased'])
+
     # ADD NODE
     for i in range(num_add):
         pre_size = post_size = len(net.nodes())
@@ -112,7 +115,7 @@ def add_nodes(net, num_add, edge_node_ratio, configs):
             node_num = rd.randint(0, len(net.nodes()) * 1000)  # hope to hit number that doesn't already exist
             net.add_node(node_num)
             post_size = len(net.nodes())
-        if (configs['biased'] == True and configs['bias_on'] == 'nodes'): bias.assign_a_node_consv(net, node_num,configs['bias_distribution'])
+        if (biased == True and configs['bias_on'] == 'nodes'): bias.assign_a_node_consv(net, node_num,configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
         pre_size = post_size = len(net.edges())
@@ -132,7 +135,7 @@ def add_nodes(net, num_add, edge_node_ratio, configs):
                 the_edge = [node2,node]
             post_size = len(net.edges())
 
-        if (configs['biased'] == True and configs['bias_on'] == 'edges'): bias.assign_an_edge_consv(net, the_edge ,configs['bias_distribution'])
+        if (biased == True and configs['bias_on'] == 'edges'): bias.assign_an_edge_consv(net, the_edge ,configs['bias_distribution'])
 
     # MAINTAIN NODE_EDGE RATIO
     # ASSUMES BTWN 1 & 2
@@ -172,6 +175,8 @@ def rm_edges(net, num_rm):
 
 
 def rewire(net, num_rewire, bias, bias_on):
+    bias = util.boool(bias)
+
     for i in range(num_rewire):
         # print("rewire(): before.")
         pre_edges = len(net.edges())
@@ -190,7 +195,7 @@ def rewire(net, num_rewire, bias, bias_on):
                 edge = edge[0]
 
             sign_orig = net[edge[0]][edge[1]]['sign']
-            if (bias == True and bias_on == 'edges'): consv_score = net[edge[0]][edge[1]]['conservation_score']
+            if (bias == True and bias_on == 'edges'): consv_score_orig = net[edge[0]][edge[1]]['conservation_score']
 
             node = rd.sample(net.nodes(), 1)
             node = node[0]
@@ -201,7 +206,7 @@ def rewire(net, num_rewire, bias, bias_on):
             sign = rd.randint(0, 1)
             if (sign == 0):     sign = -1
 
-            if (bias == True and bias_on == 'edges'): net.add_edge(node, node2, sign=sign, conservation_score = consv_score)
+            if (bias == True and bias_on == 'edges'): net.add_edge(node, node2, sign=sign, conservation_score = consv_score_orig)
             else:  net.add_edge(node, node2, sign=sign)
             #else: net.add_edge(node2, node, sign=sign)
             post_edges = len(net.edges())
@@ -213,7 +218,7 @@ def rewire(net, num_rewire, bias, bias_on):
 
                 # UNDO REWIRE:
                 if (num_cc > 1):
-                    if (bias == True and bias_on == 'edges'): net.add_edge(edge[0], edge[1], sign=sign_orig, conservation_score = consv_score)
+                    if (bias == True and bias_on == 'edges'): net.add_edge(edge[0], edge[1], sign=sign_orig, conservation_score = consv_score_orig)
                     else: net.add_edge(edge[0], edge[1], sign=sign_orig)
                     net.remove_edge(node, node2)
                     post_edges = len(net.edges())
@@ -233,6 +238,10 @@ def rewire(net, num_rewire, bias, bias_on):
 
 
 def rewire_componentsOK(net, num_rewire):
+    #obselete i think
+
+    print("\nWhy am i in mutate.rewire_componentsOK???\n")
+
     for i in range(num_rewire):
         # print("rewire(): before.")
         pre_edges = len(net.edges())

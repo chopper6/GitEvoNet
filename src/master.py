@@ -259,7 +259,7 @@ def parse_worker_popn (num_workers, itern, output_dir, num_survive, fitness_dire
     return sorted_popn[:num_survive]
 
 def parse_worker (worker_num, itern, output_dir, num_survive):
-
+    #unused
     dump_file = output_dir + "/to_master/" + str(itern) + "/" + str(worker_num)
     with open(dump_file, 'rb') as file:
         worker_pop = pickle.load(file)
@@ -330,10 +330,15 @@ def watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitn
         for root, dirs, files in os.walk(dump_dir):
             for f in files:
                 if f in ids:
-                        if (os.path.getmtime(root + "/" + f) + 4 < time.time()):
-                            popn += parse_worker(f, itern, output_dir, num_survive)
-                            num_finished += 1
-                            ids.remove(f)
+                        if (os.path.getmtime(root + "/" + f) + 1 < time.time()):
+                            dump_file = output_dir + "/to_master/" + str(itern) + "/" + str(f)
+                            with open(dump_file, 'rb') as file:
+                                try:
+                                    worker_pop = pickle.load(file)
+                                    popn += worker_pop[:num_survive]
+                                    num_finished += 1
+                                    ids.remove(f)
+                                except: pass
 
             #sort and delete some
             sorted_popn = fitness.eval_fitness(popn, fitness_direction)

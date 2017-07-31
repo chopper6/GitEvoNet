@@ -17,8 +17,8 @@ def work(configs, rank):
     while not os.path.isfile(progress):  # master will create this file
         time.sleep(2)
 
-    while not (os.path.getmtime(progress) + .5 < time.time()):  # check that file has not been recently touched
-        time.sleep(.5)
+    while not (os.path.getmtime(progress) + 2 < time.time()):  # check that file has not been recently touched
+        time.sleep(2)
 
     if (True): #lol just to avoid re-indenting in vi
         with open(progress, 'r') as file:
@@ -51,7 +51,7 @@ def work(configs, rank):
             i+=1
 
         while not (os.path.getmtime(worker_file) + 1 < time.time()):
-            time.sleep(.5)
+            time.sleep(1)
 
         t_end = time.time()
         t_elapsed = t_end - t_start
@@ -63,8 +63,13 @@ def work(configs, rank):
 def evolve_minion(worker_file, gen, rank, output_dir):
     t_start = time.time()
 
+    loaded = False
     with open(str(worker_file), 'rb') as file:
-        worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, advice, BD_table, configs = pickle.load(file)
+        while (loaded==False):
+            try:
+                worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, advice, BD_table, configs = pickle.load(file)
+                loaded = True
+            except: time.sleep(2)
         file.close()
 
     survive_fraction = float(configs['worker_percent_survive'])/100

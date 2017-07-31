@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 from decimal import Decimal
+import plot_undir
 
 
 #ORGANIZER
@@ -31,6 +32,10 @@ def single_run_plots (dirr):
 
     print("Generating degree distribution plots.")
     degree_distrib(dirr)
+
+    print("Generating undirected degree distribution plots.")
+    plot_undir.plot_dir(dirr, False, None) #last two args for Biased and bias on (may change later)
+
     #degree_distrib_change(dirr)
 
 def feature_plots_only (dirr):
