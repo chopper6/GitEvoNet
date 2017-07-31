@@ -135,7 +135,8 @@ def evolve_population(configs):
 
 
     estim_wait = None
-    while (size <= end_size and total_gens < max_gen):
+    while (size < end_size and total_gens < max_gen):
+        # size < end_size --> no more adaptation after growth
         t_start = time.time()
         worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(size, end_size, num_workers, survive_fraction, num_survive, worker_pop_size_config)
 
