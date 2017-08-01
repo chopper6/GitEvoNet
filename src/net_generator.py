@@ -25,6 +25,7 @@ def init_population(init_type, start_size, pop_size, configs):
     sign_edges_needed = True
     edge_node_ratio = float(configs['edge_to_node_ratio'])
     num_edges = int(start_size*edge_node_ratio)
+    print("net_generator.init_population(): num edges = " + str(num_edges))
 
     if (init_type == 'shell'):
         population = [Net(nx.DiGraph(), i) for i in range(pop_size)] #change to generate, based on start_size
@@ -154,14 +155,6 @@ def init_population(init_type, start_size, pop_size, configs):
     elif (init_type == 'random'):
         estim_p = num_edges/float(start_size*start_size)
         init_net = (nx.erdos_renyi_graph(start_size, estim_p, directed=True, seed=None))
-        
-        edge_list = init_net.edges()
-        for edge in edge_list:
-            sign = sysRand().randint(0, 1)
-            if (sign == 0):     sign = -1
-            init_net[edge[0]][edge[1]]['sign'] = sign
-
-        rewire_till_connected(init_net)
 
         if (len(init_net.edges()) < num_edges):
             num_add = num_edges - len(init_net.edges())
@@ -170,7 +163,18 @@ def init_population(init_type, start_size, pop_size, configs):
         elif (len(init_net.edges()) > num_edges):
             num_rm = len(init_net.edges()) - num_edges
             mutate.rm_edges(init_net, num_rm)
+
+        assert(len(init_net.edges()) == num_edges)
+
+        edge_list = init_net.edges()
+        for edge in edge_list:
+            sign = sysRand().randint(0, 1)
+            if (sign == 0):     sign = -1
+            init_net[edge[0]][edge[1]]['sign'] = sign
+
         rewire_till_connected(init_net)
+
+        assert(len(init_net.edges()) == num_edges)
         population = [Net(init_net.copy(), i) for i in range(pop_size)]
 
 

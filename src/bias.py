@@ -37,7 +37,7 @@ def assign_edge_consv(population, distrib):
     for p in range(len(population)):
         net = population[p].net
         for edge in net.edges():
-            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,.5)
+            if (distrib == 'uniform'): consv_score = sysRand().uniform(0,1)
             elif (distrib == 'normal'):
                 consv_score = sysRand().normalvariate(0,1)
                 consv_score = (consv_score+.5)/2
@@ -55,7 +55,7 @@ def assign_edge_consv(population, distrib):
 
 def assign_an_edge_consv(net, edge, distrib):
     if (distrib == 'uniform'):
-        consv_score = sysRand().uniform(0, .5)
+        consv_score = sysRand().uniform(0, 1)
     elif (distrib == 'normal'):
         consv_score = sysRand().normalvariate(0, 1)
         consv_score = (consv_score + .5) / 2
