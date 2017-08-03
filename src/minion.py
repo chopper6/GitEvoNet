@@ -69,7 +69,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
             try:
                 worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, advice, BD_table, configs = pickle.load(file)
                 loaded = True
-            except: time.sleep(2)
+            except EOFError: time.sleep(2)
         file.close()
 
     survive_fraction = float(configs['worker_percent_survive'])/100

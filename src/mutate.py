@@ -190,7 +190,7 @@ def rewire(net, num_rewire, bias, bias_on):
             edge = edge[0]
 
             # don't allow 0 deg edges
-            while ((net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1) or (net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1)):
+            while ((net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1) or (net.in_degree(edge[1]) + net.out_degree(edge[1]) == 1)):
                 edge = rd.sample(net.edges(), 1)
                 edge = edge[0]
 

@@ -18,7 +18,7 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
         name, network_file = line.strip().split(' ')
         if (name==real_net_name or real_net_name == 'all'):
             color_choice = colors[i]
-            ymin, xmax = .5, 200
+            ymin, xmax = .02, 200
             if (re.match(re.compile("[a-zA-Z0-9]*PPI"), name)):
                 color_choice = colors[0]
                 name = name.replace('PPI', ' PPI')
