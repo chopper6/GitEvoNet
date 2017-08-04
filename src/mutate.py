@@ -97,7 +97,7 @@ def add_edges(net, num_add, configs):
                 node2 = rd.sample(net.nodes(), 1)
                 node2 = node2[0]
 
-            if [node,node2] not in net.edges():
+            if not net.has_edge(node,node2):
                 sign = rd.randint(0, 1)
                 if (sign == 0):     sign = -1
 
@@ -132,11 +132,11 @@ def add_nodes(net, num_add, edge_node_ratio, configs):
             if (sign == 0):     sign = -1
             if (rd.random() < .5):
                 the_edge = [new_node,node2]
-                if the_edge not in net.edges():
+                if not net.has_edge(new_node, node2):
                     net.add_edge(new_node, node2, sign=sign)
             else:
                 the_edge = [node2,new_node]
-                if the_edge not in net.edges():
+                if not net.has_edge(node2, new_node):
                     net.add_edge(node2, new_node, sign=sign)
             post_size = len(net.edges())
 
