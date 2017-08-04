@@ -156,6 +156,7 @@ def init_population(init_type, start_size, pop_size, configs):
         estim_p = num_edges/float(start_size*start_size)
         init_net = (nx.erdos_renyi_graph(start_size, estim_p, directed=True, seed=None))
 
+        sign_edges_single(init_net)
         if (len(init_net.edges()) < num_edges):
             num_add = num_edges - len(init_net.edges())
             mutate.add_edges(init_net, num_add, configs)
@@ -166,11 +167,13 @@ def init_population(init_type, start_size, pop_size, configs):
 
         assert(len(init_net.edges()) == num_edges)
 
+        '''
         edge_list = init_net.edges()
         for edge in edge_list:
             sign = sysRand().randint(0, 1)
             if (sign == 0):     sign = -1
             init_net[edge[0]][edge[1]]['sign'] = sign
+        '''
 
         rewire_till_connected(init_net)
 
@@ -215,6 +218,13 @@ def sign_edges(population):
             sign = sysRand().randint(0, 1)
             if (sign == 0):     sign = -1
             population[p].net[edge[0]][edge[1]]['sign'] = sign
+
+def sign_edges_single(net):
+    edge_list = net.edges()
+    for edge in edge_list:
+        sign = sysRand().randint(0, 1)
+        if (sign == 0):     sign = -1
+        net[edge[0]][edge[1]]['sign'] = sign
 
 def double_edges(population):
     for p in range(len(population)):
