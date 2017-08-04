@@ -239,7 +239,6 @@ def rewire_till_connected(net):
             
             edge = sysRand().sample(net.edges(), 1)
             edge = edge[0]
-
             # don't allow 0 deg edges
             while ((net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1) or (net.in_degree(edge[1]) + net.out_degree(edge[1]) == 1)):
                 edge = sysRand().sample(net.edges(), 1)
