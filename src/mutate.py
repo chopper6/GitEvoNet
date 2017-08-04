@@ -212,7 +212,7 @@ def rewire(net, num_rewire, bias, bias_on, dirr):
 
             node = rd.sample(net.nodes(), 1) #redundant, just for a do..while below
             node = node2 = node[0]
-            while ([node,node2] in net.edges() or node2==node):
+            while (net.has_edge(node,node2) or node2==node):
                 node = rd.sample(net.nodes(), 1)
                 node = node2 = node[0]
                 while (node2 == node):
@@ -228,6 +228,7 @@ def rewire(net, num_rewire, bias, bias_on, dirr):
 
             if (post_edges > pre_edges):  # check that edge successfully added
                 net.remove_edge(edge[0], edge[1])
+                post_edges = len(net.edges())
                 if (post_edges != pre_edges): util.cluster_print(dirr, "ERROR in rewire(): rm edge failed.\n")
                 net_undir = net.to_undirected()
                 num_cc = nx.number_connected_components(net_undir)
