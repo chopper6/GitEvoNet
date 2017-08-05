@@ -164,7 +164,7 @@ def evolve_population(configs):
             #print("rate = " + str(rate) + ", itern % rate = " + str(itern%rate) + ", itern < " + str (max_gen-start_size*rate))
             if (itern % rate == 0 and itern < (max_gen-start_size*rate)):
                 for p in range(len(population)):
-                    mutate.add_nodes(population[p].net, 1, edge_node_ratio, configs)
+                    mutate.add_nodes(population[p].net, 1, configs)
 
 
         write_mpi_info(output_dir, itern)
