@@ -64,10 +64,6 @@ def num_mutations(base_mutn_freq, mutn_type, gen_percent):
 
 def add_this_edge(net, configs, node1=None, node2=None, sign=None):
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
-
     biased = util.boool(configs['biased'])
     reverse_allowed = util.boool(configs['reverse_edges_allowed'])
     bias_on = configs['bias_on']
@@ -107,16 +103,9 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None):
     if (biased == True and bias_on == 'edges'): bias.assign_an_edge_consv(net, [node1,node2], configs['bias_distribution'])
 
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
-
 
 def add_edges(net, num_add, configs):
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
 
     if (num_add == 0): print("WARNING in mutate(): 0 nodes added in add_nodes\n")
 
