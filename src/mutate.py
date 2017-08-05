@@ -62,6 +62,8 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None):
     reverse_allowed = util.boool(configs['reverse_edges_allowed'])
     bias_on = configs['bias_on']
 
+    node1_set, node2_set = node1, node2 #to save their states
+
     if not sign:
         sign = rd.randint(0, 1)
         if (sign == 0): sign = -1
@@ -70,11 +72,11 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None):
     i=0
     while (pre_size == post_size):  # ensure that net adds
 
-        if not node1:
+        if not node1_set:
             node = rd.sample(net.nodes(), 1)
             node1 = node[0]
 
-        if not node2:
+        if not node2_set:
             node2 = node1
             while (node2 == node1):
                 node2 = rd.sample(net.nodes(), 1)
@@ -83,11 +85,11 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None):
         if reverse_allowed:
             if not net.has_edge(node1, node2):
                 net.add_edge(node1, node2, sign=sign)
-                post_size = len(net.edges())
         else:
             if not net.has_edge(node1, node2) and not net.has_edge(node2, node1):
                 net.add_edge(node1, node2, sign=sign)
-                post_size = len(net.edges())
+
+        post_size = len(net.edges())
 
         i+=1
         if (i == 10000000): util.cluster_print(configs['output_directory'], "WARNING mutate.add_this_edge() is looping a lot.\n")
