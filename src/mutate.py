@@ -187,9 +187,13 @@ def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
         add_this_edge(net, configs, node1=node1, node2=node2, sign=sign_orig)
         rm_edges(net, 1, configs) #calls ensure_single_cc() at end
 
+        net_undir = net.to_undirected()
+        num_cc = nx.number_connected_components(net_undir)
+
         i+=1
         if (i == 10000000): util.cluster_print(configs['output_directory'], "WARNING mutate.ensure_single_cc() is looping a lot.\n")
 
+    assert (num_cc == 1)
 
 
 
