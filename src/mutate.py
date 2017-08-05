@@ -137,8 +137,7 @@ def add_nodes(net, num_add, configs):
         if (biased == True and configs['bias_on'] == 'nodes'): bias.assign_a_node_consv(net, new_node,configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
-        if (rd.random() < .5): node1, node2 = new_node, None
-        else: node1, node2 = None, new_node
+        node1, node2 = new_node, None #change if allow reversals, but poss issue w/add_this_edge if use node2=new_node
         add_this_edge(net, configs, node1=node1, node2=node2)
 
     # MAINTAIN NODE_EDGE RATIO
