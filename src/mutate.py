@@ -155,10 +155,6 @@ def add_nodes(net, num_add, configs):
 
 def rm_edges(net, num_rm, configs):
     # constraints: doesn't leave 0 deg edges or mult connected components
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
-
 
     for j in range(num_rm):
         pre_size = post_size = len(net.edges())
