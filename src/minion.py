@@ -81,8 +81,6 @@ def evolve_minion(worker_file, gen, rank, output_dir):
     if (control == "None"): control = None
     fitness_direction = str(configs['fitness_direction'])
 
-    node_edge_ratio = float(configs['edge_to_node_ratio'])
-
     random.seed(randSeed)
     population = gen_population_from_seed(seed, pop_size)
     start_size = len(seed.net.nodes())
@@ -99,7 +97,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
 
         for p in range(pop_size):
             t0 = ptime()
-            mutate.mutate(configs, population[p].net, gen_percent, node_edge_ratio)
+            mutate.mutate(configs, population[p].net, gen_percent)
             t1 = ptime()
             mutate_time += t1-t0
 

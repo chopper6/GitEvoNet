@@ -4,7 +4,7 @@ import networkx as nx
 import bias, util
 # from random import SystemRandom as rd
 
-def mutate(configs, net, gen_percent, edge_node_ratio):
+def mutate(configs, net, gen_percent):
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
     rewire_freq = float(configs['rewire_mutation_frequency'])
     sign_freq = float(configs['sign_mutation_frequency'])
@@ -14,50 +14,25 @@ def mutate(configs, net, gen_percent, edge_node_ratio):
     mutn_type = str(configs['mutation_type'])
 
     # --------- MUTATIONS ------------- #
+
     # GROW (ADD NODE)
-    # starts unconnected
     num_grow = num_mutations(grow_freq, mutn_type, gen_percent)
-    if (num_grow > 0): add_nodes(net, num_grow, edge_node_ratio, configs)
+    if (num_grow > 0): add_nodes(net, num_grow, configs)
 
     # SHRINK (REMOVE NODE)
     # poss outdated
     num_shrink = num_mutations(shrink_freq, mutn_type, gen_percent)
-    pre_size = len(net.nodes())
-    for i in range(num_shrink):
-
-        #REMOVE NODE
-        node = rd.sample(net.nodes(), 1)
-        node = node[0]
-
-        num_edges_lost = len(net.in_edges(node)+net.out_edges(node)) #ASSUmeS directional reduction
-        change_in_edges = 2-num_edges_lost
-
-        net.remove_node(node)
-        post_size = len(net.nodes())
-        if (pre_size == post_size): print("MUTATE SHRINK() ERR: node not removed.")
-
-        # MAINTAIN NODE:EDGE RATIO
-        if (change_in_edges > 0): rm_edges(net,change_in_edges)
-        else: add_edges(net, -1*change_in_edges, configs)
-
+    if (num_shrink > 0): shrink(net, num_shrink, configs)
 
     # REWIRE EDGE
     num_rewire = num_mutations(rewire_freq, mutn_type, gen_percent)
-    rewire(net, num_rewire, configs['biased'], configs['bias_on'], configs['output_directory'])
-
+    rewire(net, num_rewire, configs['biased'], configs['bias_on'], configs['output_directory'], configs)
 
     # CHANGE EDGE SIGN
     # poss outdated
     num_sign = num_mutations(sign_freq, mutn_type, gen_percent)
-    for i in range(num_sign):
-        pre_edges = len(net.edges())
-        post_edges = pre_edges + 1
-        while (pre_edges != post_edges):
-            edge = rd.sample(net.edges(), 1)
-            edge = edge[0]
-            net[edge[0]][edge[1]]['sign'] = -1 * net[edge[0]][edge[1]]['sign']
-            post_edges = len(net.edges())
-            if (post_edges != pre_edges): print("ERROR IN SIGN CHANGE: num edges not kept constant.")
+    if (num_sign > 0): change_edge_sign(net, num_sign)
+
 
 
 def num_mutations(base_mutn_freq, mutn_type, gen_percent):
@@ -81,33 +56,58 @@ def num_mutations(base_mutn_freq, mutn_type, gen_percent):
         return rd.randint(0, mutn_freq)
 
 
-
-def add_edges(net, num_add, configs):
+def add_this_edge(net, configs, node1=None, node2=None, sign=None):
 
     biased = util.boool(configs['biased'])
+    reverse_allowed = util.boool(configs['reverse_edges_allowed'])
+    bias_on = configs['bias_on']
 
-    if (num_add == 0): print("WARNING in mutate(): 0 nodes added in add_nodes\n")
+    if not sign:
+        sign = rd.randint(0, 1)
+        if (sign == 0): sign = -1
 
-    for j in range(num_add):
-        pre_size = post_size = len(net.edges())
-        while (pre_size == post_size):  # ensure that net adds
+    pre_size = post_size = len(net.edges())
+    i=0
+    while (pre_size == post_size):  # ensure that net adds
+
+        if not node1:
             node = rd.sample(net.nodes(), 1)
-            node = node2 = node[0]
+            node1 = node[0]
+
+        if not node2:
+            node2 = node1
             while (node2 == node):
                 node2 = rd.sample(net.nodes(), 1)
                 node2 = node2[0]
 
-            if not net.has_edge(node,node2):
-                sign = rd.randint(0, 1)
-                if (sign == 0):     sign = -1
-
-                net.add_edge(node, node2, sign=sign)
+        if reverse_allowed:
+            if not net.has_edge(node1, node2):
+                net.add_edge(node1, node2, sign=sign)
+                post_size = len(net.edges())
+        else:
+            if not net.has_edge(node1, node2) and not net.has_edge(node2, node1):
+                net.add_edge(node1, node2, sign=sign)
                 post_size = len(net.edges())
 
-        if (biased == True and configs['bias_on'] == 'edges'): bias.assign_an_edge_consv(net, [node,node2], configs['bias_distribution'])
+        i+=1
+        if (i == 10000000): util.cluster_print(configs['output_directory'], "WARNING mutate.add_this_edge() is looping a lot.\n")
+
+    if (biased == True and bias_on == 'edges'): bias.assign_an_edge_consv(net, [node1,node2], configs['bias_distribution'])
 
 
-def add_nodes(net, num_add, edge_node_ratio, configs):
+
+
+def add_edges(net, num_add, configs):
+
+    if (num_add == 0): print("WARNING in mutate(): 0 nodes added in add_nodes\n")
+
+    for j in range(num_add):
+        add_this_edge(net, configs)
+
+
+def add_nodes(net, num_add, configs):
+
+    edge_node_ratio = float(configs['edge_to_node_ratio'])
     biased = util.boool(configs['biased'])
 
     # ADD NODE
@@ -118,47 +118,30 @@ def add_nodes(net, num_add, edge_node_ratio, configs):
             if new_node not in net.nodes():
                 net.add_node(new_node)
                 post_size = len(net.nodes())
-        if (biased == True and configs['bias_on'] == 'nodes'): bias.assign_a_node_consv(net, node_num,configs['bias_distribution'])
+        if (biased == True and configs['bias_on'] == 'nodes'): bias.assign_a_node_consv(net, new_node,configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
-        pre_size = post_size = len(net.edges())
-        while (pre_size == post_size):  # ensure that net adds
-            node2 = new_node
-            while (node2 == new_node):
-                node2 = rd.sample(net.nodes(), 1)
-                node2 = node2[0]
-
-            sign = rd.randint(0, 1)
-            if (sign == 0):     sign = -1
-            if (rd.random() < .5):
-                the_edge = [new_node,node2]
-                if not net.has_edge(new_node, node2):
-                    net.add_edge(new_node, node2, sign=sign)
-            else:
-                the_edge = [node2,new_node]
-                if not net.has_edge(node2, new_node):
-                    net.add_edge(node2, new_node, sign=sign)
-            post_size = len(net.edges())
-
-        if (biased == True and configs['bias_on'] == 'edges'): bias.assign_an_edge_consv(net, the_edge ,configs['bias_distribution'])
+        add_this_edge(net, configs)
 
     # MAINTAIN NODE_EDGE RATIO
     # ASSUMES BTWN 1 & 2
     num_edge_add = 0
-    curr_ratio = len(net.edges())/float(len(net.nodes()))
-    if (curr_ratio < edge_node_ratio): num_edge_add += 1
-    #pr_second = edge_node_ratio -1
-    #if (rd.random() < pr_second): num_edge_add += 1
-
+    curr_ratio = (len(net.edges()) + num_edge_add) / float(len(net.nodes()))
+    while (curr_ratio < edge_node_ratio):
+        curr_ratio = (len(net.edges()) + num_edge_add) / float(len(net.nodes()))
+        num_edge_add += 1
     add_edges(net, num_edge_add, configs)
 
-def rm_edges(net, num_rm):
+def rm_edges(net, num_rm, configs):
+    # constraints: doesn't leave 0 deg edges or mult connected components
 
     for j in range(num_rm):
         pre_size = post_size = len(net.edges())
+        i=0
         while (pre_size == post_size):
             edge = rd.sample(net.edges(), 1)
             edge = edge[0]
+
             # don't allow 0 deg edges
             while ((net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1) or (net.in_degree(edge[1]) + net.out_degree(edge[1]) == 1)):
                 edge = rd.sample(net.edges(), 1)
@@ -166,98 +149,65 @@ def rm_edges(net, num_rm):
 
             sign_orig = net[edge[0]][edge[1]]['sign']
             net.remove_edge(edge[0], edge[1])
-            post_size = len(net.edges())
-            if (post_size == pre_size): print("WARNING: mutate remove edge failed, trying again.")
 
-            net_undir = net.to_undirected()
-            num_cc = nx.number_connected_components(net_undir)
-
-            # UNDO RM:
-            while (num_cc > 1):
-                #if err on cluster, instead of print, thread may hang
-
-                net.add_edge(edge[0], edge[1], sign=sign_orig)
-                net_undir = net.to_undirected()
-                num_cc = nx.number_connected_components(net_undir)
-                post_size = len(net.edges())
-                if (num_cc > 1 or post_size!=pre_size):
-                    print("ERROR rewire(): undo failed to restore to single component")
-                    return 1
+            ensure_single_cc(net, configs, node1=edge[0], node2=edge[1], sign_orig=sign_orig)
 
             post_size = len(net.edges())
+            i+=1
+
+            if (i==10000000): util.cluster_print(configs['output_directory'], "WARNING mutate.rm_edges() is looping a lot.\n")
 
 
+def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
+    #rewires [node1, node2] at the expense of a random, non deg1 edge
 
-def rewire(net, num_rewire, bias, bias_on, dirr):
+    net_undir = net.to_undirected()
+    num_cc = nx.number_connected_components(net_undir)
+
+    if (num_cc != 1): #rm_edge() will recursively check
+        if not node1:
+            components = list(nx.connected_components(net_undir))
+            c1 = components[0]
+            node1 = rd.sample(c1, 1)
+            node1 = node1[0]
+
+        if not node2:
+            components = list(nx.connected_components(net_undir))
+            c2 = components[1]
+            node2 = rd.sample(c2, 1)
+            node2 = node2[0]
+
+        if not sign_orig:
+            sign_orig = rd.randint(0, 1)
+            if (sign_orig == 0): sign_orig = -1
+
+        add_this_edge(net, configs, node1=node1, node2=node2, sign=sign_orig)
+        rm_edges(net, 1, configs) #calls ensure_single_cc() at end
+
+    #one last check (redundant)
+    net_undir = net.to_undirected()
+    num_cc = nx.number_connected_components(net_undir)
+    assert (num_cc > 1)
+
+def rewire(net, num_rewire, bias, bias_on, dirr, configs):
+    # constraints: no 0 deg nodes, 1 connected component
+    # avoid: re-adding a node/edge that already exists
     bias = util.boool(bias)
 
+    net_undir = net.to_undirected()
+    num_cc = nx.number_connected_components(net_undir)
+    assert (num_cc == 1)
+
     for i in range(num_rewire):
-        # print("rewire(): before.")
-        pre_edges = len(net.edges())
-        rewire_success = False
-        net_undir = net.to_undirected()
-        num_cc = nx.number_connected_components(net_undir)
-        if (num_cc > 1): util.cluster_print(dirr,"mutation rewire(): ERROR: multiple components!\n")
 
-        while (rewire_success == False):  # ensure sucessful rewire
-            edge = rd.sample(net.edges(), 1)
-            edge = edge[0]
-            # don't allow 0 deg edges
-            while ((net.in_degree(edge[0]) + net.out_degree(edge[0]) == 1) or (net.in_degree(edge[1]) + net.out_degree(edge[1]) == 1)):
-                edge = rd.sample(net.edges(), 1)
-                edge = edge[0]
-
-            sign_orig = net[edge[0]][edge[1]]['sign']
-            if (bias == True and bias_on == 'edges'): consv_score_orig = net[edge[0]][edge[1]]['conservation_score']
-
-            node = rd.sample(net.nodes(), 1) #redundant, just for a do..while below
-            node = node2 = node[0]
-            while (net.has_edge(node,node2) or node2==node):
-                node = rd.sample(net.nodes(), 1)
-                node = node2 = node[0]
-                while (node2 == node):
-                    node2 = rd.sample(net.nodes(), 1)
-                    node2 = node2[0]
-            sign = rd.randint(0, 1)
-            if (sign == 0):     sign = -1
-
-            if (bias == True and bias_on == 'edges'): net.add_edge(node, node2, sign=sign, conservation_score = consv_score_orig)
-            else:  net.add_edge(node, node2, sign=sign)
-            #else: net.add_edge(node2, node, sign=sign)
-            post_edges = len(net.edges())
-
-            if (post_edges > pre_edges):  # check that edge successfully added
-                net.remove_edge(edge[0], edge[1])
-                post_edges = len(net.edges())
-                if (post_edges != pre_edges): util.cluster_print(dirr, "ERROR in rewire(): rm edge failed.\n")
-                net_undir = net.to_undirected()
-                num_cc = nx.number_connected_components(net_undir)
-                # print("rewire(): mid.")
-
-                # UNDO REWIRE:
-                if (num_cc > 1):
-                    if (bias == True and bias_on == 'edges'): net.add_edge(edge[0], edge[1], sign=sign_orig, conservation_score = consv_score_orig)
-                    else: net.add_edge(edge[0], edge[1], sign=sign_orig)
-                    net.remove_edge(node, node2)
-                    post_edges = len(net.edges())
-                    net_undir = net.to_undirected()
-                    num_cc = nx.number_connected_components(net_undir)
-                    if (num_cc > 1): 
-                        print("ERROR rewire(): undo failed to restore to single component")
-                        return 1
-                    if (post_edges != pre_edges): print("\nMUTATE() ERROR: undo rewire failed.")
-                else:
-                    post_edges = len(net.edges())
-                    if (post_edges == pre_edges):  # check that edge successfully removed
-                        rewire_success = True
-                    else:
-                        util.cluster_print(dirr,"ERROR IN REWIRE: num edges not kept constant")
-                        return
-            else: util.cluster_print(dirr, "ERROR in rewire(): somehow edge is not added\n")
+        # poss, but unlikely
+        add_this_edge(net, configs)
+        rm_edges(net,1,configs)
 
 
 def rewire_componentsOK(net, num_rewire):
     #obselete i think
+    assert(False)
 
     print("\nWhy am i in mutate.rewire_componentsOK???\n")
 
@@ -292,3 +242,37 @@ def rewire_componentsOK(net, num_rewire):
                 else:
                     print("ERROR IN REWIRE: num edges not kept constant")
                     return
+
+
+def shrink(net, num_shrink, configs):
+    pre_size = len(net.nodes())
+    for i in range(num_shrink):
+        assert(False) #should use SHRINK w/o revising
+
+        #REMOVE NODE
+        node = rd.sample(net.nodes(), 1)
+        node = node[0]
+
+        num_edges_lost = len(net.in_edges(node)+net.out_edges(node)) #ASSUmeS directional reduction
+        change_in_edges = 2-num_edges_lost
+
+        net.remove_node(node)
+        post_size = len(net.nodes())
+        if (pre_size == post_size): print("MUTATE SHRINK() ERR: node not removed.")
+
+        # MAINTAIN NODE:EDGE RATIO
+        if (change_in_edges > 0): rm_edges(net,change_in_edges, configs)
+        else: add_edges(net, -1*change_in_edges, configs)
+
+
+def change_edge_sign(net, num_sign):
+    for i in range(num_sign):
+        pre_edges = len(net.edges())
+        post_edges = pre_edges + 1
+        while (pre_edges != post_edges):
+            edge = rd.sample(net.edges(), 1)
+            edge = edge[0]
+            net[edge[0]][edge[1]]['sign'] = -1 * net[edge[0]][edge[1]]['sign']
+            post_edges = len(net.edges())
+            if (post_edges != pre_edges): print("ERROR IN SIGN CHANGE: num edges not kept constant.")
+
