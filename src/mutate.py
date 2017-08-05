@@ -193,10 +193,6 @@ def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
     net_undir = net.to_undirected()
     num_cc = nx.number_connected_components(net_undir)
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
-
     i=0
     while (num_cc != 1): #rm_edge() will recursively check
         if not node1:
