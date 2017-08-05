@@ -76,7 +76,7 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None):
 
         if not node2:
             node2 = node1
-            while (node2 == node):
+            while (node2 == node1):
                 node2 = rd.sample(net.nodes(), 1)
                 node2 = node2[0]
 
