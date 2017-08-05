@@ -129,7 +129,9 @@ def add_nodes(net, num_add, configs):
         if (biased == True and configs['bias_on'] == 'nodes'): bias.assign_a_node_consv(net, new_node,configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
-        add_this_edge(net, configs)
+        if (rd.random() < .5): node1, node2 = new_node, None
+        else: node1, node2 = None, new_node
+        add_this_edge(net, configs, node1=node1, node2=node2)
 
     # MAINTAIN NODE_EDGE RATIO
     # ASSUMES BTWN 1 & 2
@@ -218,6 +220,10 @@ def rewire(net, num_rewire, bias, bias_on, dirr, configs):
         # poss, but unlikely
         add_this_edge(net, configs)
         rm_edges(net,1,configs)
+
+    net_undir = net.to_undirected()
+    num_cc = nx.number_connected_components(net_undir)
+    assert (num_cc == 1)
 
 
 def rewire_componentsOK(net, num_rewire):
