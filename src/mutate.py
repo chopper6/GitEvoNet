@@ -45,7 +45,9 @@ def num_mutations(base_mutn_freq, mutn_type, gen_percent):
     # note: mutation should be < 1 OR, if > 1, an INT
     mutn_freq=0
 
-    if (mutn_type == 'static' or base_mutn_freq == 0):  mutn_freq = base_mutn_freq
+    if (mutn_type == 'static' or base_mutn_freq == 0):
+        mutn_freq = int(base_mutn_freq)
+        return mutn_freq
     elif (mutn_type == 'dynamic'):
         mutn_freq = math.ceil(base_mutn_freq - base_mutn_freq*gen_percent)
         if (mutn_freq<=0): print("WARNING in mutate.num_mutations(): dynamic mutation yield 0 freq.")
@@ -150,8 +152,8 @@ def add_nodes(net, num_add, configs):
     num_edge_add = 0
     curr_ratio = (len(net.edges()) + num_edge_add) / float(len(net.nodes()))
     while (curr_ratio < edge_node_ratio):
-        curr_ratio = (len(net.edges()) + num_edge_add) / float(len(net.nodes()))
         num_edge_add += 1
+        curr_ratio = (len(net.edges()) + num_edge_add) / float(len(net.nodes()))
     add_edges(net, num_edge_add, configs)
 
     net_undir = net.to_undirected()
