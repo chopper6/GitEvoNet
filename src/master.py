@@ -355,8 +355,7 @@ def watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitn
         print("master using estim_wait = " + str(estim_wait))
     if (estim_used == True): util.cluster_print(output_dir,"master updated estim_wait to " + str(estim_wait))
     '''
-    #if (itern % 100 == 0): 
-    util.cluster_print(output_dir,"master finished extracting workers after " + str(time_elapsed) + " seconds, and making " + str(dir_checks) + " dir checks.")
+    if (itern % 100 == 0): util.cluster_print(output_dir,"master finished extracting workers after " + str(time_elapsed) + " seconds, and making " + str(dir_checks) + " dir checks.")
 
     return estim_wait, popn
 

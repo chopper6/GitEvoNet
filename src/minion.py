@@ -55,7 +55,7 @@ def work(configs, rank):
 
         t_end = time.time()
         t_elapsed = t_end - t_start
-        if ((rank == 1 or rank==32 or rank==63 or rank==128)): util.cluster_print(output_dir,"Worker #" + str(rank) + " starting evolution after waiting " + str(t_elapsed) + " seconds and checking dir " + str(i) + " times. Starts at gen " + str(gen))
+        if ((rank == 1 or rank==32 or rank==63 or rank==128) and gen % 100 == 0): util.cluster_print(output_dir,"Worker #" + str(rank) + " starting evolution after waiting " + str(t_elapsed) + " seconds and checking dir " + str(i) + " times. Starts at gen " + str(gen))
         evolve_minion(worker_file, gen, rank, output_dir)
         gen+=1
 
@@ -125,7 +125,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
 
     t_end = time.time()
     time_elapsed = t_end - t_start
-    if (rank == 1 or rank==32 or rank==63): util.cluster_print(output_dir,"Worker #" + str(rank) + " finishing after " + str(time_elapsed) + " seconds")
+    if ((rank == 1 or rank==32 or rank==63) and gen % 100 == 0): util.cluster_print(output_dir,"Worker #" + str(rank) + " finishing after " + str(time_elapsed) + " seconds")
 
 
 def write_out_worker(worker_file, population, num_return):

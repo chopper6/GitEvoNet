@@ -98,7 +98,7 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None):
         post_size = len(net.edges())
 
         i+=1
-        if (i == 10000000): util.cluster_print(configs['output_directory'], "WARNING mutate.add_this_edge() is looping a lot.\n")
+        if (i == 10000000): util.cluster_print(configs['output_directory'], "\n\n\nWARNING mutate.add_this_edge() is looping a lot.\nNode1 = " + str(node1_set) + ", Node2 = " + str(node2_set) +  "\n\n\n")
 
     if (biased == True and bias_on == 'edges'): bias.assign_an_edge_consv(net, [node1,node2], configs['bias_distribution'])
 
@@ -190,7 +190,7 @@ def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
     num_cc = nx.number_connected_components(net_undir)
 
     i=0
-    while (num_cc != 1): #rm_edge() will recursively check
+    if (num_cc != 1): #rm_edge() will recursively check #COULD CAUSE AN ERR
         if not node1:
             components = list(nx.connected_components(net_undir))
             c1 = components[0]
