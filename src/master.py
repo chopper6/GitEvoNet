@@ -157,6 +157,8 @@ def evolve_population(configs):
         if (itern % int(max_gen/num_net_output) ==0):
             nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(itern))
 
+        # minions now handle grow op
+        '''
         if (num_grow != 0): #WILL NOT WORK WELL WITH ISLAND ALGO, OR MULT WORKER GENS
             #NO LONGER: ASSUMES GROWTH ONLY FOR 1st HALF
             rate = int(max_gen/num_grow)
@@ -165,7 +167,7 @@ def evolve_population(configs):
             if (itern % rate == 0 and itern < (max_gen-start_size*rate)):
                 for p in range(len(population)):
                     mutate.add_nodes(population[p].net, 1, configs)
-
+        '''
 
         write_mpi_info(output_dir, itern)
         #debug(population), outdated

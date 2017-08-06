@@ -62,7 +62,7 @@ def num_mutations(base_mutn_freq, mutn_type, gen_percent):
         return rd.randint(0, mutn_freq)
 
 
-def add_this_edge(net, configs, node1=None, node2=None, sign=None):
+def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direction=False):
 
     biased = util.boool(configs['biased'])
     reverse_allowed = util.boool(configs['reverse_edges_allowed'])
@@ -87,6 +87,11 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None):
             while (node2 == node1):
                 node2 = rd.sample(net.nodes(), 1)
                 node2 = node2[0]
+
+        if random_direction: #swap nodes 1 & 2
+            node3=node2
+            node2=node1
+            node1=node3
 
         if reverse_allowed:
             if not net.has_edge(node1, node2):
@@ -138,7 +143,7 @@ def add_nodes(net, num_add, configs):
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
         node1, node2 = new_node, None #change if allow reversals, but poss issue w/add_this_edge if use node2=new_node
-        add_this_edge(net, configs, node1=node1, node2=node2)
+        add_this_edge(net, configs, node1=node1, node2=node2, random_direction=True)
 
     # MAINTAIN NODE_EDGE RATIO
     # ASSUMES BTWN 1 & 2
