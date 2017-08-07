@@ -193,6 +193,9 @@ def rm_edges(net, num_rm, configs):
 def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
     #rewires [node1, node2] at the expense of a random, non deg1 edge
 
+    if node1: assert(node2)
+    if not node1: assert(not node2)
+
     net_undir = net.to_undirected()
     num_cc = nx.number_connected_components(net_undir)
 
@@ -205,7 +208,6 @@ def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
             node1 = node1[0]
 
         if not node2:
-            components = list(nx.connected_components(net_undir))
             c2 = components[1]
             node2 = rd.sample(c2, 1)
             node2 = node2[0]
@@ -214,11 +216,6 @@ def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
             sign_orig = rd.randint(0, 1)
             if (sign_orig == 0): sign_orig = -1
 
-        if not net.has_edge(node1, node2): #swap node order
-            assert(net.has_edge(node2, node1))
-            node3 = node1
-            node1 = node2
-            node2 = node3
 
         add_this_edge(net, configs, node1=node1, node2=node2, sign=sign_orig)
         rm_edges(net, 1, configs) #calls ensure_single_cc() at end
