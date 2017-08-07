@@ -78,8 +78,8 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
         #FORMAT PLOT
         ax = plt.gca() # gca = get current axes instance
 
-        ax.set_xlim([0,1000])
-        ax.set_ylim([0,1000])
+        ax.set_xlim([0,100])
+        ax.set_ylim([0,100])
 
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
