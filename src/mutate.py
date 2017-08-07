@@ -179,13 +179,12 @@ def rm_edges(net, num_rm, configs):
             sign_orig = net[edge[0]][edge[1]]['sign']
             net.remove_edge(edge[0], edge[1])
 
-            ensure_single_cc(net, configs, node1=edge[0], node2=edge[1], sign_orig=sign_orig)
-
             post_size = len(net.edges())
             i+=1
 
             if (i==10000000): util.cluster_print(configs['output_directory'], "WARNING mutate.rm_edges() is looping a lot.\n")
 
+        ensure_single_cc(net, configs, node1=edge[0], node2=edge[1], sign_orig=sign_orig)
 
     net_undir = net.to_undirected()
     num_cc = nx.number_connected_components(net_undir)
@@ -214,6 +213,12 @@ def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
         if not sign_orig:
             sign_orig = rd.randint(0, 1)
             if (sign_orig == 0): sign_orig = -1
+
+        if not net.has_edge(node1, node2): #swap node order
+            assert(net.has_edge(node2, node1))
+            node3 = node1
+            node1 = node2
+            node2 = node3
 
         add_this_edge(net, configs, node1=node1, node2=node2, sign=sign_orig)
         rm_edges(net, 1, configs) #calls ensure_single_cc() at end
