@@ -80,11 +80,11 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direct
     i=0
     while (pre_size == post_size):  # ensure that net adds
 
-        if not node1_set:
+        if not node1_set and node1_set != 0:
             node = rd.sample(net.nodes(), 1)
             node1 = node[0]
 
-        if not node2_set:
+        if not node2_set and node2_set != 0:
             node2 = node1
             while (node2 == node1):
                 node2 = rd.sample(net.nodes(), 1)
@@ -193,21 +193,21 @@ def rm_edges(net, num_rm, configs):
 def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
     #rewires [node1, node2] at the expense of a random, non deg1 edge
 
-    if node1: assert(node2)
-    if not node1: assert(not node2)
+    if node1 or node1==0: assert(node2 or node2==0)
+    if not node1: assert not (node2)
 
     net_undir = net.to_undirected()
     num_cc = nx.number_connected_components(net_undir)
 
     i=0
     if (num_cc != 1): #rm_edge() will recursively check #COULD CAUSE AN ERR
-        if not node1:
+        if not node1 and node1 != 0:
             components = list(nx.connected_components(net_undir))
             c1 = components[0]
             node1 = rd.sample(c1, 1)
             node1 = node1[0]
 
-        if not node2:
+        if not node2 and node2 != 0:
             c2 = components[1]
             node2 = rd.sample(c2, 1)
             node2 = node2[0]
