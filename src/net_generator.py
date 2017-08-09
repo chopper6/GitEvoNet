@@ -172,7 +172,6 @@ def init_population(init_type, start_size, pop_size, configs):
 
             init_net = nx.empty_graph(start_size, create_using=nx.DiGraph())
             num_add = int(edge_node_ratio*start_size)
-            mutate.ensure_single_cc(init_net, configs)
             mutate.add_edges(init_net, num_add, configs)
 
         mutate.ensure_single_cc(init_net, configs)

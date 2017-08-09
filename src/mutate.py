@@ -122,7 +122,7 @@ def add_edges(net, num_add, configs):
 
     net_undir = net.to_undirected()
     num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
+    if (num_cc != 1): ensure_single_cc(net, configs)
 
 
 def add_nodes(net, num_add, configs):
