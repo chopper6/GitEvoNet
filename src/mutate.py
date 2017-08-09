@@ -115,7 +115,7 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direct
 def add_edges(net, num_add, configs):
 
 
-    if (num_add == 0): print("WARNING in mutate(): 0 nodes added in add_nodes\n")
+    #if (num_add == 0): print("WARNING in mutate(): 0 nodes added in add_nodes\n")
 
     for j in range(num_add):
         add_this_edge(net, configs)
