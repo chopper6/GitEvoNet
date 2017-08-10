@@ -12,12 +12,12 @@ def calc_fitness(net, BD_table, configs):
     leaf_metric = configs['leaf_metric']
     bias_distrib = configs['bias_distribution']
 
-    assert(biased and bias_on=='edges' or not biased or not bias_distrib) #not ready to handle local bias on nodes
+    assert(biased and bias_on=='edges' or not biased or not bias_distrib) #not ready to handle local bias on edges
 
     # fitness_score = 1
     fitness_score = 0
 
-    if not biased or not edge_distrib: #ie no local bias
+    if True: #not biased or not bias_distrib: #ie no local bias
 
         degrees = list(net.degree().values())
         degs, freqs = np.unique(degrees, return_counts=True)
@@ -30,7 +30,7 @@ def calc_fitness(net, BD_table, configs):
             # fitness_score *= math.pow(deg_fitness,freqs[i]) #as per node product rule
             if (deg_fitness != 0): fitness_score += freqs[i] * deg_fitness
 
-    else:
+    else: #fix dis later
         for n in net.nodes():
             deg = net.in_degree(n) + net.out_degree(n)
             p = net.node[n]['conservation_score']
