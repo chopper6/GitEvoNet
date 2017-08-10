@@ -67,7 +67,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
     elif (use_kp == 'False' or use_kp == False):
 
         if (edge_state == 'probabilistic'):
-            fitness_score = probabilistic_entropy.calc_fitness(net, BD_table)
+            fitness_score = probabilistic_entropy.calc_fitness(net, BD_table, configs)
 
         elif (edge_state == 'experience'):
             node_data.reset_fitness(net)

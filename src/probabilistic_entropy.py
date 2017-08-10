@@ -10,9 +10,9 @@ def calc_fitness(net, BD_table, configs):
     biased = util.boool(configs['biased'])
     bias_on = configs['bias_on']
     leaf_metric = configs['leaf_metric']
-    edge_distrib = configs['edge_state_distribution']
+    bias_distrib = configs['bias_distribution']
 
-    assert(biased and bias_on=='edges' or not biased or not edge_distrib) #not ready to handle local bias on nodes
+    assert(biased and bias_on=='edges' or not biased or not bias_distrib) #not ready to handle local bias on nodes
 
     # fitness_score = 1
     fitness_score = 0
