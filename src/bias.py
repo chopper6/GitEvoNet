@@ -39,8 +39,9 @@ def assign_edge_consv(population, distrib):
         for edge in net.edges():
             if (distrib == 'uniform'): consv_score = sysRand().uniform(0,1)
             elif (distrib == 'normal'):
-                consv_score = sysRand().normalvariate(0,1)
-                consv_score = (consv_score+.5)/2
+                consv_score = sysRand().normalvariate(.5,.2)
+                if consv_score > 1: consv_score = 1
+                elif consv_score < 0: consv_score = 0
             elif (distrib == 'global_small'): consv_score = .75
             elif (distrib == 'global_extreme'): consv_score = 1
             elif (distrib == 'global_extreme01'): consv_score = sysRand().choice([0,1])
@@ -57,8 +58,9 @@ def assign_an_edge_consv(net, edge, distrib):
     if (distrib == 'uniform'):
         consv_score = sysRand().uniform(0, 1)
     elif (distrib == 'normal'):
-        consv_score = sysRand().normalvariate(0, 1)
-        consv_score = (consv_score + .5) / 2
+        consv_score = sysRand().normalvariate(.5, .2)
+        if consv_score > 1: consv_score = 1
+        elif consv_score < 0: consv_score = 0
     elif (distrib == 'global_small'):
         consv_score = .75
     elif (distrib == 'global_extreme'):

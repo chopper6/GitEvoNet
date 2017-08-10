@@ -1,24 +1,51 @@
 import math, numpy as np
 import leaf_fitness as l_fitness
+import util
 
 
 
-def calc_fitness(net, BD_table):
+def calc_fitness(net, BD_table, configs):
     # also uses log-likelihood normz
+
+    biased = util.boool(configs['biased'])
+    bias_on = configs['bias_on']
+    leaf_metric = configs['leaf_metric']
+    edge_distrib = configs['edge_state_distribution']
+
+    assert(biased and bias_on=='edges' or not biased or not edge_distrib) #not ready to handle local bias on nodes
 
     # fitness_score = 1
     fitness_score = 0
 
-    degrees = list(net.degree().values())
-    degs, freqs = np.unique(degrees, return_counts=True)
-    tot = float(sum(freqs))
-    #freqs = [(f / tot) * 100 for f in freqs]
+    if not biased or not edge_distrib: #ie no local bias
 
-    for i in range(len(degs)):
-        deg = degs[i]
-        deg_fitness = BD_table[deg] #already log-scaled
-        # fitness_score *= math.pow(deg_fitness,freqs[i]) #as per node product rule
-        if (deg_fitness != 0): fitness_score += freqs[i] * deg_fitness
+        degrees = list(net.degree().values())
+        degs, freqs = np.unique(degrees, return_counts=True)
+        tot = float(sum(freqs))
+        #freqs = [(f / tot) * 100 for f in freqs]
+
+        for i in range(len(degs)):
+            deg = degs[i]
+            deg_fitness = BD_table[deg] #already log-scaled
+            # fitness_score *= math.pow(deg_fitness,freqs[i]) #as per node product rule
+            if (deg_fitness != 0): fitness_score += freqs[i] * deg_fitness
+
+    else:
+        for n in net.nodes():
+            deg = net.in_degree(n) + net.out_degree(n)
+            p = net.node[n]['conservation_score']
+            node_fitness = 0
+            for B in range(deg+1):
+                D = deg - B
+                prBD = (math.factorial(B + D) / (math.factorial(B) * math.factorial(D))) * math.pow(p, B) * math.pow(1 - p, D)
+                assert (prBD >= 0 and prBD <= 1)
+                fitBD = l_fitness.node_score(leaf_metric, B, D)
+                node_fitness += prBD * fitBD
+            if (node_fitness != 0): node_fitness = math.log(node_fitness, 2)  #log likelihood normz
+
+            fitness_score += node_fitness
+
+
 
     return fitness_score
 
