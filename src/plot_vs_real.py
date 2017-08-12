@@ -322,18 +322,16 @@ def custom_load(net_path):
         M.add_edge(source, target, sign=Ijk)    
     return M
 
-if __name__ == "__main__":
+
+def plot_dir(parent_dir, pairs):
+    #path is specific to rupert/yamaska servers
     base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
     real_net_file = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/input/input_nets.txt"
-
-    parent_dir = sys.argv[1]
-    pairs = sys.argv[2:]
-
-    print("plotting " + str(len(pairs)) + " dirs for comparison.\n")
+    print("plotting " + str(len(pairs)) + " dirs for comparison with real networks.")
 
     for pair in pairs:
         sim, real_name = pair.split(':')
-        print("Plotting sim dir " + str(sim) + " vs real " + str(real_name) + "\n")
+        print("Plotting sim dir " + str(sim) + " vs real " + str(real_name))
         sim_dirr = str(base_dir + parent_dir + sim)
 
         if not os.path.exists(sim_dirr + "/comparison_plots/"):
@@ -341,5 +339,13 @@ if __name__ == "__main__":
         for sim_file in os.listdir(sim_dirr+"/nets/"):
             print("Plotting sim file " + str(sim_file))
             plot_pairs(real_net_file, real_name, sim_dirr +"/nets/"+ sim_file, sim_dirr + "/comparison_plots/" + sim_file)
+
+
+if __name__ == "__main__":
+
+    parent_dir = sys.argv[1]
+    pairs = sys.argv[2:]
+
+    plot_dir(parent_dir, pairs)
 
     print("\nDone.\n")

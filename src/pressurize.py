@@ -30,7 +30,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
     biased = util.boool(configs['biased'])
 
     #num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
-    num_samples_relative = max(10, int(len(net.nodes())/10))
+    num_samples_relative = max(10, int(len(net.nodes())*10))
     if (advice_upon =='nodes'):
         pressure_relative = int(pressure * len(net.nodes()))
     elif (advice_upon =='edges'):

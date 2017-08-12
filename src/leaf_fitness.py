@@ -176,21 +176,21 @@ def directed_node_score(leaf_metric, Bin, Bout, Din, Dout):
 
         Bs = [Bin,Bout]
         Ds = [Din, Dout]
-        S = [0,0] #ENTROPY
+        S = [0,0] #ENTROPY [in,out[
         for i in range(2):
             B,D = Bs[i],Ds[i]
 
             if (B==0): H_B = 0
-            else: H_B = -1*(B/(B+D)) * math.log2(B/(B+D))
+            else: H_B = -1*(B/(B+D)) * math.log(B/float(B+D),2)
 
             if (D==0): H_D = 0
-            else: H_D = -1*(D/(B+D)) * math.log2(D/(B+D))
+            else: H_D = -1*(D/(B+D)) * math.log(D/float(B+D),2)
 
             S[i] = H_B + H_D
 
         Sin, Sout = S[0], S[1]
 
-        return Sin - Sout
+        return abs(Sin - Sout)
 
 
     else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric: " + str(leaf_metric))

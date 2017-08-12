@@ -3,7 +3,7 @@ from random import SystemRandom as sysRand
 from time import sleep, process_time
 import networkx as nx
 import numpy as np
-import fitness, minion, output, plot_nets, net_generator, perturb, pressurize, draw_nets, mutate, util, plot_undir, init, probabilistic_entropy
+import fitness, minion, output, plot_nets, plot_vs_real, net_generator, perturb, pressurize, draw_nets, mutate, util, plot_undir, init, probabilistic_entropy
 
 
 
@@ -226,7 +226,9 @@ def evolve_population(configs):
     #draw_nets.basic(population, output_dir, total_gens, draw_layout)
 
     util.cluster_print(output_dir,"Evolution finished, generating images.")
-    if (num_sims == 1): plot_nets.single_run_plots(output_dir)
+    if (num_sims == 1):
+        plot_nets.single_run_plots(output_dir)
+        plot_vs_real.plot_dir('/',output_dir+':all')
     #instances.analyze(output_dir)
     #if (configs['use_knapsack'] == (False or 'False')): entropy_net_plots.plot_dir(output_dir, configs)
 

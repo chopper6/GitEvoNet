@@ -12,6 +12,8 @@ def calc_fitness(net, BD_table, configs):
     leaf_metric = configs['leaf_metric']
     bias_distrib = configs['bias_distribution']
 
+
+
     assert(biased and bias_on=='edges' or not biased or not bias_distrib) #not ready to handle local bias on edges
 
     # fitness_score = 1
