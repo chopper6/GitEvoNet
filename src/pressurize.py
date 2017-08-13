@@ -8,7 +8,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
     # configs:
     pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
     tolerance = int(configs['PT_pairs_dict'][1][1])
-    sampling_rounds = int(configs['sampling_rounds'])
+    sampling_fraction = float(configs['sampling_rounds']) #FRACTION of curr number of EDGES
     max_sampling_rounds = int(configs['sampling_rounds_max'])
     knapsack_solver = cdll.LoadLibrary(configs['KP_solver_binary'])
     advice_upon = configs['advice_upon']
@@ -30,7 +30,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
     biased = util.boool(configs['biased'])
 
     #num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
-    num_samples_relative = max(10, int(len(net.nodes())*10))
+    num_samples_relative = max(10, int(len(net.edges())*sampling_fraction))
     if (advice_upon =='nodes'):
         pressure_relative = int(pressure * len(net.nodes()))
     elif (advice_upon =='edges'):
