@@ -51,6 +51,33 @@ def advice (M, samples, biased, advice_upon, bias_on):
 
     
     return advice
+
+
+# --------------------------------------------------------------------------------------------------
+def single_advice(M, element, configs):
+    #TODO: add global bias
+
+    advice_upon = configs['advice_upon']
+    bias_on = configs['bias_on']
+    biased = configs['biased']
+
+    advice = None
+    if not biased:
+        advice = flip()
+
+    else:
+
+        biased_center = indiv_conserv_score(element, M, advice_upon, biased, bias_on)
+
+        rand = random.uniform(0, 1)
+        # rand                = random.SystemRandom().uniform(0,1)
+
+        if rand <= biased_center:  advice = 1
+        else:  advice = -1
+
+    assert(advice == 1 or advice == -1)
+
+    return advice
 #--------------------------------------------------------------------------------------------------
 
 def indiv_conserv_score(element, M, advice_upon, biased, bias_on):

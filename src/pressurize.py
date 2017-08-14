@@ -8,7 +8,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
     # configs:
     pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
     tolerance = int(configs['PT_pairs_dict'][1][1])
-    sampling_fraction = float(configs['sampling_rounds']) #FRACTION of curr number of EDGES
+    sampling_rounds_multiplier = float(configs['sampling_rounds_multiplier']) #FRACTION of curr number of EDGES
     max_sampling_rounds = int(configs['sampling_rounds_max'])
     knapsack_solver = cdll.LoadLibrary(configs['KP_solver_binary'])
     advice_upon = configs['advice_upon']
@@ -30,7 +30,8 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
     biased = util.boool(configs['biased'])
 
     #num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
-    num_samples_relative = max(10, int(len(net.edges())*sampling_fraction))
+    num_samples_relative = max(10, int(len(net.edges())*sampling_rounds_multiplier) )
+
     if (advice_upon =='nodes'):
         pressure_relative = int(pressure * len(net.nodes()))
     elif (advice_upon =='edges'):
@@ -65,6 +66,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
         return [leaf_fitness, hub_fitness, solo_fitness]
 
     elif (use_kp == 'False' or use_kp == False):
+        #  assumes 100% pressure
 
         if (edge_state == 'probabilistic'):
             fitness_score = probabilistic_entropy.calc_fitness(net, BD_table, configs)
@@ -73,10 +75,13 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
             node_data.reset_fitness(net)
             for i in range(num_samples_relative):
                 node_data.reset_BDs(net)
-                reducer.exp_reduction(net, pressure_relative, tolerance, num_samples_relative, configs['advice_upon'], configs['biased'], configs['BD_criteria'], configs['bias_on'])
+                reducer.exp_BDs(net, configs)
                 fitness.node_fitness(net, leaf_metric)
 
             fitness.node_normz(net, num_samples_relative)
+
+            assert(fitness_operator=='product')
+
             if (fitness_operator == 'product'): fitness_score = fitness.node_product(net)
             elif (fitness_operator == 'entropy'): fitness_score = fitness.node_entropy(net)
             else: print("Error in pressurize(): unknown fitness_op: " + str(fitness_operator))

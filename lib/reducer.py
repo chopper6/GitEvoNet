@@ -24,6 +24,8 @@ def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold,
 
 #--------------------------------------------------------------------------------------------------  
 def exp_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria, bias_on):
+    assert(False) #should not be used
+
     #print ("in reducer, " + str(advice_sampling_threshold))
     if  advice_sampling_threshold <=0:
         print ("WARNING: reverse_reduction yields empty set.")
@@ -39,10 +41,26 @@ def exp_reduction(net, sample_size, T_percentage, advice_sampling_threshold, adv
     return Bs,Ds,tol
 
 
+def exp_BDs(net, configs):
 
-# --------------------------------------------------------------------------------------------------
+    advice_upon = configs['advice_upon']
+    BD_criteria = configs['BD_criteria']
+    assert (advice_upon == 'edge' and BD_criteria == 'both') #temp
+
+    for edge in net.edges():
+        advice = util.single_advice(net, edge, configs)
+        if advice == 1:
+            net.node[edge[0]]['benefits'] += 1
+            net.node[edge[1]]['benefits'] += 1
+        else: #advice == -1
+            net.node[edge[0]]['damages'] += 1
+            net.node[edge[1]]['damages'] += 1
+
+
+    # --------------------------------------------------------------------------------------------------
 def prob_reduction(net, global_ben_bias, distribn, biased, biased_on, leaf_metric):
     #NOT USED
+    assert(False)
 
     for edge in net.edges():
         source, target = edge[0], edge[1]
