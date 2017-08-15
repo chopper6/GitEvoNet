@@ -45,7 +45,7 @@ def exp_BDs(net, configs):
 
     advice_upon = configs['advice_upon']
     BD_criteria = configs['BD_criteria']
-    assert (advice_upon == 'edge' and BD_criteria == 'both') #temp
+    assert (advice_upon == 'edges' and BD_criteria == 'both') #temp
 
     for edge in net.edges():
         advice = util.single_advice(net, edge, configs)

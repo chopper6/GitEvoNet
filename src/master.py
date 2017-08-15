@@ -228,7 +228,7 @@ def evolve_population(configs):
     util.cluster_print(output_dir,"Evolution finished, generating images.")
     if (num_sims == 1):
         plot_nets.single_run_plots(output_dir)
-        plot_vs_real.plot_dir('/',output_dir+':all')
+        #plot_vs_real.plot_dir('/',output_dir+':all')
     #instances.analyze(output_dir)
     #if (configs['use_knapsack'] == (False or 'False')): entropy_net_plots.plot_dir(output_dir, configs)
 

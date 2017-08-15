@@ -29,13 +29,13 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
     colors = ['#0099cc','#ff5050', '#6699ff']
     color_choice = colors[0]
 
-    for type in ['loglog', 'scatter']:
+    for type in ['loglog', 'loglog%', 'scatter']:
         H = []
         #loglog
         degrees = list(net.degree().values())
         degs, freqs = np.unique(degrees, return_counts=True)
         tot = float(sum(freqs))
-        freqs = [(f/tot)*100 for f in freqs]
+        if (type=='loglog%'): freqs = [(f/tot)*100 for f in freqs]
 
 
 
@@ -62,13 +62,13 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
             cmap = plt.get_cmap('plasma')
             consv_colors = cmap(consv_vals)
 
-            if (type == 'loglog'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, c = consv_colors, alpha=1, markersize=8, marker='D', markeredgecolor='None')
+            if (type == 'loglog' or type=='loglog%'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, c = consv_colors, alpha=1, markersize=8, marker='D', markeredgecolor='None')
             elif (type == 'scatter'):
                 sizes = [10 for i in range(len(degs))]
                 plt.scatter(degs, freqs, c = consv_colors, alpha=1, s=sizes, marker='D')
 
         else:
-            if (type == 'loglog'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, color = color_choice, alpha=1, markersize=8, marker='D', markeredgecolor='None')
+            if (type == 'loglog' or type=='loglog%'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, color = color_choice, alpha=1, markersize=8, marker='D', markeredgecolor='None')
             elif (type == 'scatter'):
                 sizes = [10 for i in range(len(degs))]
                 plt.scatter(degs, freqs, color = color_choice, alpha=1, s=sizes, marker='D')
@@ -78,15 +78,29 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
         #FORMAT PLOT
         ax = plt.gca() # gca = get current axes instance
 
-        ax.set_xlim([0,100])
-        ax.set_ylim([0,100])
+        if (type == 'scatter'):
+            ax.set_xlim([0,50])
+            ax.set_ylim([0,50])
+        elif (type == 'loglog%'):
+            ax.set_xlim([0,100])
+            ax.set_ylim([0,100])
+        elif (type == 'loglog'):
+            max_x = max(1,math.floor(max(degs)/10))
+            max_x = max_x*10+10
+
+            max_y = max(1,math.floor(max(freqs)/10))
+            max_y = max_y*10+10
+
+            ax.set_xlim([0,max_x])
+            ax.set_ylim([0,max_y])
 
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
         plt.tick_params(axis='both', which='both', right='off', top='off') #http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
         plt.legend(loc='upper right', handles=H, frameon=False,fontsize= 11)
         plt.xlabel('Degree')
-        plt.ylabel('Number of Nodes with Given Degree')
+        if (type=='loglog%'): plt.ylabel('Percent of Nodes with Given Degree')
+        else: plt.ylabel('Number of Nodes with Given Degree')
         #plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
 
         plt.tight_layout()

@@ -21,7 +21,8 @@ def calc_fitness(net, BD_table, configs):
 
     if not directed: #not biased or not bias_distrib: #ie no local bias
 
-        degrees = list(net.degree().values())
+        #degrees = list(net.degree().values())
+        degrees = [net.in_degree(node) + net.out_degree(node) for node in net.nodes()] #making sure...
         degs, freqs = np.unique(degrees, return_counts=True)
         tot = float(sum(freqs))
         #freqs = [(f / tot) * 100 for f in freqs]
