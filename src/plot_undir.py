@@ -79,17 +79,17 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
         ax = plt.gca() # gca = get current axes instance
 
         if (type == 'scatter'):
-            ax.set_xlim([0,50])
-            ax.set_ylim([0,50])
+            ax.set_xlim([0,80])
+            ax.set_ylim([0,60])
         elif (type == 'loglog%'):
             ax.set_xlim([0,100])
             ax.set_ylim([0,100])
         elif (type == 'loglog'):
             max_x = max(1,math.floor(max(degs)/10))
-            max_x = max_x*10+10
+            max_x = max_x*10+40
 
             max_y = max(1,math.floor(max(freqs)/10))
-            max_y = max_y*10+10
+            max_y = max_y*10+40
 
             ax.set_xlim([0,max_x])
             ax.set_ylim([0,max_y])
