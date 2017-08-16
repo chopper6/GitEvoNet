@@ -42,6 +42,10 @@ def assign_edge_consv(population, distrib):
                 consv_score = sysRand().normalvariate(.5,.2)
                 if consv_score > 1: consv_score = 1
                 elif consv_score < 0: consv_score = 0
+            elif (distrib == 'bi'):
+                consv_score = sysRand().choice([.1,.9])
+            elif (distrib == 'half'):
+                consv_score = sysRand().choice([.5,1])
             elif (distrib == 'global_small'): consv_score = .75
             elif (distrib == 'global_extreme'): consv_score = 1
             elif (distrib == 'global_extreme01'): consv_score = sysRand().choice([0,1])

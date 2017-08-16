@@ -243,7 +243,6 @@ def rewire(net, num_rewire, bias, bias_on, dirr, configs):
 
     for i in range(num_rewire):
 
-        # poss, but unlikely
         add_this_edge(net, configs)
         rm_edges(net,1,configs)
 
