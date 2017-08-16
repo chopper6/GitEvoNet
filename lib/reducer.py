@@ -48,7 +48,7 @@ def exp_BDs(net, configs):
     assert (BD_criteria == 'both') #temp
 
     pressure = float(configs['pressure']/float(100))
-    pressure_relative = len(net.edges())*pressure
+    pressure_relative = int(len(net.edges())*pressure)
     edges = net.edges()
     rd.shuffle(edges)
 

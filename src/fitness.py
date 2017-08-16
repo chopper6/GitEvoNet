@@ -18,7 +18,7 @@ def eval_fitness(population, fitness_direction):
 def node_fitness(net, leaf_metric):
     for n in net.nodes():
         B,D = net.node[n]['benefits'], net.node[n]['damages']
-        if (B+D == 0): print ("WARNING fitness.node_fitness(): B+D == 0")
+        #if (B+D == 0): print ("WARNING fitness.node_fitness(): B+D == 0")
         net.node[n]['fitness'] += leaf_fitness.node_score(leaf_metric, B,D)
         #print(net[node]['fitness'])
 
