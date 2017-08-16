@@ -14,7 +14,7 @@ def calc_fitness(net, BD_table, configs):
     directed = util.boool(configs['directed'])
 
 
-    assert(biased and bias_on=='edges' or not biased or not bias_distrib) #not ready to handle local bias on edges
+    assert(not biased or not bias_distrib) #not ready to handle local bias on edges
 
     # fitness_score = 1
     fitness_score = 0

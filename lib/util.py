@@ -88,6 +88,7 @@ def indiv_conserv_score(element, M, advice_upon, biased, bias_on):
 
 
         if (advice_upon == 'nodes'):
+            assert(bias_on=='nodes')
             biased_center = M.node[element]['conservation_score']
         elif (advice_upon == 'edges'):
             ele = element
