@@ -1,5 +1,6 @@
 import random, util, math, time, numpy as np
 import leaf_fitness
+import random as rd
 
 #--------------------------------------------------------------------------------------------------
 def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria, bias_on, advice): #only version that handle Direct Evolution
@@ -46,7 +47,12 @@ def exp_BDs(net, configs):
     BD_criteria = configs['BD_criteria']
     assert (BD_criteria == 'both') #temp
 
-    for edge in net.edges():
+    pressure = float(configs['pressure']/float(100))
+    pressure_relative = len(net.edges())*pressure
+    edges = net.edges()
+    rd.shuffle(edges)
+
+    for edge in edges[:pressure_relative]:
         advice = util.single_advice(net, edge, configs)
         if advice == 1:
             net.node[edge[0]]['benefits'] += 1
