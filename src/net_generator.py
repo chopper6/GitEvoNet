@@ -170,9 +170,16 @@ def init_population(init_type, start_size, pop_size, configs):
 
         elif (style == 'static'):
 
-            init_net = nx.empty_graph(start_size, create_using=nx.DiGraph())
-            num_add = int(edge_node_ratio*start_size)
-            mutate.add_edges(init_net, num_add, configs)
+            if (start_size <= 20):
+                init_net = nx.empty_graph(start_size, create_using=nx.DiGraph())
+                num_add = int(edge_node_ratio*start_size)
+                mutate.add_edges(init_net, num_add, configs)
+
+            else: #otherwise rewire till connected is intractable
+                init_net = nx.empty_graph(8, create_using=nx.DiGraph())
+                num_add = int(edge_node_ratio*8)
+                mutate.add_edges(init_net, num_add, configs)
+                mutate.add_nodes(init_net, start_size-8, configs)
 
         mutate.ensure_single_cc(init_net, configs)
         assert(len(init_net.edges()) == num_edges)
