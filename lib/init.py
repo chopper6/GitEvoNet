@@ -50,8 +50,8 @@ def load_simulation_configs (param_file, rank):
     configs['timestamp']           = time.strftime("%B-%d-%Y-h%Hm%Ms%S")
     configs['stamp']               = fitness_def + "_RAW_INSTANCES_p" +configs['pressure'] + "_t" + configs['tolerance'] + '_' + configs['version']+configs['advice_upon'][0]+bORu+'_'+ configs['KP_solver_name']+ '_' +configs['sampling_rounds']+'_'+ configs['BD_criteria']+'_'+configs['reduction_mode']+'_alpha'+configs['alpha']+'.'+configs['timestamp']
 
-    configs['pressure']            = [float(p) for p in configs['pressure'].split(',') ]        
-    configs['tolerance']           = [float(t) for t in configs['tolerance'].split(',') ]    
+    #configs['pressure']            = [float(p) for p in configs['pressure'].split(',') ]
+    #configs['tolerance']           = [float(t) for t in configs['tolerance'].split(',') ]
     configs['sampling_rounds_nX']  = configs['sampling_rounds']
     configs['sampling_rounds']     = int(''.join([d for d in configs['sampling_rounds'] if d.isdigit()]))
     configs['sampling_rounds_max'] = int (configs['sampling_rounds_max'])      
