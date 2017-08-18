@@ -1,4 +1,4 @@
-import math, numpy as np
+import math, numpy as np, random as rd
 import leaf_fitness as l_fitness
 import util
 
@@ -13,6 +13,9 @@ def calc_fitness(net, BD_table, configs):
     bias_distrib = configs['bias_distribution']
     directed = util.boool(configs['directed'])
 
+    pressure = float(float(configs['pressure'])/float(100))
+    pressure_relative = int(len(net.edges())*pressure)
+
 
     assert(not biased or not bias_distrib) #not ready to handle local bias on edges
 
@@ -21,19 +24,35 @@ def calc_fitness(net, BD_table, configs):
 
     if not directed: #not biased or not bias_distrib: #ie no local bias
 
-        #degrees = list(net.degree().values())
-        degrees = [net.in_degree(node) + net.out_degree(node) for node in net.nodes()] #making sure...
-        degs, freqs = np.unique(degrees, return_counts=True)
-        tot = float(sum(freqs))
-        #freqs = [(f / tot) * 100 for f in freqs]
+        if not pressure==1:
+            all_edges = net.edges()
+            rd.shuffle(all_edges)
+            pressured_edges = all_edges[:pressure_relative]
+            for node in net.nodes():
+                effective_node_deg=1
+                for edge in net.edges(node):
+                    if edge in pressured_edges:
+                        effective_node_deg +=1
+                deg_fitness = BD_table[effective_node_deg]
+                if (deg_fitness != 0): fitness_score += deg_fitness
 
-        for i in range(len(degs)):
-            deg = degs[i]
-            deg_fitness = BD_table[deg] #already log-scaled
-            # fitness_score *= math.pow(deg_fitness,freqs[i]) #as per node product rule
-            if (deg_fitness != 0): fitness_score += freqs[i] * deg_fitness
+
+        else:
+
+            #degrees = list(net.degree().values())
+            degrees = [net.in_degree(node) + net.out_degree(node) for node in net.nodes()] #making sure...
+            degs, freqs = np.unique(degrees, return_counts=True)
+            tot = float(sum(freqs))
+            #freqs = [(f / tot) * 100 for f in freqs]
+
+            for i in range(len(degs)):
+                deg = degs[i]
+                deg_fitness = BD_table[deg] #already log-scaled
+                # fitness_score *= math.pow(deg_fitness,freqs[i]) #as per node product rule
+                if (deg_fitness != 0): fitness_score += freqs[i] * deg_fitness
 
     else:
+        assert(pressure==1) #not ready yet
         node_degs = [[net.in_degree(node), net.out_degree(node)] for node in net.nodes()]
         for node_deg in node_degs:
             in_deg, out_deg = node_deg[0], node_deg[1]
@@ -70,28 +89,26 @@ def build_BD_table(configs, max_deg=100):
     biased = util.boool(configs['biased'])
     global_edge_bias = float(configs['global_edge_bias'])
 
-    if (biased == True):
+    if biased:
         global_edge_bias = float(global_edge_bias)
         p = .5 + global_edge_bias
-        if (global_edge_bias < 0 or global_edge_bias > 1):
-            print("ERROR in pressurize: out of bounds global_edge_bias, p = .5 instead")
-            p = .5
+        assert (global_edge_bias > 0 and global_edge_bias < 1)
     else:
         p = .5
 
     if not directed:
-        BD_table = [None for i in range(max_deg)]
-        for i in range(max_deg):
+        BD_table = [None for d in range(max_deg)]
+        for d in range(max_deg):
             deg_fitness = 0
-            for B in range(i+1):
-                D = i - B
+            for B in range(d+1):
+                D = d - B
                 prBD = (math.factorial(B + D) / (math.factorial(B) * math.factorial(D))) * math.pow(p, B) * math.pow(1 - p,D)
                 assert (prBD >= 0 and prBD <= 1)
 
                 fitBD = l_fitness.node_score(leaf_metric, B, D)
                 deg_fitness += prBD * fitBD
             if (deg_fitness != 0): deg_fitness = math.log(deg_fitness, 2) #log likelihood normz
-            BD_table[i] = deg_fitness
+            BD_table[d] = deg_fitness
 
     else:
         BD_table = [[0 for i in range(max_deg)] for j in range(max_deg)]
