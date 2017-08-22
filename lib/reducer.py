@@ -51,31 +51,34 @@ def exp_BDs(net, configs):
     pressure_on = configs['pressure_on']
     pressure = float(float(configs['pressure'])/float(100))
 
-    if pressure_on == 'edges':
+    spinning = util.boool(configs['spinning'])
 
-        pressure_relative = int(len(net.edges()) * pressure)
-        edges = net.edges()
-        rd.shuffle(edges)
 
-        for edge in edges[:pressure_relative]:
-            advice = util.single_advice(net, edge, configs)
-            if advice == 1:
-                net.node[edge[0]]['benefits'] += 1
-                net.node[edge[1]]['benefits'] += 1
-            else: #advice == -1
-                net.node[edge[0]]['damages'] += 1
-                net.node[edge[1]]['damages'] += 1
+    if spinning:
 
-    else:
-        assert(pressure_on == 'nodes')
+        for n in net.nodes():
+            net.node[n]['state'] = random.choice([-1,1])
 
-        pressure_relative = int(len(net.nodes()) * pressure)
-        nodes = net.nodes()
-        rd.shuffle(nodes)
-        pressured_nodes = nodes[:pressure_relative]
+            #count self
+            if net.node[n]['state'] == 1:   net.node[n]['benefits'] +=1
+            else:                           net.node[n]['damages'] +=1
 
         for edge in net.edges():
-            if edge[0] in pressured_nodes and edge[1] in pressured_nodes:
+            if net.node[edge[0]]['state'] == 1:     net.node[edge[1]]['benefits'] +=1
+            else:                                   net.node[edge[1]]['damages'] +=1
+
+            if net.node[edge[1]]['state'] == 1:     net.node[edge[0]]['benefits'] +=1
+            else:                                   net.node[edge[0]]['damages'] +=1
+
+    else:
+
+        if pressure_on == 'edges':
+
+            pressure_relative = int(len(net.edges()) * pressure)
+            edges = net.edges()
+            rd.shuffle(edges)
+
+            for edge in edges[:pressure_relative]:
                 advice = util.single_advice(net, edge, configs)
                 if advice == 1:
                     net.node[edge[0]]['benefits'] += 1
@@ -83,6 +86,24 @@ def exp_BDs(net, configs):
                 else: #advice == -1
                     net.node[edge[0]]['damages'] += 1
                     net.node[edge[1]]['damages'] += 1
+
+        else:
+            assert(pressure_on == 'nodes')
+
+            pressure_relative = int(len(net.nodes()) * pressure)
+            nodes = net.nodes()
+            rd.shuffle(nodes)
+            pressured_nodes = nodes[:pressure_relative]
+
+            for edge in net.edges():
+                if edge[0] in pressured_nodes and edge[1] in pressured_nodes:
+                    advice = util.single_advice(net, edge, configs)
+                    if advice == 1:
+                        net.node[edge[0]]['benefits'] += 1
+                        net.node[edge[1]]['benefits'] += 1
+                    else: #advice == -1
+                        net.node[edge[0]]['damages'] += 1
+                        net.node[edge[1]]['damages'] += 1
 
 
     # --------------------------------------------------------------------------------------------------
