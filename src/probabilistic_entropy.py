@@ -30,6 +30,7 @@ def calc_fitness(net, BD_table, configs):
             pressured_edges = all_edges[:pressure_relative]
             for node in net.nodes():
                 effective_node_deg=1
+                assert(len(net.edges(node)) == net.in_degree(node) + net.out_degree(node))
                 for edge in net.edges(node):
                     if edge in pressured_edges:
                         effective_node_deg +=1

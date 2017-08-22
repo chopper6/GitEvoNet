@@ -45,21 +45,44 @@ def exp_reduction(net, sample_size, T_percentage, advice_sampling_threshold, adv
 def exp_BDs(net, configs):
 
     BD_criteria = configs['BD_criteria']
-    assert (BD_criteria == 'both') #temp
+    advice_on = configs['advice_upon']
+    assert (BD_criteria == 'both' and advice_on == 'edges') #temp
 
+    pressure_on = configs['pressure_on']
     pressure = float(float(configs['pressure'])/float(100))
-    pressure_relative = int(len(net.edges())*pressure)
-    edges = net.edges()
-    rd.shuffle(edges)
 
-    for edge in edges[:pressure_relative]:
-        advice = util.single_advice(net, edge, configs)
-        if advice == 1:
-            net.node[edge[0]]['benefits'] += 1
-            net.node[edge[1]]['benefits'] += 1
-        else: #advice == -1
-            net.node[edge[0]]['damages'] += 1
-            net.node[edge[1]]['damages'] += 1
+    if pressure_on == 'edges':
+
+        pressure_relative = int(len(net.edges()) * pressure)
+        edges = net.edges()
+        rd.shuffle(edges)
+
+        for edge in edges[:pressure_relative]:
+            advice = util.single_advice(net, edge, configs)
+            if advice == 1:
+                net.node[edge[0]]['benefits'] += 1
+                net.node[edge[1]]['benefits'] += 1
+            else: #advice == -1
+                net.node[edge[0]]['damages'] += 1
+                net.node[edge[1]]['damages'] += 1
+
+    else:
+        assert(pressure_on == 'nodes')
+
+        pressure_relative = int(len(net.nodes()) * pressure)
+        nodes = net.nodes()
+        rd.shuffle(nodes)
+        pressured_nodes = nodes[:pressure_relative]
+
+        for edge in net.edges():
+            if edge[0] in pressured_nodes and edge[1] in pressured_nodes:
+                advice = util.single_advice(net, edge, configs)
+                if advice == 1:
+                    net.node[edge[0]]['benefits'] += 1
+                    net.node[edge[1]]['benefits'] += 1
+                else: #advice == -1
+                    net.node[edge[0]]['damages'] += 1
+                    net.node[edge[1]]['damages'] += 1
 
 
     # --------------------------------------------------------------------------------------------------
