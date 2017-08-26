@@ -14,7 +14,7 @@ def calc_fitness(net, BD_table, configs):
     directed = util.boool(configs['directed'])
 
     pressure = float(float(configs['pressure'])/float(100))
-    pressure_relative = int(len(net.edges())*pressure)
+    pressure_on = configs['pressure_on']
 
 
     assert(not biased or not bias_distrib) #not ready to handle local bias on edges
@@ -24,18 +24,43 @@ def calc_fitness(net, BD_table, configs):
 
     if not directed: #not biased or not bias_distrib: #ie no local bias
 
-        if not pressure==1:
-            all_edges = net.edges()
-            rd.shuffle(all_edges)
-            pressured_edges = all_edges[:pressure_relative]
-            for node in net.nodes():
-                effective_node_deg=1
-                assert(len(net.edges(node)) == net.in_degree(node) + net.out_degree(node))
-                for edge in net.edges(node):
-                    if edge in pressured_edges:
-                        effective_node_deg +=1
-                deg_fitness = BD_table[effective_node_deg]
-                if (deg_fitness != 0): fitness_score += deg_fitness
+        if False: #pressure is curr handled in BD_table building, before: not pressure==1
+
+
+            if pressure_on=='edges':
+                pressure_relative = int(len(net.edges()) * pressure)
+                all_edges = net.edges()
+                rd.shuffle(all_edges)
+                pressured_edges = all_edges[:pressure_relative]
+                for node in net.nodes():
+                    effective_node_deg=1
+                    assert(len(net.edges(node)) == net.in_degree(node) + net.out_degree(node))
+                    for edge in net.edges(node):
+                        if edge in pressured_edges:
+                            effective_node_deg +=1
+                    deg_fitness = BD_table[effective_node_deg]
+                    if (deg_fitness != 0): fitness_score += deg_fitness
+
+            else:
+                assert(pressure_on=='nodes')
+
+                # either only pressurized nodes are evaluated in fitness function
+                # or only edges between two pressurized nodes are evaluated
+                # curr the later
+
+                pressure_relative = int(len(net.nodes()) * pressure)
+                all_nodes = net.nodes()
+                rd.shuffle(all_nodes)
+                pressured_nodes = all_nodes[:pressure_relative]
+                for node in pressured_nodes:
+                    effective_node_deg=1
+                    assert(len(net.edges(node)) == net.in_degree(node) + net.out_degree(node))
+                    for edge in net.edges(node):
+                        if (edge[0]==node and edge[1] in pressured_nodes) or (edge[1]==node and edge[0] in pressured_nodes):
+                            effective_node_deg +=1
+                    deg_fitness = BD_table[effective_node_deg]
+                    if (deg_fitness != 0): fitness_score += deg_fitness
+
 
 
         else:
@@ -90,6 +115,9 @@ def build_BD_table(configs, max_deg=100):
     biased = util.boool(configs['biased'])
     global_edge_bias = float(configs['global_edge_bias'])
 
+    pressure = float(float(configs['pressure'])/float(100))
+    pressure_on = configs['pressure_on']
+
     if biased:
         global_edge_bias = float(global_edge_bias)
         p = .5 + global_edge_bias
@@ -98,20 +126,47 @@ def build_BD_table(configs, max_deg=100):
         p = .5
 
     if not directed:
-        BD_table = [None for d in range(max_deg)]
-        for d in range(max_deg):
-            deg_fitness = 0
-            for B in range(d+1):
-                D = d - B
-                prBD = (math.factorial(B + D) / (math.factorial(B) * math.factorial(D))) * math.pow(p, B) * math.pow(1 - p,D)
-                assert (prBD >= 0 and prBD <= 1)
 
-                fitBD = l_fitness.node_score(leaf_metric, B, D)
-                deg_fitness += prBD * fitBD
-            if (deg_fitness != 0): deg_fitness = math.log(deg_fitness, 2) #log likelihood normz
-            BD_table[d] = deg_fitness
+        if pressure == 1:
+            BD_table = [None for d in range(max_deg)]
+            for d in range(max_deg):
+                deg_fitness = 0
+                for B in range(d+1):
+                    D = d - B
+                    prBD = bin_pr(B+D, B, p)
+                    assert (prBD >= 0 and prBD <= 1)
+
+                    fitBD = l_fitness.node_score(leaf_metric, B, D)
+                    deg_fitness += prBD * fitBD
+                if (deg_fitness != 0): deg_fitness = math.log(deg_fitness, 2) #log likelihood normz
+                BD_table[d] = deg_fitness
+
+        else:
+            #first build BD_table as if pressure==1
+            assert(pressure_on=='edges') #otherwise not sure how to implement
+
+            base_BD_table = [None for d in range(max_deg)]
+            for d in range(max_deg):
+                deg_fitness = 0
+                for B in range(d + 1):
+                    D = d - B
+                    prBD = bin_pr(B+D, B, p)
+                    assert (prBD >= 0 and prBD <= 1)
+
+                    fitBD = l_fitness.node_score(leaf_metric, B, D)
+                    deg_fitness += prBD * fitBD
+                if (deg_fitness != 0): deg_fitness = math.log(deg_fitness, 2)  # log likelihood normz
+                base_BD_table[d] = deg_fitness
+
+            BD_table = [0 for d in range(max_deg)]
+            for d in range(max_deg):
+                for d_pressured in range(d):
+                    pr_d_pressured = bin_pr(d, d_pressured, pressure)
+                    BD_table[d] += pr_d_pressured * base_BD_table[d_pressured]
 
     else:
+        assert(pressure == 1) #not ready yet
+
         BD_table = [[0 for i in range(max_deg)] for j in range(max_deg)]
         for in_deg in range(max_deg):
             for out_deg in range(max_deg):
@@ -133,3 +188,10 @@ def build_BD_table(configs, max_deg=100):
                 if (BD_table[i][o] != 0): BD_table[i][o] = math.log(BD_table[i][o], 2)  # log likelihood normz
 
     return BD_table
+
+
+def bin_pr(n, k, p):
+    # n choose k with probability of heads = p
+
+    pr = (math.factorial(n) / (math.factorial(k) * math.factorial(n-k))) * math.pow(p, k) * math.pow(1 - p, n-k)
+    return pr
