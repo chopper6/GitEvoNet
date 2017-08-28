@@ -160,7 +160,7 @@ def build_BD_table(configs, max_deg=100):
 
             BD_table = [0 for d in range(max_deg)]
             for d in range(max_deg):
-                for d_pressured in range(d):
+                for d_pressured in range(d+1):
                     pr_d_pressured = bin_pr(d, d_pressured, pressure)
                     BD_table[d] += pr_d_pressured * base_BD_table[d_pressured]
 
