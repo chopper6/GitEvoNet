@@ -159,7 +159,8 @@ def add_nodes(net, num_add, configs, biases_given=None):
     if biases_given:
         assert(len(biases_given) == num_edge_add+1) #check proper lng
 
-    add_edges(net, num_edge_add, configs, biases_given=biases_given[1:])
+    if biases_given: add_edges(net, num_edge_add, configs, biases_given=biases_given[1:])
+    else:  add_edges(net, num_edge_add, configs)
 
 
 def rm_edges(net, num_rm, configs):
