@@ -16,6 +16,8 @@ def calc_fitness(net, BD_table, configs):
     pressure = float(float(configs['pressure'])/float(100))
     pressure_on = configs['pressure_on']
 
+    auto_self_loops = util.boool(configs['auto_self_loops'])
+
 
     assert(not biased or not bias_distrib) #not ready to handle local bias on edges
 
@@ -66,7 +68,8 @@ def calc_fitness(net, BD_table, configs):
         else:
 
             #degrees = list(net.degree().values())
-            degrees = [net.in_degree(node) + net.out_degree(node) for node in net.nodes()] #making sure...
+            if auto_self_loops: degrees = [net.in_degree(node) + net.out_degree(node)+1 for node in net.nodes()] #making sure...
+            else: degrees = [net.in_degree(node) + net.out_degree(node) for node in net.nodes()]  # making sure...
             degs, freqs = np.unique(degrees, return_counts=True)
             tot = float(sum(freqs))
             #freqs = [(f / tot) * 100 for f in freqs]
@@ -78,7 +81,7 @@ def calc_fitness(net, BD_table, configs):
                 if (deg_fitness != 0): fitness_score += freqs[i] * deg_fitness
 
     else:
-        assert(pressure==1) #not ready yet
+        assert(pressure==1 and not auto_self_loops) #not ready yet
         node_degs = [[net.in_degree(node), net.out_degree(node)] for node in net.nodes()]
         for node_deg in node_degs:
             in_deg, out_deg = node_deg[0], node_deg[1]

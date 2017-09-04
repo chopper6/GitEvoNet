@@ -13,10 +13,6 @@ def mutate(configs, net, gen_percent, edge_biases = None):
 
     mutn_type = str(configs['mutation_type'])
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
-
     # --------- MUTATIONS ------------- #
 
     # GROW (ADD NODE)
@@ -124,18 +120,15 @@ def add_edges(net, num_add, configs, biases_given=None):
         if (biases_given): add_this_edge(net,configs, bias_given=biases_given[j])
         else: add_this_edge(net, configs)
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    if (num_cc != 1): ensure_single_cc(net, configs)
+    if util.boool(configs['single_cc']):
+        net_undir = net.to_undirected()
+        num_cc = nx.number_connected_components(net_undir)
+        if (num_cc != 1): ensure_single_cc(net, configs)
 
 
 def add_nodes(net, num_add, configs, biases_given=None):
 
     if biases_given: assert(configs['bias_on'] == 'edges') #not ready for nodes
-
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
 
     edge_node_ratio = float(configs['edge_to_node_ratio'])
     biased = util.boool(configs['biased'])
@@ -168,9 +161,6 @@ def add_nodes(net, num_add, configs, biases_given=None):
 
     add_edges(net, num_edge_add, configs, biases_given=biases_given[1:])
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
 
 def rm_edges(net, num_rm, configs):
     # constraints: doesn't leave 0 deg edges or mult connected components
@@ -197,49 +187,54 @@ def rm_edges(net, num_rm, configs):
 
         ensure_single_cc(net, configs, node1=edge[0], node2=edge[1], sign_orig=sign_orig)
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
+    if util.boool(configs['single_cc']):
+        net_undir = net.to_undirected()
+        num_cc = nx.number_connected_components(net_undir)
+        assert (num_cc == 1)
 
 def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
     #rewires [node1, node2] at the expense of a random, non deg1 edge
 
-    if node1 or node1==0: assert(node2 or node2==0)
-    elif not node1: assert not (node2)
+    single_cc = util.boool(configs['single_cc'])
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
+    if single_cc:
 
-    i=0
-    if (num_cc != 1): #rm_edge() will recursively check #COULD CAUSE AN ERR
-        if not node1 and node1 != 0:
-            components = list(nx.connected_components(net_undir))
-            c1 = components[0]
-            node1 = rd.sample(c1, 1)
-            node1 = node1[0]
-
-        if not node2 and node2 != 0:
-            c2 = components[1]
-            node2 = rd.sample(c2, 1)
-            node2 = node2[0]
-
-        if not sign_orig:
-            sign_orig = rd.randint(0, 1)
-            if (sign_orig == 0): sign_orig = -1
-
-
-        add_this_edge(net, configs, node1=node1, node2=node2, sign=sign_orig)
-        rm_edges(net, 1, configs) #calls ensure_single_cc() at end
+        if node1 or node1==0: assert(node2 or node2==0)
+        elif not node1: assert not (node2)
 
         net_undir = net.to_undirected()
         num_cc = nx.number_connected_components(net_undir)
 
-        i+=1
-        if (i == 10000000): util.cluster_print(configs['output_directory'], "WARNING mutate.ensure_single_cc() is looping a lot.\n")
+        i=0
+        if (num_cc != 1): #rm_edge() will recursively check #COULD CAUSE AN ERR
+            if not node1 and node1 != 0:
+                components = list(nx.connected_components(net_undir))
+                c1 = components[0]
+                node1 = rd.sample(c1, 1)
+                node1 = node1[0]
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
+            if not node2 and node2 != 0:
+                c2 = components[1]
+                node2 = rd.sample(c2, 1)
+                node2 = node2[0]
+
+            if not sign_orig:
+                sign_orig = rd.randint(0, 1)
+                if (sign_orig == 0): sign_orig = -1
+
+
+            add_this_edge(net, configs, node1=node1, node2=node2, sign=sign_orig)
+            rm_edges(net, 1, configs) #calls ensure_single_cc() at end
+
+            net_undir = net.to_undirected()
+            num_cc = nx.number_connected_components(net_undir)
+
+            i+=1
+            if (i == 10000000): util.cluster_print(configs['output_directory'], "WARNING mutate.ensure_single_cc() is looping a lot.\n")
+
+        net_undir = net.to_undirected()
+        num_cc = nx.number_connected_components(net_undir)
+        assert (num_cc == 1)
 
 
 
@@ -247,19 +242,22 @@ def rewire(net, num_rewire, bias, bias_on, dirr, configs):
     # constraints: no 0 deg nodes, 1 connected component
     # avoid: re-adding a node/edge that already exists
     bias = util.boool(bias)
+    single_cc = util.boool(configs['single_cc'])
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
+    if single_cc:
+        net_undir = net.to_undirected()
+        num_cc = nx.number_connected_components(net_undir)
+        assert (num_cc == 1)
 
     for i in range(num_rewire):
 
         add_this_edge(net, configs)
         rm_edges(net,1,configs)
 
-    net_undir = net.to_undirected()
-    num_cc = nx.number_connected_components(net_undir)
-    assert (num_cc == 1)
+    if single_cc:
+        net_undir = net.to_undirected()
+        num_cc = nx.number_connected_components(net_undir)
+        assert (num_cc == 1)
 
 
 def rewire_componentsOK(net, num_rewire):
