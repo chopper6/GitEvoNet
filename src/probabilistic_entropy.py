@@ -121,7 +121,7 @@ def build_BD_table(configs, max_deg=100):
     if biased:
         global_edge_bias = float(global_edge_bias)
         p = .5 + global_edge_bias
-        assert (global_edge_bias > 0 and global_edge_bias < 1)
+        assert (p > 0 and p < 1)
     else:
         p = .5
 
