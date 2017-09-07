@@ -205,7 +205,7 @@ def directed_node_score(leaf_metric, Bin, Bout, Din, Dout):
         return abs(Sin - Sout)
 
 
-    if (leaf_metric == 'mutual_info'):
+    elif (leaf_metric == 'mutual_info'):
 
         Bs = [Bin,Bout]
         Ds = [Din, Dout]
@@ -224,7 +224,7 @@ def directed_node_score(leaf_metric, Bin, Bout, Din, Dout):
         return Sin+Sout-Sboth
 
 
-    if (leaf_metric == 'mutual_info_rev'):
+    elif (leaf_metric == 'mutual_info_rev'):
 
         Bs = [Bin,Bout]
         Ds = [Din, Dout]
