@@ -234,9 +234,9 @@ def directed_node_score(leaf_metric, Bin, Bout, Din, Dout):
             if pr00==0: H00 = 0
             else: H00 = -1 * pr00 * math.log(pr00, 2)
             Sboth = H11+H10+H01+H00
-        assert(Sboth >= 0 and Sboth <= 1)
+        assert(Sboth >= 0 and Sboth <= 2)
 
-        assert(Sin+Sout-Sboth >= 0 and Sin+Sout-Sboth <= 1)
+        assert(Sin+Sout-Sboth >= -.2 and Sin+Sout-Sboth <= 1.2) #room for rounding
         return Sin+Sout-Sboth
 
 
@@ -269,9 +269,9 @@ def directed_node_score(leaf_metric, Bin, Bout, Din, Dout):
             if pr00==0: H00 = 0
             else: H00 = -1 * pr00 * math.log(pr00, 2)
             Sboth = H11+H10+H01+H00
-        assert(Sboth >= 0 and Sboth <= 1)
+        assert(Sboth >= 0 and Sboth <= 2)
 
-        assert(1-Sin+Sout-Sboth >= 0 and 1-Sin+Sout-Sboth <= 1)
+        assert(1-Sin+Sout-Sboth >= -.2 and 1-Sin+Sout-Sboth <= 1.2)
         return 1-Sin+Sout-Sboth
 
 
