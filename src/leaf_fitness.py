@@ -216,22 +216,24 @@ def directed_node_score(leaf_metric, Bin, Bout, Din, Dout):
         Sin, Sout = S[0], S[1]
 
         tot = (Bs[0]+Ds[0])*(Bs[1]+Ds[1])
-        pr11 = Bs[0]*Bs[1]/tot
-        pr10 = Bs[0]*Ds[1]/tot
-        pr01 = Ds[0]*Bs[1]/tot
-        pr00 = Ds[0]*Ds[1]/tot
+        if tot==0: Sboth = 0
+        else:
+            pr11 = Bs[0]*Bs[1]/tot
+            pr10 = Bs[0]*Ds[1]/tot
+            pr01 = Ds[0]*Bs[1]/tot
+            pr00 = Ds[0]*Ds[1]/tot
 
-        assert(pr11+pr10+pr01+pr00 < 1.2 and pr11+pr10+pr01+pr00 > .8) #leave room for rounding
+            assert(pr11+pr10+pr01+pr00 < 1.2 and pr11+pr10+pr01+pr00 > .8) #leave room for rounding
 
-        if pr11==0: H11 = 0
-        else: H11 = -1 * pr11 * math.log(pr11, 2)
-        if pr10==0: H10 = 0
-        else: H10 = -1 * pr10 * math.log(pr10, 2)
-        if pr01==0: H01 = 0
-        else: H01 = -1 * pr01 * math.log(pr01, 2)
-        if pr00==0: H00 = 0
-        else: H00 = -1 * pr00 * math.log(pr00, 2)
-        Sboth = H11+H10+H01+H00
+            if pr11==0: H11 = 0
+            else: H11 = -1 * pr11 * math.log(pr11, 2)
+            if pr10==0: H10 = 0
+            else: H10 = -1 * pr10 * math.log(pr10, 2)
+            if pr01==0: H01 = 0
+            else: H01 = -1 * pr01 * math.log(pr01, 2)
+            if pr00==0: H00 = 0
+            else: H00 = -1 * pr00 * math.log(pr00, 2)
+            Sboth = H11+H10+H01+H00
         assert(Sboth >= 0 and Sboth <= 1)
 
         assert(Sin+Sout-Sboth >= 0 and Sin+Sout-Sboth <= 1)
@@ -249,22 +251,24 @@ def directed_node_score(leaf_metric, Bin, Bout, Din, Dout):
         Sin, Sout = S[0], S[1]
 
         tot = (Bs[0]+Ds[0])*(Bs[1]+Ds[1])
-        pr11 = Bs[0]*Bs[1]/tot
-        pr10 = Bs[0]*Ds[1]/tot
-        pr01 = Ds[0]*Bs[1]/tot
-        pr00 = Ds[0]*Ds[1]/tot
+        if tot == 0: Sboth = 0
+        else:
+            pr11 = Bs[0]*Bs[1]/tot
+            pr10 = Bs[0]*Ds[1]/tot
+            pr01 = Ds[0]*Bs[1]/tot
+            pr00 = Ds[0]*Ds[1]/tot
 
-        assert(pr11+pr10+pr01+pr00 < 1.2 and pr11+pr10+pr01+pr00 > .8) #leave room for rounding
+            assert(pr11+pr10+pr01+pr00 < 1.2 and pr11+pr10+pr01+pr00 > .8) #leave room for rounding
 
-        if pr11==0: H11 = 0
-        else: H11 = -1 * pr11 * math.log(pr11, 2)
-        if pr10==0: H10 = 0
-        else: H10 = -1 * pr10 * math.log(pr10, 2)
-        if pr01==0: H01 = 0
-        else: H01 = -1 * pr01 * math.log(pr01, 2)
-        if pr00==0: H00 = 0
-        else: H00 = -1 * pr00 * math.log(pr00, 2)
-        Sboth = H11+H10+H01+H00
+            if pr11==0: H11 = 0
+            else: H11 = -1 * pr11 * math.log(pr11, 2)
+            if pr10==0: H10 = 0
+            else: H10 = -1 * pr10 * math.log(pr10, 2)
+            if pr01==0: H01 = 0
+            else: H01 = -1 * pr01 * math.log(pr01, 2)
+            if pr00==0: H00 = 0
+            else: H00 = -1 * pr00 * math.log(pr00, 2)
+            Sboth = H11+H10+H01+H00
         assert(Sboth >= 0 and Sboth <= 1)
 
         assert(1-Sin+Sout-Sboth >= 0 and 1-Sin+Sout-Sboth <= 1)
