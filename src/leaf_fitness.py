@@ -205,6 +205,44 @@ def directed_node_score(leaf_metric, Bin, Bout, Din, Dout):
         return abs(Sin - Sout)
 
 
+    if (leaf_metric == 'mutual_info'):
+
+        Bs = [Bin,Bout]
+        Ds = [Din, Dout]
+        S = [0,0] #ENTROPY [in,out]
+        for i in range(2):
+            B,D = Bs[i],Ds[i]
+            S[i] = shannon_entropy(B,D)
+
+        B = Bs[0] + Bs[1]
+        D = Ds[0] + Ds[1]
+        Sboth = shannon_entropy(B,D)
+
+        Sin, Sout = S[0], S[1]
+
+        assert(Sin+Sout-Sboth >= 0 and Sin+Sout-Sboth <= 1)
+        return Sin+Sout-Sboth
+
+
+    if (leaf_metric == 'mutual_info_rev'):
+
+        Bs = [Bin,Bout]
+        Ds = [Din, Dout]
+        S = [0,0] #ENTROPY [in,out]
+        for i in range(2):
+            B,D = Bs[i],Ds[i]
+            S[i] = shannon_entropy(B,D)
+
+        B = Bs[0] + Bs[1]
+        D = Ds[0] + Ds[1]
+        Sboth = shannon_entropy(B,D)
+
+        Sin, Sout = S[0], S[1]
+
+        assert(1-Sin+Sout-Sboth >= 0 and 1-Sin+Sout-Sboth <= 1)
+        return 1-Sin+Sout-Sboth
+
+
     else: print("ERROR in fitness.node_leaf_score(): unknown leaf metric: " + str(leaf_metric))
 
 
@@ -213,3 +251,11 @@ def assign_denom(leaf_metric, num_genes):
 
     return num_genes
 
+def shannon_entropy(B,D):
+    if (B == 0): H_B = 0
+    else: H_B = -1 * (B / (B + D)) * math.log(B / float(B + D), 2)
+
+    if (D == 0):  H_D = 0
+    else:  H_D = -1 * (D / (B + D)) * math.log(D / float(B + D), 2)
+
+    return H_B + H_D
