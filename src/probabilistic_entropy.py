@@ -188,7 +188,11 @@ def build_BD_table(configs, max_deg=100):
 
         for i in range(max_deg):
             for o in range(max_deg):
-                if (BD_table[i][o] != 0): BD_table[i][o] = math.log(BD_table[i][o], 2)  # log likelihood normz
+                if (BD_table[i][o] > 0): BD_table[i][o] = math.log(BD_table[i][o], 2)  # log likelihood normz
+                else:
+                    assert(BD_table[i][o] > -.2) #allow rounding diff
+                    BD_table[i][o] = 0
+
 
     return BD_table
 
