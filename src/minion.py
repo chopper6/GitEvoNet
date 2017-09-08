@@ -49,6 +49,7 @@ def work(configs, rank):
                 time.sleep(4)
                 estim_time += 4
             i+=1
+        estim_time /= 2
 
         while not (os.path.getmtime(worker_file) + 1 < time.time()):
             time.sleep(1)
