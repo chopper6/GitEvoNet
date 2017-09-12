@@ -30,9 +30,9 @@ def assign_node_consv(population, distrib):
 
     return population
 
-def assign_a_node_consv(net, node, distrib, preset_bias=preset_bias):
+def assign_a_node_consv(net, node, distrib, set_bias=None):
     #redundant with assign_an_edge_consv()
-    if preset_bias: consv_score = preset_bias
+    if set_bias: consv_score = set_bias
     else: consv_score = bias_score(distrib)
     net.node[node]['conservation_score'] = consv_score
 
