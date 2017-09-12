@@ -113,7 +113,7 @@ def evolve_population(configs):
             #just need ADVICE from a worker dump
             a_worker_file = output_dir + "/to_workers/" + str(itern) + "/1"
             with open(a_worker_file, 'rb') as w_file:
-                a_worker_ID, a_seed, a_worker_gens, a_pop_size, a_num_return, a_randSeed, a_curr_gen, advice, BD_table, edge_biases,  a_configs = pickle.load(w_file)
+                a_worker_ID, a_seed, a_worker_gens, a_pop_size, a_num_return, a_randSeed, a_curr_gen, advice, BD_table, biases,  a_configs = pickle.load(w_file)
 
             #util.cluster_print(output_dir,"\nmaster(): CONTINUE RUN with global gen = " + str(itern) + ", len advice = " + str(len(advice)) + "\n")
             cont = True
@@ -172,15 +172,15 @@ def evolve_population(configs):
         write_mpi_info(output_dir, itern)
         #debug(population), outdated
 
-        if biased and bias_on=='edges': edge_biases = bias.gen_biases(itern/max_gen, configs)
-        else: edge_biases = None
+        if biased and bias_on=='edges': biases = bias.gen_biases(itern/max_gen, configs)
+        else: biases = None
 
         # distribute workers
         if (debug == True): #sequential debug, may be outdated
             dump_file = output_dir + "to_workers/" + str(itern) + "/1"
             seed = population[0].copy()
             randSeeds = os.urandom(sysRand().randint(0, 1000000))
-            worker_args = [0, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds,total_gens, advice, BD_table, edge_biases, configs]
+            worker_args = [0, seed, worker_gens, worker_pop_size, min(worker_pop_size, num_survive), randSeeds,total_gens, advice, BD_table, biases, configs]
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
             #pool.map_async(minion.evolve_minion, (dump_file,))
@@ -194,7 +194,7 @@ def evolve_population(configs):
                 seed = population[w % num_survive].copy()
                 randSeeds = os.urandom(sysRand().randint(0,1000000))
                 assert(seed != population[w % num_survive])
-                worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, total_gens, advice, BD_table, edge_biases, configs]
+                worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, total_gens, advice, BD_table, biases, configs]
                 with open(dump_file, 'wb') as file:
                     pickle.dump(worker_args, file)
 

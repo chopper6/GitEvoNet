@@ -4,11 +4,15 @@ from random import SystemRandom as sysRand
 
 
 def gen_biases(gen_percent, configs):
-    assert(configs['bias_on']=='edges')
+    bias_on = configs['bias_on']
     distrib = configs['bias_distribution']
 
     num_mutns = mutate.num_mutations(float(configs['grow_mutation_frequency']), str(configs['mutation_type']), gen_percent)
-    num_biases = int(num_mutns * float(configs['edge_to_node_ratio']))
+
+
+    if bias_on == 'edges': num_biases = int(num_mutns * float(configs['edge_to_node_ratio']))
+    elif bias_on=='nodes': num_biases = int(num_mutns)
+    else: assert(False)
 
     biases = []
     for i in range(num_biases): biases.append(bias_score(distrib))
@@ -26,10 +30,10 @@ def assign_node_consv(population, distrib):
 
     return population
 
-def assign_a_node_consv(net, node, distrib):
+def assign_a_node_consv(net, node, distrib, preset_bias=preset_bias):
     #redundant with assign_an_edge_consv()
-
-    consv_score = bias_score(distrib)
+    if preset_bias: consv_score = preset_bias
+    else: consv_score = bias_score(distrib)
     net.node[node]['conservation_score'] = consv_score
 
 

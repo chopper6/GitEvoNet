@@ -69,6 +69,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
         #  assumes 100% pressure
 
         if (edge_state == 'probabilistic'):
+            assert(not biased or not configs['bias_on']=='nodes')
             fitness_score = probabilistic_entropy.calc_fitness(net, BD_table, configs)
 
         elif (edge_state == 'experience'):

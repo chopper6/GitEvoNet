@@ -52,16 +52,26 @@ def exp_BDs(net, configs):
     pressure = float(float(configs['pressure'])/float(100))
 
     spinning = util.boool(configs['spinning'])
+    auto_self_loops = util.boool(configs['auto_self_loops'])
+    biased = util.boool(configs['biased'])
+    bias_on = util.boool(configs['bias_on'])
 
 
     if spinning:
 
         for n in net.nodes():
-            net.node[n]['state'] = random.choice([-1,1])
+            if biased:
+                assert(bias_on == 'nodes')
+                if random.random()<net.node[n]['conservation_score']:
+                    net.node[n]['state'] = 1
+                else:
+                    net.node[n]['state'] = -1
+            else:
+                net.node[n]['state'] = random.choice([-1,1])
 
-            #count self
-            if net.node[n]['state'] == 1:   net.node[n]['benefits'] +=1
-            else:                           net.node[n]['damages'] +=1
+            if auto_self_loops:
+                if net.node[n]['state'] == 1:   net.node[n]['benefits'] +=1
+                else:                           net.node[n]['damages'] +=1
 
         for edge in net.edges():
             if net.node[edge[0]]['state'] == 1:     net.node[edge[1]]['benefits'] +=1

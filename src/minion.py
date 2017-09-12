@@ -68,7 +68,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
     with open(str(worker_file), 'rb') as file:
         while (loaded==False):
             try:
-                worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, advice, BD_table, edge_biases, configs = pickle.load(file)
+                worker_ID, seed, worker_gens, pop_size, num_return, randSeed, curr_gen, advice, BD_table, biases, configs = pickle.load(file)
                 loaded = True
             except EOFError: time.sleep(2)
         file.close()
@@ -98,7 +98,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
 
         for p in range(pop_size):
             t0 = ptime()
-            mutate.mutate(configs, population[p].net, gen_percent, edge_biases=edge_biases)
+            mutate.mutate(configs, population[p].net, gen_percent, biases=biases)
             t1 = ptime()
             mutate_time += t1-t0
 

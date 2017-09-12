@@ -4,7 +4,7 @@ import networkx as nx
 import bias, util
 # from random import SystemRandom as rd
 
-def mutate(configs, net, gen_percent, edge_biases = None):
+def mutate(configs, net, gen_percent, biases = None):
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
     rewire_freq = float(configs['rewire_mutation_frequency'])
     sign_freq = float(configs['sign_mutation_frequency'])
@@ -17,7 +17,7 @@ def mutate(configs, net, gen_percent, edge_biases = None):
 
     # GROW (ADD NODE)
     num_grow = num_mutations(grow_freq, mutn_type, gen_percent)
-    if (num_grow > 0): add_nodes(net, num_grow, configs, biases_given=edge_biases)
+    if (num_grow > 0): add_nodes(net, num_grow, configs, biases=biases)
 
     # SHRINK (REMOVE NODE)
     # poss outdated
@@ -26,7 +26,7 @@ def mutate(configs, net, gen_percent, edge_biases = None):
 
     # REWIRE EDGE
     num_rewire = num_mutations(rewire_freq, mutn_type, gen_percent)
-    if (edge_biases): assert(num_rewire==0)
+    #if (biases): assert(num_rewire==0)
     rewire(net, num_rewire, configs['biased'], configs['bias_on'], configs['output_directory'], configs)
 
     # CHANGE EDGE SIGN
@@ -126,27 +126,27 @@ def add_edges(net, num_add, configs, biases_given=None):
         if (num_cc != 1): ensure_single_cc(net, configs)
 
 
-def add_nodes(net, num_add, configs, biases_given=None):
-
-    if biases_given: assert(configs['bias_on'] == 'edges') #not ready for nodes
+def add_nodes(net, num_add, configs, biases=None):
 
     edge_node_ratio = float(configs['edge_to_node_ratio'])
     biased = util.boool(configs['biased'])
+    bias_on = configs['bias_on']
 
     # ADD NODE
     for i in range(num_add):
         pre_size = post_size = len(net.nodes())
         while (pre_size == post_size):
             new_node = rd.randint(0, len(net.nodes()) * 1000)  # hope to hit number that doesn't already exist
-            if new_node not in net.nodes():
+            if new_node not in net.nodes(): #could be slowing things down...
                 net.add_node(new_node)
                 post_size = len(net.nodes())
-        if (biased == True and configs['bias_on'] == 'nodes'): bias.assign_a_node_consv(net, new_node,configs['bias_distribution'])
+                assert(pre_size < post_size)
+
+        if biases and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'], preset_bias=biases[i])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
-        node1 = new_node
-        if biases_given: add_this_edge(net, configs, node1=node1, random_direction=True, bias_given=biases_given[0])
-        else: add_this_edge(net, configs, node1=node1, random_direction=True)
+        if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, bias_given=biases[0])
+        else: add_this_edge(net, configs, node1=new_node, random_direction=True)
 
     # MAINTAIN NODE_EDGE RATIO
     # ASSUMES BTWN 1 & 2
@@ -156,10 +156,10 @@ def add_nodes(net, num_add, configs, biases_given=None):
         num_edge_add += 1
         curr_ratio = (len(net.edges()) + num_edge_add) / float(len(net.nodes()))
 
-    if biases_given:
-        assert(len(biases_given) == num_edge_add+1) #check proper lng
+    if biases and bias_on=='edges':
+        assert(len(biases) == num_edge_add+1) #check proper lng
 
-    if biases_given: add_edges(net, num_edge_add, configs, biases_given=biases_given[1:])
+    if biases and bias_on=='edges': add_edges(net, num_edge_add, configs, biases_given=biases[1:])
     else:  add_edges(net, num_edge_add, configs)
 
 
