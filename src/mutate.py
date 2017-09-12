@@ -142,7 +142,7 @@ def add_nodes(net, num_add, configs, biases=None):
                 post_size = len(net.nodes())
                 assert(pre_size < post_size)
 
-        if biases and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'], preset_bias=biases[i])
+        if biased and biases and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'], set_bias=biases[i])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
         if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, bias_given=biases[0])

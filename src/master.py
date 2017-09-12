@@ -172,7 +172,7 @@ def evolve_population(configs):
         write_mpi_info(output_dir, itern)
         #debug(population), outdated
 
-        if biased and bias_on=='edges': biases = bias.gen_biases(itern/max_gen, configs)
+        if biased: biases = bias.gen_biases(itern/max_gen, configs)
         else: biases = None
 
         # distribute workers

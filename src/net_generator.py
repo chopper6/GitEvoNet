@@ -1,6 +1,6 @@
 import networkx as nx
 from random import SystemRandom as sysRand
-import perturb, init, mutate, bias
+import perturb, init, mutate, bias, util
 import pickle
 
 # maybe rename to reduce confusion
@@ -193,7 +193,7 @@ def init_population(init_type, start_size, pop_size, configs):
         return
 
     if (sign_edges_needed == True): sign_edges(population)
-    if (configs['biased'] == True):
+    if util.boool(configs['biased']):
         if (configs['bias_on'] == 'nodes'): bias.assign_node_consv(population, configs['bias_distribution'])
         elif (configs['bias_on'] == 'edges'): bias.assign_edge_consv(population, configs['bias_distribution'])
         else: print("ERROR in net_generator(): unknown bias_on: " + str (configs['bias_on']))

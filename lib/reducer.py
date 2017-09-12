@@ -54,7 +54,7 @@ def exp_BDs(net, configs):
     spinning = util.boool(configs['spinning'])
     auto_self_loops = util.boool(configs['auto_self_loops'])
     biased = util.boool(configs['biased'])
-    bias_on = util.boool(configs['bias_on'])
+    bias_on = (configs['bias_on'])
 
 
     if spinning:
