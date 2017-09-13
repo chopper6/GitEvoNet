@@ -42,7 +42,7 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
         #derive vals from conservation scores
         consv_vals = []
         if (biased == True or biased == 'True'):
-            print('using bias')
+            print('\n\nusing bias\n\n')
             for deg in degs: #deg consv is normalized by num nodes
                 avg_consv, num_nodes = 0,0
                 for node in net.nodes():
@@ -114,6 +114,9 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
 
 def comparison_undir_deg_distrib(net_file1, net_file2, destin_path, title, biased, bias_on):
     print('undir_deg_distrib: biased=' + str(biased) + ', bias_on=' + str(bias_on))
+
+    biased = bias_on = None
+
     #update_rcParams()
     # each line in 'input.txt' should be: [network name (spaces allowed) followed by /path/to/edge/file.txt/or/pickled/network.dump]
 
@@ -138,7 +141,8 @@ def comparison_undir_deg_distrib(net_file1, net_file2, destin_path, title, biase
         #derive vals from conservation scores
         consv_vals = []
         if (biased == True or biased == 'True'):
-            print('using bias')
+            assert(False) #would look aweful
+            print('\n\nusing bias\n\n')
             for deg in degs: #deg consv is normalized by num nodes
                 avg_consv, num_nodes = 0,0
                 for node in net.nodes():
@@ -207,13 +211,23 @@ if __name__ == "__main__":
 
 
 
-    biased = False #sys.argv[2]
-    bias_on = None #sys.argv[3]
+    if sys.argv[1] == 'biased':
+        biased = True
+        bias_on = sys.argv[2]
+        parent_dir = sys.argv[3]
 
-    parent_dir = sys.argv[1]
+        for dirr in sys.argv[4:]:
+            print("plotting " + base_dir + parent_dir + dirr)
+            plot_dir(base_dir + parent_dir + dirr, biased, bias_on)
 
-    for dirr in sys.argv[2:]:
-        print("plotting " + base_dir + parent_dir + dirr)
-        plot_dir(base_dir + parent_dir + dirr, biased, bias_on)
+    else:
+        biased = None
+        bias_on = None
+
+        parent_dir = sys.argv[1]
+
+        for dirr in sys.argv[2:]:
+            print("plotting " + base_dir + parent_dir + dirr)
+            plot_dir(base_dir + parent_dir + dirr, biased, bias_on)
 
     print("\nDone.\n")
