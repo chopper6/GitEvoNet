@@ -158,7 +158,9 @@ def evolve_population(configs):
 
         if (itern % int(max_gen/num_net_output) ==0):
             nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(itern))
-            pickle.dump(population[0].net, output_dir + "/nets/" + str(itern) + "_pickle")
+            pickle_file =  output_dir + "/nets/" + str(itern) + "_pickle"
+            with open(pickle_file, 'wb') as file:
+                pickle.dump(population[0].net, file)
 
         # minions now handle grow op
         if (num_grow != 0): #WILL NOT WORK WELL WITH ISLAND ALGO, OR MULT WORKER GENS
@@ -226,7 +228,9 @@ def evolve_population(configs):
 
     #final outputs
     nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(itern))
-    pickle.dump(population[0].net, output_dir + "/nets/" + str(itern) + "_pickle")
+    pickle_file = output_dir + "/nets/" + str(itern) + "_pickle"
+    with open(pickle_file, 'wb') as file:
+        pickle.dump(population[0].net, file)
 
     output.popn_data(population, output_dir, total_gens)
     output.deg_change_csv(population, output_dir)
