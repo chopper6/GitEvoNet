@@ -158,7 +158,7 @@ def evolve_population(configs):
 
         if (itern % int(max_gen/num_net_output) ==0):
             nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(itern))
-            pickle_file =  output_dir + "/nets/" + str(itern) + "_pickle"
+            pickle_file =  output_dir + "/pickle_nets/" + str(itern) + "_pickle"
             with open(pickle_file, 'wb') as file:
                 pickle.dump(population[0].net, file)
 
@@ -228,7 +228,7 @@ def evolve_population(configs):
 
     #final outputs
     nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(itern))
-    pickle_file = output_dir + "/nets/" + str(itern) + "_pickle"
+    pickle_file = output_dir + "/pickle_nets/" + str(itern) + "_pickle"
     with open(pickle_file, 'wb') as file:
         pickle.dump(population[0].net, file)
 
@@ -250,7 +250,7 @@ def evolve_population(configs):
 def init_dirs(num_workers, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    dirs = ["/node_info/", "/instances/", "/nets/", "/to_workers/", "/to_master/"]
+    dirs = ["/node_info/", "/instances/", "/nets/", "/pickle_nets/", "/to_workers/", "/to_master/"]
     for dirr in dirs:
         if not os.path.exists(output_dir + dirr):
             os.makedirs(output_dir+dirr)

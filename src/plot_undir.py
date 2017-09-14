@@ -29,7 +29,8 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
             net = pickle.load(file)
             file.close()
     else:
-        net = nx.read_edgelist(net_file, nodetype=int, create_using=nx.DiGraph())
+        return
+        #net = nx.read_edgelist(net_file, nodetype=int, create_using=nx.DiGraph())
 
     colors = ['#0099cc','#ff5050', '#6699ff']
     color_choice = colors[0]
@@ -42,12 +43,9 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
         tot = float(sum(freqs))
         if (type=='loglog%'): freqs = [(f/tot)*100 for f in freqs]
 
-
-
         #derive vals from conservation scores
         consv_vals = []
         if (biased == True or biased == 'True'):
-            print('\n\nusing bias\n\n')
             for deg in degs: #deg consv is normalized by num nodes
                 avg_consv, num_nodes = 0,0
                 for node in net.nodes():
