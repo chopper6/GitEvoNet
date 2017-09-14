@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg') # you need this line if you're running this code on rupert
 import sys, os, matplotlib.pyplot as plt, matplotlib.patches as mpatches, networkx as nx, numpy as np
-import math
+import math, re, pickle
 #from scipy.stats import itemfreq
 import matplotlib.ticker as ticker
 import matplotlib.font_manager as font_manager
@@ -24,7 +24,12 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
     #update_rcParams()
     # each line in 'input.txt' should be: [network name (spaces allowed) followed by /path/to/edge/file.txt/or/pickled/network.dump]
 
-    net = nx.read_edgelist(net_file, nodetype=int, create_using=nx.DiGraph())
+    if (re.match(re.compile("[a-zA-Z0-9]*pickle"), net_file)):
+        with open(net_file, 'rb') as file:
+            net = pickle.load(file)
+            file.close()
+    else:
+        net = nx.read_edgelist(net_file, nodetype=int, create_using=nx.DiGraph())
 
     colors = ['#0099cc','#ff5050', '#6699ff']
     color_choice = colors[0]
