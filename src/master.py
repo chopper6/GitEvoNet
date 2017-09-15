@@ -91,6 +91,10 @@ def evolve_population(configs):
     prog_path = output_dir + "/progress.txt"
     cont=False
 
+    #TEMP
+    if not os.path.exists(output_dir + "/pickle_nets/"):
+        os.makedirs(output_dir + "/pickle_nets/")
+
 
     if (configs['edge_state'] == 'probabilistic' and (util.boool(configs['use_knapsack']) == False)): BD_table = probabilistic_entropy.build_BD_table(configs)
     else: BD_table = None
