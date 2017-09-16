@@ -98,6 +98,7 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             H = H + [patch]
 
             # FORMAT PLOT
+            matplotlib.rcParams.update({'font.size': 16})
             ax = plt.gca()  # gca = get current axes instance
 
             # ax.set_xscale('log') #for scatter i think
