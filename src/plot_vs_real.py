@@ -69,7 +69,7 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             H = []
 
             # PLOT REAL NET
-            title = plot_title + "_" + str(name) + "_" + str(direction)
+            title = plot_title + "_" + str(name)
 
             real_deg, sim_deg = None, None
             if (direction == 'in'): real_deg, sim_deg = real_in_degrees, sim_in_degrees
