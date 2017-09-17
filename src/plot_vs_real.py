@@ -12,7 +12,7 @@ import random as rd
 def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
     input_files = open(real_net_file,'r').readlines()
 
-    colors = ['#002299', '#006699','#990066','#4C0099', '#4C0099', '#ff0066', '#ffb31a', 'purple']
+    colors = ['#4C0099', '#006699','#990077','#990012', '#4C0099', '#ff0066', '#ffb31a', 'purple']
     i=0
     for line in input_files:
         name, network_file = line.strip().split(' ')
@@ -128,7 +128,7 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             H = H + [patch]
 
             # FORMAT PLOT
-            matplotlib.rcParams.update({'font.size': 16})
+            matplotlib.rcParams.update({'font.size': 14})
             ax = plt.gca()  # gca = get current axes instance
 
             # ax.set_xscale('log') #for scatter i think
