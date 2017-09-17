@@ -12,13 +12,13 @@ import random as rd
 def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
     input_files = open(real_net_file,'r').readlines()
 
-    colors = ['#4C0099', '#006699','#990077','#990012', '#4C0099', '#ff0066', '#ffb31a', 'purple']
+    colors = ['#4C0099', '#006699','#009931','#990055', '#4C0099', '#ff0066', '#ffb31a', 'purple']
     i=0
     for line in input_files:
         name, network_file = line.strip().split(' ')
         if (name==real_net_name or real_net_name == 'all'):
             color_choice = colors[i%8]
-            ymin, xmax = .02, 200
+            ymin, xmax = .02, 400
 
             color_by = 'org'
 
@@ -35,7 +35,6 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
                 elif (re.match(re.compile("[a-zA-Z0-9]*Bacteria"), name)):
                     color_choice = colors[3]
                     name = name.replace('Bacteria', ' Bacteria')
-                    ymin, xmax = .02, 1000
                 elif (re.match(re.compile("[a-zA-Z0-9]*TRRUST"), name)):
                     color_choice = colors[5]
                     name = name.replace('TRRUST', ' TRRUST')
