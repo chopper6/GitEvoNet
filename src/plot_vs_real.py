@@ -12,7 +12,7 @@ import random as rd
 def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
     input_files = open(real_net_file,'r').readlines()
 
-    colors = ['#002299', '#006699','#990066','#299900', '#4C0099', '#ff0066', '#ffb31a', 'purple']
+    colors = ['#002299', '#006699','#990066','#4C0099', '#4C0099', '#ff0066', '#ffb31a', 'purple']
     i=0
     for line in input_files:
         name, network_file = line.strip().split(' ')
@@ -128,7 +128,7 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             H = H + [patch]
 
             # FORMAT PLOT
-            matplotlib.rcParams.update({'font.size': 20})
+            matplotlib.rcParams.update({'font.size': 16})
             ax = plt.gca()  # gca = get current axes instance
 
             # ax.set_xscale('log') #for scatter i think
@@ -147,8 +147,8 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
             ax.spines["right"].set_visible(False)
             plt.tick_params(axis='both', which='both', right='off', top='off')  # http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
             plt.legend(loc='upper right', handles=H, frameon=False, fontsize=11)
-            plt.xlabel('degree  ')
-            plt.ylabel('% nodes ')
+            plt.xlabel('degree  ', fontsize=20)
+            plt.ylabel('% nodes ', fontsize=20)
             # plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
 
             plt.tight_layout()
