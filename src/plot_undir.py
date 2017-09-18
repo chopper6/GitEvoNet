@@ -44,14 +44,21 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
         if (type=='loglog%'): freqs = [(f/tot)*100 for f in freqs]
 
         #derive vals from conservation scores
-        consv_vals = []
+        consv_vals, ngh_consv_vals = [], []
         if (biased == True or biased == 'True'):
             for deg in degs: #deg consv is normalized by num nodes
-                avg_consv, num_nodes = 0,0
+                avg_consv, ngh_consv, num_nodes = 0,0,0
                 for node in net.nodes():
                     if (net.degree(node) == deg):
                         if (bias_on == 'nodes'):
-                            avg_consv += net.node[node]['conservation_score']
+                            avg_consv += abs(.5-net.node[node]['conservation_score'])
+
+                            avg_ngh_consv = 0
+                            for ngh in net.neighbors(node):
+                                avg_ngh_consv += net.node[ngh]['conservation_score']
+                            avg_ngh_consv /= len(net.neighbors(node))
+                            ngh_consv += abs(.5-avg_ngh_consv)
+
                         elif (bias_on == 'edges'): #node consv is normalized by num edges
                             node_consv, num_edges = 0, 0
                             for edge in net.edges(node):
@@ -60,8 +67,15 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
                             if (num_edges != 0): node_consv /= num_edges
                         num_nodes += 1
                 avg_consv /= num_nodes
+                ngh_consv /= num_nodes
                 consv_vals.append(avg_consv)
+                ngh_consv_vals.append(ngh_consv)
             assert(len(consv_vals) == len(degs))
+
+            with open(destin_path + "/degs_freqs_bias_nghBias",'wb') as file:
+                pickle.dump(file, [degs, freqs, consv_vals, ngh_consv_vals])
+
+
             cmap = plt.get_cmap('plasma')
             consv_colors = cmap(consv_vals)
 
