@@ -2,6 +2,7 @@ import math
 import random as rd
 import networkx as nx
 import bias, util
+import numpy as np
 # from random import SystemRandom as rd
 
 def mutate(configs, net, gen_percent, biases = None):
@@ -250,6 +251,11 @@ def rewire(net, num_rewire, bias, bias_on, dirr, configs):
         num_cc = nx.number_connected_components(net_undir)
         assert (num_cc == 1)
 
+        degrees = list(net.degree().values())
+        degs, freqs = np.unique(degrees, return_counts=True)
+        if degs[0] == 0:
+            assert(freqs[0]==0)
+
     for i in range(num_rewire):
 
         add_this_edge(net, configs)
@@ -259,6 +265,11 @@ def rewire(net, num_rewire, bias, bias_on, dirr, configs):
         net_undir = net.to_undirected()
         num_cc = nx.number_connected_components(net_undir)
         assert (num_cc == 1)
+
+        degrees = list(net.degree().values())
+        degs, freqs = np.unique(degrees, return_counts=True)
+        if degs[0] == 0:
+            assert (freqs[0] == 0)
 
 
 def rewire_componentsOK(net, num_rewire):
