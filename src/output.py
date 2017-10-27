@@ -10,7 +10,7 @@ def init_csv(out_dir, configs):
  
     csv_title = "Generation, Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Mean Fitness, Variance in Fitness, Fitness_Div_#Edges, Fitness_Div_#Nodes\n"
     #csv_title = "Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Clustering Coefficient, # Triangle Communities\n"
-    deg_distrib_title = "Generation, Net Size, In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
+    deg_distrib_title = "Generation, Net Size, In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies, Degs, Deg Freqs\n"
 
     deg_summary_title = "In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
 
@@ -98,6 +98,11 @@ def popn_data(population, output_dir, gen):
             #outdegs, outdegs_freqs = tmp[:, 0], tmp[:, 1]
             distrib_info.append(outdegs)
             distrib_info.append(outdegs_freqs)
+
+            degrees = list(net.degree().values())
+            degs, freqs = np.unique(degrees, return_counts=True)
+            distrib_info.append(degs)
+            distrib_info.append(freqs)
 
             output.writerow(distrib_info)
 

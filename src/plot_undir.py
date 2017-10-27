@@ -10,9 +10,11 @@ import random as rd
 
 
 def plot_dir(output_dir, biased, bias_on):
-    if not os.path.exists(output_dir + "/undirected_degree_distribution/"):
-        os.makedirs(output_dir+"/undirected_degree_distribution/")
-    #files = os.walk(output_dir + "/nets/")
+    dirs = ["/undirected_degree_distribution/", "/undirected_degree_distribution/loglog/", "/undirected_degree_distribution/loglog%/", "/undirected_degree_distribution/scatter/", "/undirected_degree_distribution/scatter%/"]
+    for dirr in dirs:
+        if not os.path.exists(output_dir + dirr):
+            os.makedirs(output_dir + dirr)
+
     for root, dirs, files in os.walk(output_dir + "/nets/"):
         for f in files:
             print("plot_dir(): file " + str(f))
@@ -34,13 +36,13 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
     colors = ['#0099cc','#ff5050', '#6699ff']
     color_choice = colors[0]
 
-    for type in ['loglog', 'loglog%', 'scatter']:
+    for type in ['loglog', 'loglog%', 'scatter', 'scatter%']:
         H = []
         #loglog
         degrees = list(net.degree().values())
         degs, freqs = np.unique(degrees, return_counts=True)
         tot = float(sum(freqs))
-        if (type=='loglog%'): freqs = [(f/tot)*100 for f in freqs]
+        if (type=='loglog%' or type=='scatter%'): freqs = [(f/tot)*100 for f in freqs]
 
         #derive vals from conservation scores
         consv_vals, ngh_consv_vals = [], []
@@ -79,13 +81,13 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
             consv_colors = cmap(consv_vals)
 
             if (type == 'loglog' or type=='loglog%'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, c = consv_colors, alpha=1, markersize=8, marker='D', markeredgecolor='None')
-            elif (type == 'scatter'):
+            elif (type == 'scatter' or type=='scatter%'):
                 sizes = [10 for i in range(len(degs))]
                 plt.scatter(degs, freqs, c = consv_colors, alpha=1, s=sizes, marker='D')
 
         else:
             if (type == 'loglog' or type=='loglog%'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, color = color_choice, alpha=1, markersize=8, marker='D', markeredgecolor='None')
-            elif (type == 'scatter'):
+            elif (type == 'scatter' or type=='scatter%'):
                 sizes = [10 for i in range(len(degs))]
                 plt.scatter(degs, freqs, color = color_choice, alpha=1, s=sizes, marker='D')
         patch =  mpatches.Patch(color=color_choice, label=title + "_" + type)
@@ -94,13 +96,10 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
         #FORMAT PLOT
         ax = plt.gca() # gca = get current axes instance
 
-        if (type == 'scatter'):
-            ax.set_xlim([0,80])
-            ax.set_ylim([0,80])
-        elif (type == 'loglog%'):
+        if (type == 'loglog%' or type=='scatter%'):
             ax.set_xlim([0,100])
             ax.set_ylim([0,100])
-        elif (type == 'loglog'):
+        elif (type == 'loglog' or type == 'scatter'):
             max_x = max(1,math.floor(max(degs)/10))
             max_x = max_x*10+10
 
@@ -122,7 +121,7 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
         #plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
 
         plt.tight_layout()
-        plt.savefig(destin_path + title + "_" + type + ".png", dpi=300,bbox='tight') # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
+        plt.savefig(destin_path + "/" + type + "/" + title + ".png", dpi=300,bbox='tight') # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
         plt.clf()
         plt.cla()
         plt.close()
@@ -220,8 +219,12 @@ if __name__ == "__main__":
         biased = False  # sys.argv[2]
         bias_on = None  # sys.argv[3]
 
-        if not os.path.exists(net1_path + "/undirected_degree_distribution/"):
-            os.makedirs(net1_path + "/undirected_degree_distribution/")
+        dirs = ["/undirected_degree_distribution/", "/undirected_degree_distribution/loglog/",
+                "/undirected_degree_distribution/loglog%/", "/undirected_degree_distribution/scatter/",
+                "/undirected_degree_distribution/scatter%/"]
+        for dirr in dirs:
+            if not os.path.exists(net1_path + dirr):
+                os.makedirs(net1_path + dirr)
 
         comparison_undir_deg_distrib(base_dir+ "/" + net1_path, base_dir + "/" + net2_path, net1_path + "/undirected_degree_distribution/", "comparison", biased, bias_on)
 
