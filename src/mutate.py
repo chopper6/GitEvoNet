@@ -44,22 +44,23 @@ def num_mutations(base_mutn_freq, mutn_type, gen_percent):
     mutn_freq=0
 
     if (mutn_type == 'static' or base_mutn_freq == 0):
-        mutn_freq = int(base_mutn_freq)
-        return mutn_freq
+        if base_mutn_freq >= 1: mutn_freq = int(base_mutn_freq)
+        else: mutn_freq = base_mutn_freq
     elif (mutn_type == 'dynamic'):
-        mutn_freq = math.ceil(base_mutn_freq - base_mutn_freq*gen_percent)
+        mutn_freq = math.ceil(base_mutn_freq - base_mutn_freq*gen_percent) #assumes int
         if (mutn_freq<=0): print("WARNING in mutate.num_mutations(): dynamic mutation yield 0 freq.")
     else: print("ERROR in mutation(): unknown mutation type.")
 
     if (mutn_freq == 0): return 0
+    elif (mutn_freq >= 1): return int(mutn_freq)
     elif (mutn_freq < 1):
         if (rd.random() < mutn_freq):
             return 1
         else:
             return 0
-
-    else:
-        return rd.randint(0, mutn_freq)
+    else: assert(False)
+    #else:
+    #    return rd.randint(0, mutn_freq)
 
 
 def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direction=False, bias_given=None):
