@@ -101,6 +101,8 @@ def popn_data(population, output_dir, gen):
 
             degrees = list(net.degree().values())
             degs, freqs = np.unique(degrees, return_counts=True)
+            degs = np.array2string(degs).replace('\n', '')
+            freqs = np.array2string(freqs).replace('\n', '')
             distrib_info.append(degs)
             distrib_info.append(freqs)
 
