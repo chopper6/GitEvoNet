@@ -37,9 +37,10 @@ def node_product(net):
             #fitness_score = decimal.Decimal(str(fitness_score)) * decimal.Decimal(str(net.node[n]['fitness']))
 
     #fitness_score = math.pow(fitness_score , 1/float(len(net.nodes())))#further normalization
-    #if (num_0 > 0): print("WARNING: fitness.node_product(): " + str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
+    if (num_0 > len(net.nodes())/100 and num_0 > 10): print("WARNING: fitness.node_product(): " + str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
     return fitness_score
 
+#curr blocked in pressurize
 def node_entropy(net):
     fitness_score = 0
     for n in net.nodes():
@@ -140,11 +141,12 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, leaf_pow, hub_m
 
 
     else:
-        print("WARNING in pressurize: no results from oracle advice")
+        print("WARNING in fitness: no results from oracle advice")
         fitness_score, leaf_score, hub_score, node_info = 0,0,0,None
 
     if (instance_file_name != None):
         with open(instance_file_name, 'a') as file_out:
+
             for line in lines:
                 file_out.write(line + "\n")
 

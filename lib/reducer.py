@@ -5,7 +5,7 @@ import random as rd
 #--------------------------------------------------------------------------------------------------
 def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria, bias_on, advice): #only version that handle Direct Evolution
     if  advice_sampling_threshold <=0:
-        print ("WARNING: simple_reduction yields empty set.")
+        print ("WARNING: reverse_reduction yields empty set.")
         yield [{},{},0]
     else:
         if (advice != None): #ie direct evo, keep same advice

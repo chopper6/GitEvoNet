@@ -69,10 +69,18 @@ def load_simulation_configs (param_file, rank):
     #--------------------------------------------
     index = 1
     ALL_PT_pairs = {}
+
+    #OVERRIDE: ONLY 1 PT PAIR ALLOWED!
+    '''
     for p in sorted (configs['pressure']):
         for t in sorted (configs['tolerance']):
             ALL_PT_pairs[index] = (p,t)
             index+=1
+
+    '''
+
+    ALL_PT_pairs[1] = (configs['pressure'],configs['tolerance'])
+
     completed_pairs                = []
     if os.path.isdir (configs['datapoints_dir']):
         for r,ds,fs in os.walk(configs['datapoints_dir']):
