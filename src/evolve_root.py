@@ -110,4 +110,4 @@ if __name__ == "__main__":
     evolve(rank, config_file)
 
     print("\nFinished Evolution.\n")
-    comm.Abort()
+    if (rank==0): comm.Abort()
