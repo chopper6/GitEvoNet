@@ -29,6 +29,8 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
     edge_distribution = str(configs['edge_state_distribution'])
     biased = util.boool(configs['biased'])
 
+    scale_node_fitness = util.boool(configs['scale_node_fitness'])
+
     #num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
     num_samples_relative = max(1, int(len(net.edges())*sampling_rounds_multiplier) )
 
@@ -80,6 +82,8 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
                 fitness.node_fitness(net, leaf_metric)
 
             fitness.node_normz(net, num_samples_relative)
+
+            if scale_node_fitness: fitness.node_scale(net)
 
             assert(fitness_operator=='product')
 
