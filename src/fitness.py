@@ -21,6 +21,10 @@ def node_fitness(net, leaf_metric):
         #if (B+D == 0): print ("WARNING fitness.node_fitness(): B+D == 0")
         net.node[n]['fitness'] += leaf_fitness.node_score(leaf_metric, B,D)
         #print(net[node]['fitness'])
+        if (leaf_metric=='info'):
+            info = net.node[n]['fitness']
+            num_edges = len(net.in_edges(n) + net.out_edges(n))
+            net.node[n]['fitness'] = math.pow(2*info,num_edges)
 
 def node_product(net):
     #now uses log-likelihood estimation: product --> sum log
