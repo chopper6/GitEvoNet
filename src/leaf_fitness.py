@@ -179,6 +179,17 @@ def node_score (leaf_metric, B, D, num_edges):
         H = H_B + H_D
         return math.pow(2,num_edges)*(1-math.pow(H,num_edges))
 
+    elif (leaf_metric == 'info3'):
+        #if (B+D==0): return 0
+        if (B==0): H_B = 0
+        else: H_B = -1*(B/(B+D)) * math.log2(B/(B+D))
+
+        if (D==0): H_D = 0
+        else: H_D = -1*(D/(B+D)) * math.log2(D/(B+D))
+
+        I = 1-(H_B + H_D)
+        return math.pow(2,I*num_edges)
+
 
 
     elif (leaf_metric == 'entropy'):

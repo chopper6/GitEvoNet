@@ -27,7 +27,7 @@ def node_scale(net):
     for n in net.nodes():
         info = net.node[n]['fitness']
         num_edges = len(net.in_edges(n) + net.out_edges(n))
-        net.node[n]['fitness'] = math.pow(2,num_edges)-math.pow(2*info,num_edges)
+        net.node[n]['fitness'] = math.pow(2,info*num_edges)
 
 
 
