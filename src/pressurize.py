@@ -87,7 +87,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
 
             assert(fitness_operator=='product')
 
-            if (fitness_operator == 'product'): fitness_score = fitness.node_product(net)
+            if (fitness_operator == 'product'): fitness_score = fitness.node_product(net, scale_node_fitness)
             elif (fitness_operator == 'entropy'): fitness_score = fitness.node_entropy(net)
             else: print("Error in pressurize(): unknown fitness_op: " + str(fitness_operator))
 

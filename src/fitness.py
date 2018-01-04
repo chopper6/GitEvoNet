@@ -31,7 +31,7 @@ def node_scale(net):
 
 
 
-def node_product(net):
+def node_product(net, scale_node_fitness):
     #now uses log-likelihood estimation: product --> sum log
     #decimal.getcontext().prec = 40
     #fitness_score = 1
@@ -42,7 +42,11 @@ def node_product(net):
             #print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
             num_0 += 1
         else:
-            fitness_score += math.log(net.node[n]['fitness'],2)
+            if scale_node_fitness:
+                e2n = len(net.edges(n))
+                fitness_score += math.log(net.node[n]['fitness'], e2n)
+            else:
+                fitness_score += math.log(net.node[n]['fitness'],2)
             #fitness_score = decimal.Decimal(str(fitness_score)) * decimal.Decimal(str(net.node[n]['fitness']))
 
     #fitness_score = math.pow(fitness_score , 1/float(len(net.nodes())))#further normalization
