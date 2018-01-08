@@ -37,6 +37,8 @@ def node_product(net, scale_node_fitness):
     #fitness_score = 1
     fitness_score = 0
     num_0 = 0
+    num_n = len(net.nodes())
+    num_under, num_over = 0,0
     for n in net.nodes():
         if net.node[n]['fitness'] == 0: 
             #print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
@@ -46,8 +48,15 @@ def node_product(net, scale_node_fitness):
                 e2n = len(net.edges(n))
                 fitness_score += math.log(net.node[n]['fitness'], e2n)
             else:
-                fitness_score += math.log(net.node[n]['fitness'],2)
+                #fitness_score += math.log(net.node[n]['fitness'],2)
+                Inode = 1-math.log(net.node[n]['fitness'], num_n)
+                if Inode < 0: num_under += 1
+                elif Inode > 1: num_over += 1
+                fitness_score += Inode
             #fitness_score = decimal.Decimal(str(fitness_score)) * decimal.Decimal(str(net.node[n]['fitness']))
+
+    if (num_over != 0 or num_under != 0):
+        print("# I < 0 = " + str(num_under) + "\t # I > 1 = " + str(num_over) + "\n")
 
     #fitness_score = math.pow(fitness_score , 1/float(len(net.nodes())))#further normalization
     if (num_0 > len(net.nodes())/100 and num_0 > 10): print("WARNING: fitness.node_product(): " + str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))

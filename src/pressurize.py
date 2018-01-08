@@ -83,7 +83,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
 
             fitness.node_normz(net, num_samples_relative)
 
-            if scale_node_fitness: fitness.node_scale(net)
+            #if scale_node_fitness: fitness.node_scale(net)
 
             assert(fitness_operator=='product')
 
