@@ -46,10 +46,11 @@ def node_product(net, scale_node_fitness):
         else:
             if scale_node_fitness:
                 e2n = len(net.edges(n))
-                fitness_score += math.log(net.node[n]['fitness'], e2n)
+                Inode = net.node[n]['fitness']
+                fitness_score += -1*Inode*math.log(Inode, num_n)
             else:
                 #fitness_score += math.log(net.node[n]['fitness'],2)
-                Inode = 1-math.log(net.node[n]['fitness'], num_n)
+                Inode = -math.log(net.node[n]['fitness'], num_n)
                 if Inode < 0: num_under += 1
                 elif Inode > 1: num_over += 1
                 fitness_score += Inode
