@@ -47,7 +47,7 @@ def node_product(net, scale_node_fitness):
             if scale_node_fitness:
                 e2n = len(net.edges(n))
                 Inode = net.node[n]['fitness']
-                fitness_score += -1*math.log(net.node[n]['fitness'],2)
+                fitness_score += -1*math.log(net.node[n]['fitness'])
             else:
                 fitness_score += math.log(net.node[n]['fitness'],2)
             #fitness_score = decimal.Decimal(str(fitness_score)) * decimal.Decimal(str(net.node[n]['fitness']))
