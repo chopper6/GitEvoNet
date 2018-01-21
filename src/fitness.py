@@ -20,7 +20,7 @@ def node_fitness(net, leaf_metric):
         B,D = net.node[n]['benefits'], net.node[n]['damages']
         num_edges = len(net.in_edges(n) + net.out_edges(n))
         #if (B+D == 0): print ("WARNING fitness.node_fitness(): B+D == 0")
-        net.node[n]['fitness'] += leaf_fitness.node_score(leaf_metric, B,D, num_edges)
+        net.node[n]['fitness'] += leaf_fitness.node_score(leaf_metric, B,D)
 
 
 def node_scale(net):

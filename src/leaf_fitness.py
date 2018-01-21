@@ -1,6 +1,6 @@
 import math
 
-def node_score (leaf_metric, B, D, num_edges):
+def node_score (leaf_metric, B, D):
     if (B+D==0): return 0
 
     if (leaf_metric=='RGAR'):
