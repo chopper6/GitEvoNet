@@ -103,6 +103,7 @@ def indiv_conserv_score(element, M, advice_upon, biased, bias_on):
                     print("ERROR  util.advice(): unknown bias_on: " + str(bias_on))
             else:
                 biased_center = .5  # doesn't really matter
+                assert(False) #okay to rm iff not all edges are given a bias
 
         else:
             print("ERROR util.advice(): unknown advice_upon: " + str(advice_upon))
