@@ -256,7 +256,7 @@ def evolve_population(configs):
 def init_dirs(num_workers, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    dirs = ["/node_info/", "/instances/", "/nets/", "/pickle_nets/", "/to_workers/", "/to_master/"]
+    dirs = ["/node_info/", "/instances/", "/nets/", "/bias/", "/pickle_nets/", "/to_workers/", "/to_master/"]
     for dirr in dirs:
         if not os.path.exists(output_dir + dirr):
             os.makedirs(output_dir+dirr)
