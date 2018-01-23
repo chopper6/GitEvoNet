@@ -144,8 +144,11 @@ def add_nodes(net, num_add, configs, biases=None):
                 post_size = len(net.nodes())
                 assert(pre_size < post_size)
 
+                #poss bias lost here
+
         if biased and biases and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'], set_bias=biases[i])
         elif biased and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'])
+
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
         if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, bias_given=biases[0])
@@ -248,6 +251,7 @@ def rewire(net, num_rewire, bias, bias_on, dirr, configs):
     bias = util.boool(bias)
     single_cc = util.boool(configs['single_cc'])
 
+    '''
     if single_cc:
         net_undir = net.to_undirected()
         num_cc = nx.number_connected_components(net_undir)
@@ -257,58 +261,19 @@ def rewire(net, num_rewire, bias, bias_on, dirr, configs):
         degs, freqs = np.unique(degrees, return_counts=True)
         if degs[0] == 0:
             assert(freqs[0]==0)
+    '''
 
     for i in range(num_rewire):
 
         add_this_edge(net, configs)
         rm_edges(net,1,configs)
 
+    '''
     if single_cc:
         net_undir = net.to_undirected()
         num_cc = nx.number_connected_components(net_undir)
         assert (num_cc == 1)
-
-
-
-
-def rewire_componentsOK(net, num_rewire):
-    #obselete i think
-    assert(False)
-
-    print("\nWhy am i in mutate.rewire_componentsOK???\n")
-
-    for i in range(num_rewire):
-        # print("rewire(): before.")
-        pre_edges = len(net.edges())
-        rewire_success = False
-
-        while (rewire_success == False):  # ensure sucessful rewire
-            edge = rd.sample(net.edges(), 1)
-            edge = edge[0]
-            sign_orig = net[edge[0]][edge[1]]['sign']
-
-            node = rd.sample(net.nodes(), 1)
-            node = node[0]
-            node2 = node
-            while (node2 == node):
-                node2 = rd.sample(net.nodes(), 1)
-                node2 = node2[0]
-            sign = rd.randint(0, 1)
-            if (sign == 0):     sign = -1
-
-            net.add_edge(node, node2, sign=sign)
-            #else: net.add_edge(node2, node, sign=sign)
-            post_edges = len(net.edges())
-            if (post_edges > pre_edges):  # check that edge successfully added
-                net.remove_edge(edge[0], edge[1])
-
-                post_edges = len(net.edges())
-                if (post_edges == pre_edges):  # check that edge successfully removed
-                    rewire_success = True
-                else:
-                    print("ERROR IN REWIRE: num edges not kept constant")
-                    return
-
+    '''
 
 def shrink(net, num_shrink, configs):
     pre_size = len(net.nodes())

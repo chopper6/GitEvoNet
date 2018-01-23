@@ -187,7 +187,6 @@ def init_population(init_type, start_size, pop_size, configs):
         population = [Net(init_net.copy(), i) for i in range(pop_size)]
 
 
-
     else:
         print("ERROR in master.gen_init_population(): unknown init_type.")
         return

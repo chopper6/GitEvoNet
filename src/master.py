@@ -236,6 +236,8 @@ def evolve_population(configs):
     with open(pickle_file, 'wb') as file:
         pickle.dump(population[0].net, file)
 
+    bias.pickle_bias(population[0].net, output_dir+"/bias", configs['bias_on'])
+
     output.popn_data(population, output_dir, total_gens)
     output.deg_change_csv(population, output_dir)
     #draw_nets.basic(population, output_dir, total_gens, draw_layout)

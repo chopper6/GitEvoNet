@@ -1,5 +1,5 @@
 import networkx as nx
-import mutate
+import mutate, pickle, numpy as np
 from random import SystemRandom as sysRand
 
 
@@ -86,3 +86,54 @@ def bias_score(distrib):
         print("ERROR in net_generator(): unknown bias distribution: " + str(distrib))
         assert(False)
         return 1
+
+
+
+def pickle_bias(net, output_dir, bias_on): #for some reason bias_on isn't recognz'd
+
+        degrees = list(net.degree().values())
+        degs, freqs = np.unique(degrees, return_counts=True)
+        tot = float(sum(freqs))
+
+        percent = True
+        if (percent): freq = [(f/tot)*100 for f in freqs]
+
+        #derive vals from conservation scores
+        consv_vals, ngh_consv_vals = [], []
+        for deg in degs: #deg consv is normalized by num nodes; node consv is normz by num edges
+            avg_consv, ngh_consv, num_nodes = 0,0,0
+            for node in net.nodes():
+                if (net.degree(node) == deg):
+                    if (bias_on == 'nodes'):
+                        print(net.node[node])
+                        avg_consv += abs(.5-net.node[node]['conservation_score'])
+
+                        avg_ngh_consv = 0
+                        for ngh in net.neighbors(node):
+                            avg_ngh_consv += net.node[ngh]['conservation_score']
+                        avg_ngh_consv /= len(net.neighbors(node))
+                        ngh_consv += abs(.5-avg_ngh_consv)
+
+                    elif (bias_on == 'edges'): #node consv is normalized by num edges
+                        node_consv, num_edges = 0, 0
+                        for edge in net.edges(node):
+                            node_consv += (.5-net[edge[0]][edge[1]]['conservation_score'])
+                            num_edges += 1
+                        node_consv = abs(node_consv)
+                        if (num_edges != 0): node_consv /= num_edges
+                        assert(num_edges == deg)
+                        avg_consv += node_consv
+
+                    num_nodes += 1
+
+            avg_consv /= num_nodes
+            ngh_consv /= num_nodes
+            #print(deg, avg_consv)
+            consv_vals.append(avg_consv)
+            ngh_consv_vals.append(ngh_consv)
+        assert(len(consv_vals) == len(degs))
+
+
+        with open(output_dir + "/degs_freqs_bias",'wb') as file:
+            pickle.dump( [degs, freqs, consv_vals] , file)
+
