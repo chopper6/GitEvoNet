@@ -236,8 +236,6 @@ def evolve_population(configs):
     with open(pickle_file, 'wb') as file:
         pickle.dump(population[0].net, file)
 
-    bias.pickle_bias(population[0].net, output_dir+"/bias", configs['bias_on'])
-
     output.popn_data(population, output_dir, total_gens)
     output.deg_change_csv(population, output_dir)
     #draw_nets.basic(population, output_dir, total_gens, draw_layout)
@@ -246,6 +244,10 @@ def evolve_population(configs):
     if (num_sims == 1):
         plot_nets.single_run_plots(output_dir)
         #plot_vs_real.plot_dir('/',output_dir+':all')
+
+    if util.boool(configs['biased']):
+        util.cluster_print(output_dir,"Pickling biases.")
+        bias.pickle_bias(population[0].net, output_dir+"/bias", configs['bias_on'])
     #instances.analyze(output_dir)
     #if (configs['use_knapsack'] == (False or 'False')): entropy_net_plots.plot_dir(output_dir, configs)
 

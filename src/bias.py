@@ -103,7 +103,7 @@ def pickle_bias(net, output_dir, bias_on): #for some reason bias_on isn't recogn
         for deg in degs: #deg consv is normalized by num nodes; node consv is normz by num edges
             avg_consv, ngh_consv, num_nodes = 0,0,0
             for node in net.nodes():
-                if (net.degree(node) == deg):
+                if (len(net.in_edges(node))+len(net.out_edges(node)) == deg):
                     if (bias_on == 'nodes'):
                         avg_consv += abs(.5-net.node[node]['conservation_score'])
 
@@ -117,7 +117,9 @@ def pickle_bias(net, output_dir, bias_on): #for some reason bias_on isn't recogn
 
                     elif (bias_on == 'edges'): #node consv is normalized by num edges
                         node_consv, num_edges = 0, 0
-                        for edge in net.edges(node):
+                        for edge in net.in_edges(node)+net.out_edges(node):
+                            #poss err if out_edges are backwards
+
                             node_consv += (.5-net[edge[0]][edge[1]]['conservation_score'])
                             num_edges += 1
                         node_consv = abs(node_consv)
