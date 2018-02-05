@@ -194,10 +194,12 @@ def rm_edges(net, num_rm, configs):
 
         ensure_single_cc(net, configs, node1=edge[0], node2=edge[1], sign_orig=sign_orig)
 
+    '''
     if util.boool(configs['single_cc']):
         net_undir = net.to_undirected()
         num_cc = nx.number_connected_components(net_undir)
         assert (num_cc == 1)
+    '''
 
 def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
     #rewires [node1, node2] at the expense of a random, non deg1 edge
@@ -239,9 +241,10 @@ def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
             i+=1
             if (i == 10000000): util.cluster_print(configs['output_directory'], "WARNING mutate.ensure_single_cc() is looping a lot.\n")
 
-        net_undir = net.to_undirected()
-        num_cc = nx.number_connected_components(net_undir)
-        assert (num_cc == 1)
+
+        #net_undir = net.to_undirected()
+        #num_cc = nx.number_connected_components(net_undir)
+        #assert (num_cc == 1)
 
 
 
