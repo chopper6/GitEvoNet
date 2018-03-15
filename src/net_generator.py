@@ -180,9 +180,11 @@ def init_population(init_type, start_size, pop_size, configs):
                 num_add = int(edge_node_ratio*8)
                 mutate.add_edges(init_net, num_add, configs)
                 mutate.add_nodes(init_net, start_size-8, configs)
+                if (len(init_net.edges()) == num_edges+1): mutate.rm_edges(init_net, 1, configs)
 
         mutate.ensure_single_cc(init_net, configs)
         assert(len(init_net.edges()) == num_edges)
+        assert(len(init_net.nodes()) == start_size)
 
         population = [Net(init_net.copy(), i) for i in range(pop_size)]
 
