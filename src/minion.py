@@ -1,5 +1,4 @@
 # worker processes
-
 import math, pickle, random, os, time
 import output, fitness, pressurize, mutate, init, util
 from time import process_time as ptime
@@ -78,8 +77,6 @@ def evolve_minion(worker_file, gen, rank, output_dir):
     output_dir = configs['output_directory'].replace("v4nu_minknap_1X_both_reverse/", '')
     #output_dir += str(worker_ID)
     max_gen = int(configs['max_generations'])
-    control = configs['control']
-    if (control == "None"): control = None
     fitness_direction = str(configs['fitness_direction'])
 
     random.seed(randSeed)
@@ -102,16 +99,12 @@ def evolve_minion(worker_file, gen, rank, output_dir):
             t1 = ptime()
             mutate_time += t1-t0
 
-            if (control == None):
-                pressure_results = pressurize.pressurize(configs, population[p].net, None, advice, BD_table)  # false: don't track node fitness, None: don't write instances to file
-                population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
-
-            else: util.cluster_print(output_dir,"ERROR in minion(): unknown control config: " + str(control))
+            pressure_results = pressurize.pressurize(configs, population[p].net, None, advice, BD_table)  # false: don't track node fitness, None: don't write instances to file
+            population[p].fitness_parts[0], population[p].fitness_parts[1], population[p].fitness_parts[2] = pressure_results[0], pressure_results[1], pressure_results[2]
 
         old_popn = population
         population = fitness.eval_fitness(old_popn, fitness_direction)
         del old_popn
-        #debug(population,worker_ID, output_dir)
         curr_gen += 1
     write_out_worker(output_dir + "/to_master/" + str(gen) + "/" + str(rank), population, num_return)
     
@@ -121,7 +114,6 @@ def evolve_minion(worker_file, gen, rank, output_dir):
         end_size = len(population[0].net.nodes())
         growth = end_size - start_size
         output.minion_csv(orig_dir, pressurize_time, growth, end_size)
-        #debug(population, worker_ID, output_dir)
         #if (worker_ID==0): util.cluster_print(output_dir,"Pressurizing took " + str(pressurize_time) + " secs, while mutate took " + str(mutate_time) + " secs.")
 
     t_end = time.time()
@@ -143,18 +135,4 @@ def gen_population_from_seed(seed, num_survive):
         assert(population[-1] != seed)
     return population
 
-def debug(population, worker_ID, output_dir):
-    pop_size = len(population)
-    if (worker_ID == 0):
-        print ("Minion population fitness: ")
-        for p in range(pop_size):
-            util.cluster_util.cluster_print(output_dir,population[p].fitness_parts[2])
-    # check that population is unique
-    for p in range(pop_size):
-        for q in range(0, p):
-            if (p != q): assert (population[p] != population[q])
-
-    util.cluster_print(output_dir,"Minion nets exist?")
-    for p in range(pop_size):
-            util.cluster_print(output_dir,population[p].net)
 

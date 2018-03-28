@@ -1,4 +1,3 @@
-import networkx as nx
 import mutate, pickle, numpy as np
 from random import SystemRandom as sysRand
 

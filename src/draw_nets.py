@@ -1,14 +1,14 @@
 #!/usr/bin/python3
 import matplotlib
 matplotlib.use('Agg') # This must be done before importing matplotlib.pyplot
-import matplotlib.pyplot as plt
-import networkx as nx
 import os
+
+# THIS IS MORE OF A CURIOSITY AND NOT SO USEFUL FOR ANYTHING BUT VERY SMALL NETS
+# MAY REQUIRE SOME DEBUGGING
 
 def basic(population, dirr, iter, layout):
     #draws basic graph of most fit net
     #assumes already sorted by fitness
-    '''
     plt.figure(figsize= (16,16))
     net = population[0].net
     num_edges = len(net.edges())
@@ -43,7 +43,6 @@ def basic(population, dirr, iter, layout):
     plt.savefig(file_name)
     plt.clf()
     plt.close()
-    '''
 
     return
 

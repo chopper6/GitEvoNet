@@ -51,44 +51,31 @@ def exp_BDs(net, configs):
     pressure_on = configs['pressure_on']
     pressure = float(float(configs['pressure'])/float(100))
 
-    spinning = util.boool(configs['spinning'])
-    auto_self_loops = util.boool(configs['auto_self_loops'])
-    biased = util.boool(configs['biased'])
-    bias_on = (configs['bias_on'])
+    if pressure_on == 'edges':
 
+        pressure_relative = int(len(net.edges()) * pressure)
+        edges = net.edges()
+        rd.shuffle(edges)
 
-    if spinning:
-
-        for n in net.nodes():
-            if biased:
-                assert(bias_on == 'nodes')
-                if random.random()<net.node[n]['conservation_score']:
-                    net.node[n]['state'] = 1
-                else:
-                    net.node[n]['state'] = -1
-            else:
-                net.node[n]['state'] = random.choice([-1,1])
-
-            if auto_self_loops:
-                if net.node[n]['state'] == 1:   net.node[n]['benefits'] +=1
-                else:                           net.node[n]['damages'] +=1
-
-        for edge in net.edges():
-            if net.node[edge[0]]['state'] == 1:     net.node[edge[1]]['benefits'] +=1
-            else:                                   net.node[edge[1]]['damages'] +=1
-
-            if net.node[edge[1]]['state'] == 1:     net.node[edge[0]]['benefits'] +=1
-            else:                                   net.node[edge[0]]['damages'] +=1
+        for edge in edges[:pressure_relative]:
+            advice = util.single_advice(net, edge, configs)
+            if advice == 1:
+                net.node[edge[0]]['benefits'] += 1
+                net.node[edge[1]]['benefits'] += 1
+            else: #advice == -1
+                net.node[edge[0]]['damages'] += 1
+                net.node[edge[1]]['damages'] += 1
 
     else:
+        assert(pressure_on == 'nodes')
 
-        if pressure_on == 'edges':
+        pressure_relative = int(len(net.nodes()) * pressure)
+        nodes = net.nodes()
+        rd.shuffle(nodes)
+        pressured_nodes = nodes[:pressure_relative]
 
-            pressure_relative = int(len(net.edges()) * pressure)
-            edges = net.edges()
-            rd.shuffle(edges)
-
-            for edge in edges[:pressure_relative]:
+        for edge in net.edges():
+            if edge[0] in pressured_nodes and edge[1] in pressured_nodes:
                 advice = util.single_advice(net, edge, configs)
                 if advice == 1:
                     net.node[edge[0]]['benefits'] += 1
@@ -97,28 +84,10 @@ def exp_BDs(net, configs):
                     net.node[edge[0]]['damages'] += 1
                     net.node[edge[1]]['damages'] += 1
 
-        else:
-            assert(pressure_on == 'nodes')
-
-            pressure_relative = int(len(net.nodes()) * pressure)
-            nodes = net.nodes()
-            rd.shuffle(nodes)
-            pressured_nodes = nodes[:pressure_relative]
-
-            for edge in net.edges():
-                if edge[0] in pressured_nodes and edge[1] in pressured_nodes:
-                    advice = util.single_advice(net, edge, configs)
-                    if advice == 1:
-                        net.node[edge[0]]['benefits'] += 1
-                        net.node[edge[1]]['benefits'] += 1
-                    else: #advice == -1
-                        net.node[edge[0]]['damages'] += 1
-                        net.node[edge[1]]['damages'] += 1
-
 
     # --------------------------------------------------------------------------------------------------
 def prob_reduction(net, global_ben_bias, distribn, biased, biased_on, leaf_metric):
-    #NOT USED
+    #NOT USED, keep as a control
     assert(False)
 
     for edge in net.edges():

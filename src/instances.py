@@ -4,18 +4,15 @@ import leaf_fitness
 import BD_plots, slice_plots
 from time import process_time as ptime
 
+assert(False) #Todo; rm if not triggerd
+
 def analyze(output_dir):
     dirr = output_dir + "instances/"
 
     t0 = ptime()
     node_info, iters, leaf_metric = read_in(dirr)
-    # node_info = {'id':names, 'degree':deg, 'benefit':B, 'damage':D, 'solution':soln}
-    # 'benefit' = [file#] [node#]
     t1 = ptime()
     print("\nRead_in took " + str(t1-t0))
-
-    #TEMP FOR HUBS:
-    #leaf_metric = "RGAR"
 
     t0 = ptime()
     freq, maxBD = extract_freq(node_info)
@@ -26,17 +23,13 @@ def analyze(output_dir):
     Pr = BD_probability(maxBD)
     t1 = ptime()
     print("\nProbability took " + str(t1-t0))
-    # Pr [B] [D]
 
     t0 = ptime()
     BD_leaf_fitness = calc_BD_leaf_fitness(leaf_metric, maxBD) #derive leaf metric from file name?
-    # BD_leaf_fitness [B] [D]
     t1 = ptime()
     print("\nCalc_leaf_fitness took " + str(t1-t0))
 
     t0 = ptime()
-    #ETB_score = derive_ETB(node_info, maxBD)
-    # ETB_score [file#] [B] [D]
     t1 = ptime()
     print("\nDerive_ETB took " + str(t1-t0))
 

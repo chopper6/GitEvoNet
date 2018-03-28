@@ -9,14 +9,14 @@ class Net:
         self.fitness = 0  #aim to max
         self.fitness_parts = [0]*3   #leaf-fitness, hub-fitness
         self.net = net.copy()
-        assert(self.net != net)
+        #assert(self.net != net)
         self.id = id  #irrelv i think
 
     def copy(self):
         copy = Net(self.net, self.id)
         copy.fitness = self.fitness
         self.fitness_parts = [0]*3   #leaf-fitness, hub-fitness
-        assert (copy != self and copy.net != self.net)
+        #assert (copy != self and copy.net != self.net)
         #assert (copy.fitness_parts != self.fitness_parts)
         return copy
 

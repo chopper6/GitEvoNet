@@ -5,25 +5,13 @@ import util
 def initialize_configs (cl_arg, num_workers):
     
     configs                        = load_simulation_configs (cl_arg, 0)
-    
-    #M                              = load_network    (configs)
-    #configs['number_of_genes']     = len(M.nodes())
     configs['sampling_rounds']     = configs['sampling_rounds']
-        #ORIG: min (configs['sampling_rounds_max'], (len(M.nodes())+len(M.edges()))*configs['sampling_rounds'])
-            #now dynam adjusted to net size
     configs ['worker_load']        = int (math.ceil (float(configs['sampling_rounds']) / max(1, float(num_workers))))
     configs ['num_workers']        = num_workers
-      
-    #return M, configs
     return configs
-#--------------------------------------------------------------------------------------------------    
-def initialize_worker(cl_args):
-    #not used
-    configs = load_simulation_configs (cl_args[1], -1)
-    return configs
+
 #--------------------------------------------------------------------------------------------------
 def load_simulation_configs (param_file, rank):
-    #print("i'm loading configs as rank " + str(rank))
     parameters = (open(param_file,'r')).readlines()
     assert len(parameters)>0
     configs = {}
@@ -35,8 +23,6 @@ def load_simulation_configs (param_file, rank):
                     key   = param[0].strip().replace (' ', '_')
                     value = param[1].strip()
                     configs[key] = value
-    #print("in init.py num_workers = " + str(configs['number_of_workers']))
-    #assert os.path.isfile(configs['network_file']) # the only mandatory parameters 
     configs['biased']              = configs['biased'] == 'True'
     bORu = 'u'
     if configs['biased']:
@@ -49,16 +35,11 @@ def load_simulation_configs (param_file, rank):
     configs['KP_solver_name']      = configs['KP_solver_binary'].split('/')[-1].split('.')[0]
     configs['timestamp']           = time.strftime("%B-%d-%Y-h%Hm%Ms%S")
     configs['stamp']               = fitness_def + "_RAW_INSTANCES_p" +configs['pressure'] + "_t" + configs['tolerance'] + '_' + configs['version']+configs['advice_upon'][0]+bORu+'_'+ configs['KP_solver_name']+ '_' +configs['sampling_rounds']+'_'+ configs['BD_criteria']+'_'+configs['reduction_mode']+'_alpha'+configs['alpha']+'.'+configs['timestamp']
-
-    #configs['pressure']            = [float(p) for p in configs['pressure'].split(',') ]
-    #configs['tolerance']           = [float(t) for t in configs['tolerance'].split(',') ]
     configs['sampling_rounds_nX']  = configs['sampling_rounds']
     configs['sampling_rounds']     = int(''.join([d for d in configs['sampling_rounds'] if d.isdigit()]))
     configs['sampling_rounds_max'] = int (configs['sampling_rounds_max'])      
     configs ['output_directory'] += "/"
-
     configs['instance_file']    = (util.slash (configs['output_directory']) + "instances/" +configs['stamp'])
-    #print("\nIn lib/init(): instance_file: " + str(configs['instance_file']))
     configs['stats_dir']           = configs['output_directory']+"00_network_stats/" 
     configs['datapoints_dir']      = configs['output_directory']+"02_raw_instances_simulation/data_points/"
     configs['params_save_dir']     = configs['output_directory']+"02_raw_instances_simulation/parameters/"
@@ -67,26 +48,15 @@ def load_simulation_configs (param_file, rank):
     configs['DUMP_DIR']            = util.slash (configs['output_directory'])+"dump_raw_instances"
     configs['alpha']               = float(configs['alpha']) 
     #--------------------------------------------
-    index = 1
     ALL_PT_pairs = {}
 
-    #OVERRIDE: ONLY 1 PT PAIR ALLOWED!
-    '''
-    for p in sorted (configs['pressure']):
-        for t in sorted (configs['tolerance']):
-            ALL_PT_pairs[index] = (p,t)
-            index+=1
-
-    '''
-
-    ALL_PT_pairs[1] = (configs['pressure'],configs['tolerance'])
+    ALL_PT_pairs[1] = (configs['pressure'],configs['tolerance']) #TODO: check if obsolete, only 1 pair anyhow
 
     completed_pairs                = []
     if os.path.isdir (configs['datapoints_dir']):
         for r,ds,fs in os.walk(configs['datapoints_dir']):
             RAW_FILES       = [f for f in fs if 'RAW' in f]            
             for raw_file in RAW_FILES:
-                #file names must be as such: Vinayagam_RAW_INSTANCES_p020.0_t001.0_V3_MINKNAP_4X_BOTH_SCRAMBLE_June-13-2016-h09m15s55.csv
                 split = raw_file.split('_')
                 p     = float(''.join([d for d in split[-8] if d.isdigit() or d=='.']))
                 t     = float(''.join([d for d in split[-7] if d.isdigit() or d=='.']))
@@ -98,12 +68,10 @@ def load_simulation_configs (param_file, rank):
     #--------------------------------------------   
     if rank == 0: #only master should create dir, prevents workers from fighting over creating the same dir
         while not os.path.isdir (configs['output_directory']):
-            #print (configs['output_directory'])
             try:
                 os.makedirs (configs['output_directory']) # will raise an error if invalid path, which is good
             except:
                 time.sleep(5)
-                #print ("In load_simulation_configs(), rank=0, and Im still trying to create "+configs['output_directory']+" .. is this a correct path?")
                 continue
 
     return configs

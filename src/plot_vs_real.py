@@ -7,7 +7,6 @@ import matplotlib.ticker as ticker
 import matplotlib.font_manager as font_manager
 from matplotlib import rcParams
 import random as rd
-#from ticker import FuncFormatter
 
 def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
     input_files = open(real_net_file,'r').readlines()
@@ -78,22 +77,14 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
 
 
             sim_net = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
-            # print("Simulated Net: \tnodes " + str(len(M.nodes())) + "\tedges " + str(len(M.edges())))
-            sim_nodes = sim_net.nodes()
             real_net = custom_load(network_file.strip())
             real_alpha = .4
-            #real_net = nx.read_edgelist(network_file.strip(),create_using=nx.DiGraph())
-            #real_net = nx.read_gpickle(network_file)
-            real_nodes = real_net.nodes()
-
             #if (len(real_nodes) != len(sim_nodes)): print("WARNING: real net does not have same number of nodes as simulation.")
             #if (len(real_net.edges()) != len(sim_net.edges())): print("WARNING: real net does not have same number of edges as simulation.")
 
             real_degrees, real_in_degrees, real_out_degrees = list(real_net.degree().values()),  list(real_net.in_degree().values()), list(real_net.out_degree().values())
             sim_degrees, sim_in_degrees, sim_out_degrees = list(sim_net.degree().values()),  list(sim_net.in_degree().values()), list(sim_net.out_degree().values())
 
-
-            #for direction in ['both']:
             direction = 'both'
             H = []
 
@@ -160,29 +151,20 @@ def plot_pairs(real_net_file, real_net_name, sim_net_file, plot_title):
 
 
 def plot_em(real_net_file, sim_net_file, plot_title):
-    #update_rcParams()
-    # each line in 'input.txt' should be: [network name (spaces allowed) followed by /path/to/edge/file.txt/or/pickled/network.dump]
     input_files = open(real_net_file,'r').readlines()
 
     colors = ['#ADECD7', '#ADC0F3','#E4B2FB','#FBB2B2','#FFCC66','#C3F708']
-    # pick more colors from here: http://htmlcolorcodes.com/ , number of colos >= number of networks in input_files ]
     i = 0
     for  line in input_files:
         H = []
         sim_net = nx.read_edgelist(sim_net_file, nodetype=int, create_using=nx.DiGraph())
-        #print("Simulated Net: \tnodes " + str(len(M.nodes())) + "\tedges " + str(len(M.edges())))
         num_nodes = len(sim_net.nodes())
-
 
         # PLOT REAL NETS
         line         = line.strip()
         title        = line.split()[:-1][0]
         network_file = line.split()[-1]
 
-        # if networks are edge files, load them using load_network(), if they're pickled (faster) load them using nx's read_gpickle
-        #M = init.load_network ({'network_file':network_file.strip(), 'biased':False})
-        #M = nx.read_edgelist(network_file.strip(),nodetype=int,create_using=nx.DiGraph())
-        #nx.write_gpickle(M,'dumps/'+network_file.split('/')[-1].split('.')[0]+'.dump')
         M = nx.read_gpickle(network_file)
 
         repeats = 100
@@ -190,13 +172,7 @@ def plot_em(real_net_file, sim_net_file, plot_title):
         for j in range(repeats):
             sample_nodes = rd.sample(M.nodes(), num_nodes)
             ENR += len(M.edges(sample_nodes))/float(len(sample_nodes))
-            #if (j==0): print(title + " has ENR = " + str(len(M.edges())/float(len(M.nodes()))) + ".\n")
-            #with open (network_file,''
-            #print (network_file.split('/')[-1].strip()+"\tnodes "+str(len(M.nodes()))+"\tedges "+str(len(M.edges())))
-
             degrees = list(M.degree(sample_nodes).values())
-            in_degrees, out_degrees = list(M.in_degree(sample_nodes).values()), list(M.out_degree(sample_nodes).values())
-            #degrees = in_degrees + out_degrees
 
             #NP GET FREQS
             degs, freqs = np.unique(degrees, return_counts=True)
@@ -204,25 +180,20 @@ def plot_em(real_net_file, sim_net_file, plot_title):
             freqs = [(f/tot)*100 for f in freqs]
 
             plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, color = colors[i], alpha=0.25, markersize=8, marker='.', markeredgecolor='None', )
-            # you can also scatter the in/out degrees on the same plot
-            # plt.scatter( .... )
+            # can also plt.scatter( .... )
 
 
         #i think one patch per set of samples?
         patch =  mpatches.Patch(color=colors[i], label=title)
         ENR /= repeats
-        #print("Avg ENR " + str(title) + " = " + str(ENR) )
 
         H = H + [patch]
 
         #PLOT SIM NET
         degrees = list(sim_net.degree().values())
-        in_degrees, out_degrees = list(sim_net.in_degree().values()), list(sim_net.out_degree().values())
-        # degrees = in_degrees + out_degrees
         degs, freqs = np.unique(degrees, return_counts=True)
         tot = float(sum(freqs))
         freqs = [(f / tot) * 100 for f in freqs]
-
         plt.loglog(degs, freqs, basex=10, basey=10, linestyle='', linewidth=.5, color='#000000', alpha=1, markersize=10, marker='.', markeredgecolor='None')
 
         patch = mpatches.Patch(color='#000000', label="Simulation")
@@ -231,13 +202,6 @@ def plot_em(real_net_file, sim_net_file, plot_title):
 
         #FORMAT PLOT
         ax = plt.gca() # gca = get current axes instance
-
-        # if you are plotting a single network, you can add a text describing the fitness function used:
-        #ax.text(.5,.7,r'$f(N)=\prod\frac {b}{b+d}\times\sum_{j=1}^{n} etc$', horizontalalignment='center', transform=ax.transAxes, size=20)
-        # change (x,y)=(.5, .7) to position the text in a good location; the "f(N)=\sum \frac{}" is a mathematical expression using latex, see this:
-        # https://www.sharelatex.com/learn/Mathematical_expressions
-        # http://matplotlib.org/users/usetex.html
-
         #ax.set_xscale('log')
         #ax.set_yscale('log')
         ax.set_xlim([0.7,200])

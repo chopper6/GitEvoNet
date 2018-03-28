@@ -1,8 +1,7 @@
-import math, os, pickle, sys, time, shutil
+import math, os, pickle, time, shutil
 from random import SystemRandom as sysRand
-from time import sleep, process_time
+from time import sleep
 import networkx as nx
-import numpy as np
 import fitness, minion, output, plot_nets, plot_vs_real, net_generator, perturb, pressurize, draw_nets, mutate, util, plot_undir, init, probabilistic_entropy, bias
 
 
@@ -13,7 +12,7 @@ def evolve_master(configs):
     evolve_population(configs)
 
 
-def protocol_configs(protocol, configs):
+def protocol_configs(protocol, configs): #TODO: update these to useful protocols, will also fully sep Info and Kp projects
     output_dir = configs['output_directory']
 
     if (protocol == 'mLmH'):
@@ -64,37 +63,20 @@ def evolve_population(configs):
     max_gen = int(configs['max_generations'])
     debug = util.boool(configs['debug'])
     worker_pop_size_config = int(configs['num_worker_nets'])
-    worker_survive_fraction = float(configs['worker_percent_survive'])/100
     init_type = str(configs['initial_net_type'])
     start_size = int(configs['starting_size'])
     end_size = int(configs['ending_size'])
-    #instance_file = configs['instance_file']
-    num_grow = int(configs['num_grows'])
-    edge_node_ratio = float(configs['edge_to_node_ratio'])
     fitness_direction = str(configs['fitness_direction'])
     num_instance_output = int(configs['num_instance_output'])
     instance_file = configs['instance_file']
     biased = util.boool(configs['biased'])
-    bias_on = configs['bias_on']
     if (num_instance_output==0): instance_file = None
-
-    #NEW ocnfigs
-    stopping_condn = configs['stopping_condition'] #TODO: implement this
     num_sims = int(configs['num_sims'])
-
-
-    size, total_gens, itern, population, num_survive = None, None, None, None, None #just to avoid annoying warnings
 
     worker_pop_size, pop_size, num_survive, worker_gens = curr_gen_params(start_size, end_size, num_workers,survive_fraction, -1, worker_pop_size_config)
     util.cluster_print(output_dir,"Master init worker popn size: " + str(worker_pop_size) + ",\t num survive: " + str(num_survive) + " out of total popn of " + str(pop_size))
-
     prog_path = output_dir + "/progress.txt"
     cont=False
-
-    #TEMP
-    if not os.path.exists(output_dir + "/pickle_nets/"):
-        os.makedirs(output_dir + "/pickle_nets/")
-
 
     if (configs['edge_state'] == 'probabilistic' and (util.boool(configs['use_knapsack']) == False)): BD_table = probabilistic_entropy.build_BD_table(configs)
     else: BD_table = None
@@ -104,22 +86,20 @@ def evolve_population(configs):
             itern = file.readline()
 
         if (itern == 'Done'):
-            util.cluster_print(output_dir, "Run already finished, exiting...")
+            util.cluster_print(output_dir, "Run already finished, exiting...\n")
             return
 
         elif (itern and itern!=0 and itern!=1 and itern!=2): #IS CONTINUATION RUN
-            itern = int(itern)-2 #fall back one, latest may not have finished
+            itern = int(itern)-2 #latest may not have finished
             population = parse_worker_popn(num_workers, itern, output_dir, num_survive, fitness_direction)
             size = len(population[0].net.nodes())
             itern += 1
             total_gens = itern  # also temp, assumes worker gens = 1
 
-            #just need ADVICE from a worker dump
             a_worker_file = output_dir + "/to_workers/" + str(itern) + "/1"
             with open(a_worker_file, 'rb') as w_file:
                 a_worker_ID, a_seed, a_worker_gens, a_pop_size, a_num_return, a_randSeed, a_curr_gen, advice, BD_table, biases,  a_configs = pickle.load(w_file)
 
-            #util.cluster_print(output_dir,"\nmaster(): CONTINUE RUN with global gen = " + str(itern) + ", len advice = " + str(len(advice)) + "\n")
             cont = True
 
     if cont==False: #FRESH START
@@ -128,7 +108,6 @@ def evolve_population(configs):
         # draw_nets.init(output_dir)
 
         population = net_generator.init_population(init_type, start_size, pop_size, configs)
-        # init fitness, uses net0 since effectively a random choice (may disadv init, but saves lotto time)
         advice = init.build_advice(population[0].net, configs)
 
         #init fitness eval
@@ -139,8 +118,6 @@ def evolve_population(configs):
 
         total_gens, size, itern = 0, start_size, 0
 
-
-    estim_wait = None
     while (size < end_size and total_gens < max_gen):
         # size < end_size --> no more adaptation after growth
         t_start = time.time()
@@ -150,9 +127,6 @@ def evolve_population(configs):
         if (itern % int(max_gen / num_output) == 0):
             output.popn_data(population, output_dir, total_gens)
             util.cluster_print(output_dir,"Master at gen " + str(total_gens) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
-            worker_percent_survive = worker_pop_size #should match however workers handle %survive
-            util.cluster_print(output_dir,"Workers: over " + str(worker_gens) + " gens " + str(worker_percent_survive) + " nets survive out of " + str(worker_pop_size) + ".\n")
-
             nx.write_edgelist(population[0].net, output_dir+"/fittest_net.edgelist")
 
         if (num_instance_output != 0):
@@ -160,24 +134,13 @@ def evolve_population(configs):
                 # if first gen, have already pressurized w/net[0]
                 if (itern != 0): pressure_results = pressurize.pressurize(configs, population[0].net, instance_file + "Xitern" + str( itern) + ".csv", advice, BD_table)
 
-        if (itern % int(max_gen/num_net_output) ==0):
+        if (itern % int(max_gen/num_net_output) == 0): #TODO: merge this with above output, poss new save_net fn() in output.py
             nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(itern))
             pickle_file =  output_dir + "/pickle_nets/" + str(itern) + "_pickle"
             with open(pickle_file, 'wb') as file:
                 pickle.dump(population[0].net, file)
 
-        # minions now handle grow op
-        if (num_grow != 0): #WILL NOT WORK WELL WITH ISLAND ALGO, OR MULT WORKER GENS
-            #NO LONGER: ASSUMES GROWTH ONLY FOR 1st HALF
-            rate = int(max_gen/num_grow)
-            #if ((itern-start_size) % rate ==0 and itern < (max_gen - start_size*rate)):
-            #print("rate = " + str(rate) + ", itern % rate = " + str(itern%rate) + ", itern < " + str (max_gen-start_size*rate))
-            if (itern % rate == 0 and itern < (max_gen-start_size*rate)):
-                for p in range(len(population)):
-                    mutate.add_nodes(population[p].net, 1, configs)
-
         write_mpi_info(output_dir, itern)
-        #debug(population), outdated
 
         if biased: biases = bias.gen_biases(itern/max_gen, configs)
         else: biases = None
@@ -197,17 +160,12 @@ def evolve_population(configs):
         else:
             for w in range(1,num_workers+1):
                 dump_file =  output_dir + "/to_workers/" + str(itern) + "/" + str(w)
-                #util.cluster_print(output_dir,"master dumping to file: " + str(dump_file))
                 seed = population[w % num_survive].copy()
                 randSeeds = os.urandom(sysRand().randint(0,1000000))
                 assert(seed != population[w % num_survive])
                 worker_args = [w, seed, worker_gens, worker_pop_size, min(worker_pop_size,num_survive), randSeeds, total_gens, advice, BD_table, biases, configs]
                 with open(dump_file, 'wb') as file:
                     pickle.dump(worker_args, file)
-
-            #dump_file = output_dir + "/to_workers/" + str(itern) + "/0"
-            #return_file = output_dir + "/to_master/" + str(itern) + "/0"
-            #minion.evolve_minion(dump_file, itern, 0, return_file)
 
         del population
         if (debug == True):
@@ -218,11 +176,8 @@ def evolve_population(configs):
         t_end = time.time()
         t_elapsed = t_end-t_start
         if (itern % 100 == 0): util.cluster_print(output_dir,"Master finishing after " + str(t_elapsed) + " seconds.\n")
-        estim_wait, population = watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitness_direction)
-        #sorted_popn = fitness.eval_fitness(worker_popn, fitness_direction)
-        #population = sorted_popn[:num_survive]
-        #del sorted_popn, worker_popn
-        #population = parse_worker_popn(num_workers, itern, output_dir, num_survive, fitness_direction)
+        population = watch(configs, itern, num_workers, output_dir, num_survive, fitness_direction)
+
         size = len(population[0].net.nodes())
         itern += 1
         total_gens += worker_gens
@@ -233,12 +188,12 @@ def evolve_population(configs):
     #final outputs
     nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(itern))
     pickle_file = output_dir + "/pickle_nets/" + str(itern) + "_pickle"
-    with open(pickle_file, 'wb') as file:
-        pickle.dump(population[0].net, file)
-
+    with open(pickle_file, 'wb') as file: pickle.dump(population[0].net, file)
     output.popn_data(population, output_dir, total_gens)
-    output.deg_change_csv(population, output_dir)
     #draw_nets.basic(population, output_dir, total_gens, draw_layout)
+
+    shutil.rmtree(output_dir + "/to_master/")
+    shutil.rmtree(output_dir + "/to_workers/")
 
     util.cluster_print(output_dir,"Evolution finished, generating images.")
     if (num_sims == 1):
@@ -248,21 +203,18 @@ def evolve_population(configs):
     if util.boool(configs['biased']):
         util.cluster_print(output_dir,"Pickling biases.")
         bias.pickle_bias(population[0].net, output_dir+"/bias", configs['bias_on'])
-    #instances.analyze(output_dir)
-    #if (configs['use_knapsack'] == (False or 'False')): entropy_net_plots.plot_dir(output_dir, configs)
 
     util.cluster_print(output_dir,"Master finished config file.\n")
-
 
 
 def init_dirs(num_workers, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    dirs = ["/node_info/", "/instances/", "/nets/", "/bias/", "/pickle_nets/", "/to_workers/", "/to_master/"]
+
+    dirs = ["/instances/", "/nets/", "/bias/", "/pickle_nets/", "/to_workers/", "/to_master/", "/pickle_nets/"]
     for dirr in dirs:
         if not os.path.exists(output_dir + dirr):
             os.makedirs(output_dir+dirr)
-
 
 def parse_worker_popn (num_workers, itern, output_dir, num_survive, fitness_direction):
     popn = []
@@ -308,42 +260,11 @@ def curr_gen_params(size, end_size, num_workers, survive_fraction, prev_num_surv
     return worker_pop_size_config, pop_size, num_survive, worker_gens
 
 
-def debug(population):
-    '''
-    util.cluster_print(output_dir,"Master population fitness: ")
-    for p in range(len(population)):
-        util.cluster_print(output_dir,population[p].fitness)
-    '''
-    # check that population is unique
-    for p in range(len(population)):
-        for q in range(0, p):
-            if (p != q): assert (population[p] != population[q])
-
-
-
-def watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitness_direction):
+def watch(configs, itern, num_workers, output_dir, num_survive, fitness_direction):
 
     dump_dir = output_dir + "/to_master/" + str(itern)
-
-    #done, i = False, 1
-
     t_start = time.time()
-    estim_used = False
-    '''
-    while not done:
-        if (estim_wait != None and estim_used == False): 
-            time.sleep(estim_wait + .1)
-            estim_used = True
-        elif(estim_wait != None): 
-            time.sleep(.1)
-            estim_wait += .1
-        else: time.sleep(.1)  #freq checks for accurate estim_wait
-        i += 1
-        #util.cluster_print(output_dir,dump_dir)
-        '''
-
-    popn = []
-    num_finished, dir_checks = 0,0
+    popn, num_finished, dir_checks = [], 0,0
 
     ids = [str(i) for i in range(1, num_workers + 1)]
     while (num_finished < num_workers):
@@ -370,23 +291,11 @@ def watch(configs, itern, num_workers, output_dir, estim_wait, num_survive, fitn
 
     t_end = time.time()
     time_elapsed = t_end - t_start
-    '''
-    if (estim_wait == None):
-        estim_wait = time_elapsed
-        print("master using estim_wait = " + str(estim_wait))
-    if (estim_used == True): util.cluster_print(output_dir,"master updated estim_wait to " + str(estim_wait))
-    '''
     if (itern % 100 == 0): util.cluster_print(output_dir,"master finished extracting workers after " + str(time_elapsed) + " seconds, and making " + str(dir_checks) + " dir checks.")
 
-    return estim_wait, popn
+    return popn
 
 def write_mpi_info(output_dir, itern):
-
-    #os.rename(output_dir + "/progress*.txt", output_dir + "/progress_" + str(itern) + ":w.txt")
-
-    #if (itern ==0):
-    #    with open(output_dir + "/progress.txt", 'w') as out:
-    #        out.write(output_dir + "\n")
 
     with open(output_dir + "/progress.txt", 'w') as out:
         out.write(str(itern))
@@ -396,13 +305,9 @@ def write_mpi_info(output_dir, itern):
     if not os.path.exists(output_dir + "/to_master/" + str(itern)):
         os.makedirs(output_dir + "/to_master/" + str(itern))
 
-
     #del old gen dirs
     prev_itern = itern - 3 #safe since cont starts at itern - 2
     if os.path.exists(output_dir + "/to_master/" + str(prev_itern)):
         shutil.rmtree(output_dir + "/to_master/" + str(prev_itern))
     if os.path.exists(output_dir + "/to_workers/" + str(prev_itern)):
         shutil.rmtree(output_dir + "/to_workers/" + str(prev_itern))
-
-    #else: util.cluster_print(output_dir,"WARNING in master.write_mpi_info(): dir /to_master/" + str(itern) + " already exists...sensible if a continuation run.")
-

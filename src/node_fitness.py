@@ -2,7 +2,7 @@ import os, csv, math
 import numpy as np
 import leaf_fitness, hub_fitness, fitness
 
-
+assert(False)
 
 #OLD CRAP
 def calc(node_info, leaf_metric, hub_metric, fitness_operator, soln_bens, num_genes):

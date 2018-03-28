@@ -1,15 +1,11 @@
 #!/usr/local/bin/python3
-import os, csv, math
-#from scipy.stats import itemfreq
+import csv
 import numpy as np
 np.set_printoptions(formatter={'int_kind': lambda x:' {0:d}'.format(x)})
-import networkx as nx
-
 
 def init_csv(out_dir, configs):
  
-    csv_title = "Generation, Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Mean Fitness, Variance in Fitness, Fitness_Div_#Edges, Fitness_Div_#Nodes\n"
-    #csv_title = "Net Size, Fitness, Leaf Measure,  Hub Measure, Solo Measure, Average Degree, Edge:Node Ratio, Clustering Coefficient, # Triangle Communities\n"
+    csv_title = "Generation, Net Size, Fitness, Fitness, Leaf Measure,  Hub Measure, Average Degree, Edge:Node Ratio, Mean Fitness, Variance in Fitness, Fitness_Div_#Edges, Fitness_Div_#Nodes\n"
     deg_distrib_title = "Generation, Net Size, In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies, Degs, Deg Freqs\n"
 
     deg_summary_title = "In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
@@ -22,8 +18,6 @@ def init_csv(out_dir, configs):
     out_configs = out_dir + "/configs_used.csv"
 
     with open(out_configs, 'w') as outConfigs:
-        #keys = configs.keys()
-        #keys.sort()
         for config in configs:
             outConfigs.write(config + "," + str(configs[config]) + "\n")
 
@@ -35,25 +29,6 @@ def init_csv(out_dir, configs):
     out_deg_summary = out_dir + "/degree_change.csv"
     with open(out_deg_summary, 'w') as out_summary:
         out_summary.write(deg_summary_title)
-
-
-def deg_change_csv(population, output_dir):
-    with open(output_dir + "/degree_change.csv", 'a') as deg_file:
-        # only distribution of most fit net
-        output = csv.writer(deg_file)
-        distrib_info = []
-
-        degrees = list(population[0].net.degree().values())
-
-        #is actually all degs not just in
-        indegs, indegs_freqs = np.unique(degrees, return_counts=True)
-        indegs = np.array2string(indegs).replace('\n', '')
-        indegs_freqs = np.array2string(indegs_freqs).replace('\n', '')
-        distrib_info.append(indegs)
-        distrib_info.append(indegs_freqs)
-
-        output.writerow(distrib_info)
-
 
 def popn_data(population, output_dir, gen):
 
@@ -86,16 +61,12 @@ def popn_data(population, output_dir, gen):
             indegs, indegs_freqs = np.unique(in_degrees, return_counts=True)
             indegs = np.array2string(indegs).replace('\n', '')
             indegs_freqs = np.array2string(indegs_freqs).replace('\n', '')
-            #tmp = itemfreq(in_degrees)
-            #indegs, indegs_freqs = tmp[:, 0], tmp[:, 1]  # 0 = unique values in data, 1 = frequencies
             distrib_info.append(indegs)
             distrib_info.append(indegs_freqs)
 
             outdegs, outdegs_freqs = np.unique(out_degrees, return_counts=True)
             outdegs = np.array2string(outdegs).replace('\n', '')
             outdegs_freqs = np.array2string(outdegs_freqs).replace('\n', '')
-            #tmp = itemfreq(out_degrees)
-            #outdegs, outdegs_freqs = tmp[:, 0], tmp[:, 1]
             distrib_info.append(outdegs)
             distrib_info.append(outdegs_freqs)
 
@@ -110,6 +81,8 @@ def popn_data(population, output_dir, gen):
 
 
 def minion_csv(output_dir, pressurize_time, num_growth, end_size):
+    #poss obsolete
+
     if (num_growth == 0): num_growth = 1
     with open(output_dir + "/timing.csv", 'a') as time_file:
         output=csv.writer(time_file)

@@ -1,14 +1,16 @@
 #!/usr/bin/python3
 import os,sys,csv,shutil
 from mpi4py import MPI
-os.environ['lib'] = '/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib'
-sys.path.insert(0, os.getenv('lib'))
+#os.environ['lib'] = '/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib'
+sys.path.insert(0, os.getenv('lib')) #for some reason this wasn't working alone before...
 import init, util, plot_nets
 import numpy as np
 from time import sleep
 
 def extract_and_combine(output_dir, num_sims):
     # takes info.csv from mult runs and combines into one info.csv in main dir
+
+    assert (False) #TODO: rm this fn() if not triggered
 
     all_data, titles = None, None #just for warnings
 

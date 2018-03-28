@@ -2,8 +2,6 @@ import math
 import random as rd
 import networkx as nx
 import bias, util
-import numpy as np
-# from random import SystemRandom as rd
 
 def mutate(configs, net, gen_percent, biases = None):
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
@@ -21,7 +19,7 @@ def mutate(configs, net, gen_percent, biases = None):
     if (num_grow > 0): add_nodes(net, num_grow, configs, biases=biases)
 
     # SHRINK (REMOVE NODE)
-    # poss outdated
+    # WARNING: poss outdated
     num_shrink = num_mutations(shrink_freq, mutn_type, gen_percent)
     if (num_shrink > 0): shrink(net, num_shrink, configs)
 
@@ -31,7 +29,7 @@ def mutate(configs, net, gen_percent, biases = None):
     rewire(net, num_rewire, configs['biased'], configs['bias_on'], configs['output_directory'], configs)
 
     # CHANGE EDGE SIGN
-    # poss outdated
+    # WARNING: poss outdated
     num_sign = num_mutations(sign_freq, mutn_type, gen_percent)
     if (num_sign > 0): change_edge_sign(net, num_sign)
 
@@ -40,7 +38,6 @@ def mutate(configs, net, gen_percent, biases = None):
 
 
 def num_mutations(base_mutn_freq, mutn_type, gen_percent):
-    # note: mutation should be < 1 OR, if > 1, an INT
     mutn_freq=0
 
     if (mutn_type == 'static' or base_mutn_freq == 0):
@@ -54,14 +51,11 @@ def num_mutations(base_mutn_freq, mutn_type, gen_percent):
     if (mutn_freq == 0): return 0
     elif (mutn_freq >= 1): return int(mutn_freq)
     elif (mutn_freq < 1):
-        if (rd.random() < mutn_freq):
-            return 1
-        else:
-            return 0
-    else: assert(False)
-    #else:
-    #    return rd.randint(0, mutn_freq)
-
+        if (rd.random() < mutn_freq): return 1
+        else: return 0
+    else:
+        print("ERROR in mutate.num_mutations(): mutation should be < 1 OR, if > 1, an INT")
+        assert(False)
 
 def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direction=False, bias_given=None):
 
@@ -249,34 +243,12 @@ def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
 
 
 def rewire(net, num_rewire, bias, bias_on, dirr, configs):
-    # constraints: no 0 deg nodes, 1 connected component
-    # avoid: re-adding a node/edge that already exists
-    bias = util.boool(bias)
-    single_cc = util.boool(configs['single_cc'])
-
-    '''
-    if single_cc:
-        net_undir = net.to_undirected()
-        num_cc = nx.number_connected_components(net_undir)
-        assert (num_cc == 1)
-
-        degrees = list(net.degree().values())
-        degs, freqs = np.unique(degrees, return_counts=True)
-        if degs[0] == 0:
-            assert(freqs[0]==0)
-    '''
 
     for i in range(num_rewire):
 
         add_this_edge(net, configs)
         rm_edges(net,1,configs)
 
-    '''
-    if single_cc:
-        net_undir = net.to_undirected()
-        num_cc = nx.number_connected_components(net_undir)
-        assert (num_cc == 1)
-    '''
 
 def shrink(net, num_shrink, configs):
     pre_size = len(net.nodes())

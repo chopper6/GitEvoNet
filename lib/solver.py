@@ -33,8 +33,6 @@ def solve_knapsack (kp_instance, knapsack_solver):
         #---------------------------------------------------------------------    
         knapsack_solver.solve (B, D, T_edges, N, F, solver_returns)   # WARNING: minknap.so does not return the correct knapsack weight (solver_returns[1])                          
         #---------------------------------------------------------------------
-        #old: TOTAL_Bin, TOTAL_Din, TOTAL_Bout, TOTAL_Dout, GENES_in, GENES_out = 0, 0, 0, 0, [], []
-        
         for g in range (0, N):
             if F[g] == 1:
                 GENES_in.append ((G[g], B[g], D[g], F[g]))

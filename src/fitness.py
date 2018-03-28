@@ -1,12 +1,11 @@
-import math, random
+import math
 from operator import attrgetter
-import networkx as nx
 import hub_fitness, leaf_fitness
 
 def eval_fitness(population, fitness_direction):
     #determines fitness of each individual and orders the population by fitness
     for p in range(len(population)):
-        population[p].fitness = population[p].fitness_parts[2]
+        population[p].fitness = population[p].fitness_parts[0]
 
     if (fitness_direction == 'max'): population = sorted(population,key=attrgetter('fitness'), reverse=True)
     elif (fitness_direction == 'min'):  population = sorted(population,key=attrgetter('fitness'))
@@ -18,12 +17,10 @@ def eval_fitness(population, fitness_direction):
 def node_fitness(net, leaf_metric):
     for n in net.nodes():
         B,D = net.node[n]['benefits'], net.node[n]['damages']
-        num_edges = len(net.in_edges(n) + net.out_edges(n))
-        #if (B+D == 0): print ("WARNING fitness.node_fitness(): B+D == 0")
         net.node[n]['fitness'] += leaf_fitness.node_score(leaf_metric, B,D)
 
 
-def node_scale(net):
+def node_scale(net): #TODO: cut i think
     for n in net.nodes():
         info = net.node[n]['fitness']
         num_edges = len(net.in_edges(n) + net.out_edges(n))
@@ -31,35 +28,28 @@ def node_scale(net):
 
 
 
-def node_product(net, scale_node_fitness):
-    #now uses log-likelihood estimation: product --> sum log
-    #decimal.getcontext().prec = 40
-    #fitness_score = 1
+def node_product(net, scale_node_fitness): #for info version
     fitness_score = 0
     num_0 = 0
-    num_n = len(net.nodes())
     num_under, num_over = 0,0
     for n in net.nodes():
-        if net.node[n]['fitness'] == 0: 
-            #print("\nWARNING: in fitness.node_product(), node fitness = 0, discounted.\n\n")
+        if net.node[n]['fitness'] == 0:
             num_0 += 1
         else:
-            if scale_node_fitness:
+            if scale_node_fitness: #hasn't really worked so far
                 e2n = len(net.edges(n))
                 Inode = net.node[n]['fitness']
                 fitness_score += -1*math.log(net.node[n]['fitness'])
             else:
                 fitness_score += math.log(net.node[n]['fitness'],2)
-            #fitness_score = decimal.Decimal(str(fitness_score)) * decimal.Decimal(str(net.node[n]['fitness']))
 
     if (num_over != 0 or num_under != 0):
         print("# I < 0 = " + str(num_under) + "\t # I > 1 = " + str(num_over) + "\n")
 
-    #fitness_score = math.pow(fitness_score , 1/float(len(net.nodes())))#further normalization
     if (num_0 > len(net.nodes())/100 and num_0 > 10): print("WARNING: fitness.node_product(): " + str(num_0) + " nodes had 0 fitness out of " + str(len(net.nodes())))
     return fitness_score
 
-#curr blocked in pressurize
+#curr blocked in pressurize, TODO: cut it?
 def node_entropy(net):
     fitness_score = 0
     for n in net.nodes():
@@ -74,17 +64,11 @@ def node_normz(net, denom):
         for n in net.nodes():
             net.node[n]['fitness'] /= float(denom)
 
+
 #use_kp only
-def kp_instance_properties(a_result, leaf_metric, leaf_operator, leaf_pow, hub_metric, hub_operator, fitness_operator, net, instance_file_name):
+def kp_instance_properties(a_result, leaf_metric, leaf_pow, hub_metric, hub_operator, fitness_operator, net, instance_file_name):
 
-    #LEAF MEASURES
-    RGAR, leaf_control = 0,0
-    if (leaf_operator == 'average' or leaf_operator == 'sum' or leaf_operator == 'inv sum'): leaf_score = 0
-    elif (leaf_operator == 'product'): leaf_score = 1
-    else: print ("ERROR in fitness(): unknown leaf_operator: " + str(leaf_operator))
-
-    #HUB MEASURES
-    ETB, effic, effic2 = 0,0,0
+    leaf_score = 0
     if (instance_file_name != None): lines = ['' for i in range(5)]
 
     if len(a_result) > 0:
@@ -94,34 +78,21 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, leaf_pow, hub_m
 
         if (instance_file_name != None): lines[4] += str(solver_time) + ' '
         # -------------------------------------------------------------------------------------------------
+
         # FITNESS BASED ON KP SOLUTION
         soln_bens = []
-        soln_bens_sq = []
         soln_dmgs = []
-
         for g in GENES_in:
             # g[0] gene name, g[1] benefits, g[2] damages, g[3] if in knapsack (binary)
             B,D=g[1],g[2]
             soln_bens.append(B)
-            soln_bens_sq.append(math.pow(B,2))
             soln_dmgs.append(D)
 
         # -------------------------------------------------------------------------------------------------
-
-        # -------------------------------------------------------------------------------------------------
-        # FITNESS BASED ON ALL GENES
-        all_ben = []
-        all_dmg = []
         for g in ALL_GENES:
             # g[0] gene name, g[1] benefits, g[2] damages, g[3] if in knapsack (binary)
             B,D=g[1],g[2]
-            if (leaf_operator == 'average' or leaf_operator == 'sum' or leaf_operator == 'inv sum'): leaf_score += leaf_fitness.node_score(leaf_metric, B, D)
-            elif (leaf_operator == 'product'): leaf_score *= leaf_fitness.node_score(leaf_metric, B, D)
-            else: print("ERROR in fitness(): unknown leaf_operator: " + str(leaf_operator))
-            RGAR += leaf_fitness.node_score("RGAR", B, D)
-
-            all_ben.append(B)
-            all_dmg.append(D)
+            leaf_score += leaf_fitness.node_score(leaf_metric, B, D)
 
             if (instance_file_name != None):
                 indeg = net.in_degree(g[0])
@@ -130,30 +101,14 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, leaf_pow, hub_m
                 lines[1] += str(B) + ' '
                 lines[2] += str(D) + ' '
                 lines[3] += str(g[3]) + ' '
+        # -------------------------------------------------------------------------------------------------
 
         num_genes = len(ALL_GENES)
+        leaf_score = math.pow(leaf_score/num_genes,leaf_pow)
 
-        # -------------------------------------------------------------------------------------------------
-        leaf_denom = leaf_fitness.assign_denom (leaf_metric, num_genes)
-        if (leaf_operator == 'average'):
-            leaf_score /= leaf_denom #ASSUMES ALL LEAF METRICS ARE CALC'D PER EACH NODE
-            leaf_score = math.pow(leaf_score,leaf_pow)
-
-        elif (leaf_operator == 'sum'): leaf_score = math.pow(leaf_score/leaf_denom,leaf_pow)
-        elif (leaf_operator == 'inv sum'): leaf_score = 1/leaf_score
-        elif (leaf_operator == 'product'): leaf_score = math.pow(leaf_score, leaf_pow/leaf_denom)
-        RGAR /= leaf_fitness.assign_denom ("RGAR", num_genes)
-
-        hub_score = hub_fitness.assign_numer (hub_metric, soln_bens, soln_dmgs, soln_bens_sq)
+        hub_numer = hub_fitness.assign_numer (hub_metric, soln_bens, soln_dmgs)
         hub_denom = hub_fitness.assign_denom (hub_metric, soln_bens)
-        hub_score /= float(hub_denom)
-        if (hub_operator == 'pow'): hub_score = math.pow(hub_score, 1/len(GENES_in))
-        elif (hub_operator == 'mult'): hub_score /= len(GENES_in)
-        elif (hub_operator == 'Btot'):
-            if (sum(all_ben)>0): hub_score /= float(sum(all_ben))
-        elif (hub_operator == 'inv sum'): hub_score = 1/hub_score
-        elif (hub_operator == 'inv leaf'): hub_score = leaf_score/hub_score
-        elif (hub_operator == 'leaf'): hub_score /= leaf_score
+        hub_score = hub_numer/float(hub_denom)
 
         fitness_score = operate_on_features (leaf_score, hub_score, fitness_operator)
 
@@ -169,7 +124,7 @@ def kp_instance_properties(a_result, leaf_metric, leaf_operator, leaf_pow, hub_m
             for line in lines:
                 file_out.write(line + "\n")
 
-    return [leaf_score, hub_score, fitness_score]
+    return [fitness_score, leaf_score, hub_score]
 
 
 
