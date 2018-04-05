@@ -1,17 +1,17 @@
 #!/usr/bin/python3
 import os,sys,csv,shutil
 from mpi4py import MPI
-#os.environ['lib'] = '/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib'
-sys.path.insert(0, os.getenv('lib')) #for some reason this wasn't working alone before...poss problem on yamaska/rupert, but not clusters
+os.environ['lib'] = '/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib' #NOTE: needed only for yamaska/rupert
+sys.path.insert(0, os.getenv('lib'))
 import init, util, plot_nets
 import numpy as np
 from time import sleep
 
 # WARNING: MULTIPLE SIMULATIONS MAY BE OUTDATED
 
-def evolve(rank, config_file):
+def evolve(rank, num_workers, config_file):
 
-    configs = init.load_sim_configs(config_file, rank)
+    configs = init.load_sim_configs(config_file, rank, num_workers)
     orig_output_dir = configs['output_directory']
     num_sims = int(configs['num_sims'])
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     num_workers = comm.Get_size()-1  # master not incld
     config_file = sys.argv[1]
 
-    evolve(rank, config_file)
+    evolve(rank, num_workers, config_file)
 
     print("\nFinished Evolution.\n")
     if (rank==0): comm.Abort()
