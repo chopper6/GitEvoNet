@@ -9,24 +9,22 @@ def mutate(configs, net, gen_percent, biases = None):
     grow_freq = float(configs['grow_mutation_frequency'])
     shrink_freq = float(configs['shrink_mutation_frequency'])
 
-    mutn_type = str(configs['mutation_type'])
-
     # GROW (ADD NODE)
-    num_grow = num_mutations(grow_freq, mutn_type)
+    num_grow = num_mutations(grow_freq)
     if (num_grow > 0): add_nodes(net, num_grow, configs, biases=biases)
 
     # SHRINK (REMOVE NODE)
     # WARNING: poss outdated
-    num_shrink = num_mutations(shrink_freq, mutn_type)
+    num_shrink = num_mutations(shrink_freq)
     if (num_shrink > 0): shrink(net, num_shrink, configs)
 
     # REWIRE EDGE
-    num_rewire = num_mutations(rewire_freq, mutn_type)
+    num_rewire = num_mutations(rewire_freq)
     rewire(net, num_rewire, configs['biased'], configs['bias_on'], configs['output_directory'], configs)
 
     # CHANGE EDGE SIGN
     # WARNING: poss outdated
-    num_sign = num_mutations(sign_freq, mutn_type)
+    num_sign = num_mutations(sign_freq)
     if (num_sign > 0): change_edge_sign(net, num_sign)
 
     ensure_single_cc(net, configs)
@@ -214,7 +212,7 @@ def rm_edges(net, num_rm, configs):
 
 
 ################################ MISC HELPER FUNCTIONS ################################
-def num_mutations(base_mutn_freq, mutn_type):
+def num_mutations(base_mutn_freq):
 
     if base_mutn_freq >= 1: mutn_freq = int(base_mutn_freq)
     else: mutn_freq = base_mutn_freq
