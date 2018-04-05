@@ -21,6 +21,10 @@ def load_sim_configs (param_file, rank, num_workers):
     configs ['output_directory'] += "/"
     configs['num_workers'] = num_workers
 
+    #kp_only, stamp may need work
+    configs['datapoints_dir'] = configs['output_directory'] + "02_raw_instances_simulation/data_points/"
+    configs['instance_file'] = (util.slash(configs['output_directory'])) + "instances/" # + configs['stamp']) #TODO: 'stamp' needs to be redone is wanted
+
     #--------------------------------------------
     #PT pairs aren't generally used for this version, but could be useful
     ALL_PT_pairs = {}
@@ -39,7 +43,8 @@ def load_sim_configs (param_file, rank, num_workers):
     for index in sorted(ALL_PT_pairs.keys()):
         if not ALL_PT_pairs[index] in completed_pairs:
             configs['PT_pairs_dict'][index] = ALL_PT_pairs[index]        
-    #--------------------------------------------   
+    #--------------------------------------------
+
     if rank == 0: #only master should create dir, prevents workers from fighting over creating the same dir
         while not os.path.isdir (configs['output_directory']):
             try:

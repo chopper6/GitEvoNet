@@ -7,8 +7,7 @@ def getCommandLineArgs():
         sys.exit()
     return str(sys.argv[1])
 #----------------------------------------------------------------------------  
-def slash(path):
-    assert(False)
+def slash(path): #likely kp only
     return path+(path[-1] != '/')*'/'
 #--------------------------------------------------------------------------------------------------
 def flip():
@@ -59,16 +58,14 @@ def advice (M, samples, biased, advice_upon, bias_on):
 def single_advice(M, element, configs):
     #TODO: add global bias
 
-    advice_upon = configs['advice_upon']
-    bias_on = configs['bias_on']
-    biased = configs['biased']
+    biased = boool(configs['biased'])
 
     if not biased:
         advice = flip()
 
     else:
 
-        biased_center = indiv_conserv_score(element, M, advice_upon, biased, bias_on)
+        biased_center = indiv_conserv_score(element, M, configs)
 
         rand = random.uniform(0, 1)
         # rand                = random.SystemRandom().uniform(0,1)
@@ -81,8 +78,11 @@ def single_advice(M, element, configs):
     return advice
 #--------------------------------------------------------------------------------------------------
 
-def indiv_conserv_score(element, M, advice_upon, biased, bias_on):
+def indiv_conserv_score(element, M, configs):
 
+    advice_upon = configs['advice_upon']
+    bias_on = configs['bias_on']
+    biased = boool(configs['biased'])
 
     if (biased == True):
         biased_center=None

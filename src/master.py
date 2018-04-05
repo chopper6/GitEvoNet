@@ -1,7 +1,7 @@
 import os, pickle, time, shutil
 from random import SystemRandom as sysRand
 from time import sleep
-import fitness, minion, output, plot_nets, net_generator, pressurize, draw_nets, util, init, probabilistic_entropy, bias
+import fitness, minion, output, plot_nets, net_generator, pressurize, util, init, probabilistic_entropy, bias
 
 
 #MASTER EVOLUTION

@@ -1,6 +1,6 @@
 import networkx as nx
 from random import SystemRandom as sysRand
-import perturb, init, mutate, bias, util
+import init, mutate, bias, util
 import pickle
 
 # maybe rename to reduce confusion
