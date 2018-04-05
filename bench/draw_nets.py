@@ -6,8 +6,7 @@ import os
 # THIS IS MORE OF A CURIOSITY AND NOT SO USEFUL FOR ANYTHING BUT VERY SMALL NETS
 # MAY REQUIRE SOME DEBUGGING
 
-def basic(population, dirr, iter, layout):
-    #draws basic graph of most fit net
+def basic(population, dirr, iter, layout = "spring"):
     #assumes already sorted by fitness
     plt.figure(figsize= (16,16))
     net = population[0].net

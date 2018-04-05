@@ -1,6 +1,4 @@
-
-import networkx as nx
-
+#essentially a helper to pressurize and fitness modules
 
 def reset_fitness(net):
     for n in net.nodes():

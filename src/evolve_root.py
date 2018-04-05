@@ -2,16 +2,77 @@
 import os,sys,csv,shutil
 from mpi4py import MPI
 #os.environ['lib'] = '/home/2014/choppe1/Documents/EvoNet/virt_workspace/lib'
-sys.path.insert(0, os.getenv('lib')) #for some reason this wasn't working alone before...
+sys.path.insert(0, os.getenv('lib')) #for some reason this wasn't working alone before...poss problem on yamaska/rupert, but not clusters
 import init, util, plot_nets
 import numpy as np
 from time import sleep
 
+# WARNING: MULTIPLE SIMULATIONS MAY BE OUTDATED
+
+def evolve(rank, config_file):
+
+    configs = init.load_sim_configs(config_file, rank)
+    orig_output_dir = configs['output_directory']
+    num_sims = int(configs['num_sims'])
+
+    for i in range(num_sims):
+
+        init_sim(configs, num_sims, i, orig_output_dir)
+
+        if rank == 0:  # MASTER
+            log_text = 'Evolve_root(): in dir ' + str(os.getcwd()) + ', config file = ' + str(config_file) + ', num_workers = ' + str(num_workers)
+
+            import master
+            if (configs['number_of_workers'] != num_workers): util.cluster_print(configs['output_directory'], "\nWARNING in evolve_root(): mpi #workers != config #workers! " + str(configs['num_workers']) + " vs " + str(num_workers) + "\n") #not sure why this doesn't correctly get # config workers...
+            util.cluster_print(configs['output_directory'], log_text)
+            master.evolve_master(configs)
+
+        else: # WORKERS
+            import minion
+            minion.work(configs, rank)
+
+    if (num_sims > 1 and rank==0): close_out_mult_sims(num_sims, orig_output_dir)
+
+
+def init_sim(configs, num_sims, sim_num, orig_output_dir):
+    if (num_sims > 1 and sim_num == 0):  # check where to pick up the run
+        this_dir = False
+        while (not this_dir):
+
+            if (sim_num >= num_sims):
+                util.cluster_print(orig_output_dir, "All simulations already finished, exiting...\n")
+                return
+
+            configs['output_directory'] = orig_output_dir + "_" + str(i)
+            this_dir = True  # remains true if any of the following fail
+
+            if os.path.exists(configs['output_directory'] + "/progress.txt"):
+                with open(configs['output_directory'] + "/progress.txt") as progress:
+                    line = progress.readline()
+                    if (line.strip() == 'Done' or line.strip() == 'done'):
+                        this_dir = False
+                        sim_num += 1
+
+    if (num_sims > 1):
+        configs['output_directory'] = orig_output_dir + "sim_" + str(sim_num) + "/"
+        configs['instance_file'] = (util.slash(configs['output_directory']) + "/instances/" + configs['stamp'])
+        if (rank == 0):
+            if not os.path.exists(configs['output_directory']): os.makedirs(configs['output_directory'])
+        else:
+            while (not os.path.exists(configs['output_directory'])):
+                sleep(1)
+
+
+def close_out_mult_sims(num_sims, orig_output_dir):
+    extract_and_combine(orig_output_dir, num_sims)
+    plot_nets.feature_plots_only(orig_output_dir)
+    for i in range(num_sims-1):
+        if (os.path.exists(orig_output_dir + "sim_" + str(i))):
+            shutil.rmtree(orig_output_dir + "sim_" + str(i)) #clean up, leave last run as sample
+
+
 def extract_and_combine(output_dir, num_sims):
     # takes info.csv from mult runs and combines into one info.csv in main dir
-
-    assert (False) #TODO: rm this fn() if not triggered
-
     all_data, titles = None, None #just for warnings
 
     for i in range(num_sims):
@@ -45,63 +106,6 @@ def extract_and_combine(output_dir, num_sims):
         file.writerow(titles)
         for row in mean_data:
             file.writerow(row)
-
-
-def evolve(rank, config_file):
-
-    configs = init.initialize_configs(config_file, rank)
-    orig_output_dir = configs['output_directory']
-    num_sims = int(configs['num_sims'])
-
-    for i in range(num_sims):
-
-        if (num_sims > 1 and i==0):  #check where to pick up the run
-            this_dir = False
-            while(not this_dir):
-
-                if (i >= num_sims):
-                    util.cluster_print(orig_output_dir, "All simulations already finished, exiting...\n")
-                    return
-
-                configs['output_directory'] = orig_output_dir + "_" + str(i)
-                this_dir = True #remains true if any of the following fail
-
-                if os.path.exists(configs['output_directory'] + "/progress.txt"):
-                    with open(configs['output_directory'] + "/progress.txt") as progress:
-                        line = progress.readline()
-                        if (line.strip() == 'Done' or line.strip() == 'done'):
-                            this_dir = False
-                            i += 1
-
-        if (num_sims > 1):
-            configs['output_directory'] = orig_output_dir + "sim_" + str(i) + "/"
-            configs['instance_file'] = (util.slash(configs['output_directory']) + "/instances/" + configs['stamp'])
-            if (rank==0):
-                if not os.path.exists(configs['output_directory']): os.makedirs(configs['output_directory'])
-            else:
-                while(not os.path.exists(configs['output_directory'])):
-                    sleep(1)
-
-        if rank == 0:  # ie is master
-            log_text = 'Evolve_root(): in dir ' + str(os.getcwd()) + ', config file = ' + str(config_file) + ', num_workers = ' + str(num_workers)
-
-            import master
-            if (configs['number_of_workers'] != num_workers): util.cluster_print(configs['output_directory'], "\nWARNING in evolve_root(): mpi #workers != config #workers! " + str(configs['num_workers']) + " vs " + str(num_workers) + "\n") #not sure why this doesn't correctly get # config workers...
-            util.cluster_print(configs['output_directory'], log_text)
-            master.evolve_master(configs)
-
-        else:
-            import minion
-            minion.work(configs, rank)
-
-
-    if (num_sims > 1 and rank==0):
-        extract_and_combine(orig_output_dir, num_sims)
-        plot_nets.feature_plots_only(orig_output_dir)
-        for i in range(num_sims-1):
-            if (os.path.exists(orig_output_dir + "sim_" + str(i))):
-                shutil.rmtree(orig_output_dir + "sim_" + str(i)) #clean up, leave last run as sample
-
 
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD

@@ -1,17 +1,9 @@
-import sys, os, csv, time, math, networkx as nx, shutil
+import sys, os, time, math, networkx as nx
 sys.path.insert(0, os.getenv('lib'))
 import util
-#--------------------------------------------------------------------------------------------------
-def initialize_configs (cl_arg, num_workers):
-    
-    configs                        = load_simulation_configs (cl_arg, 0)
-    configs['sampling_rounds']     = configs['sampling_rounds']
-    configs ['worker_load']        = int (math.ceil (float(configs['sampling_rounds']) / max(1, float(num_workers))))
-    configs ['num_workers']        = num_workers
-    return configs
 
 #--------------------------------------------------------------------------------------------------
-def load_simulation_configs (param_file, rank):
+def load_sim_configs (param_file, rank, num_workers):
     parameters = (open(param_file,'r')).readlines()
     assert len(parameters)>0
     configs = {}
@@ -23,34 +15,16 @@ def load_simulation_configs (param_file, rank):
                     key   = param[0].strip().replace (' ', '_')
                     value = param[1].strip()
                     configs[key] = value
-    configs['biased']              = configs['biased'] == 'True'
-    bORu = 'u'
-    if configs['biased']:
-        bORu = 'b'
-
-    if (configs['fitness_operation'] == 'leaf'): fitness_def = configs['leaf_metric']
-    elif (configs['fitness_operation'] == 'hub'): fitness_def = configs['hub_metric']
-    else: fitness_def = configs['leaf_metric'] + configs['fitness_operation'] + configs['hub_metric']
 
     configs['KP_solver_name']      = configs['KP_solver_binary'].split('/')[-1].split('.')[0]
     configs['timestamp']           = time.strftime("%B-%d-%Y-h%Hm%Ms%S")
-    configs['stamp']               = fitness_def + "_RAW_INSTANCES_p" +configs['pressure'] + "_t" + configs['tolerance'] + '_' + configs['version']+configs['advice_upon'][0]+bORu+'_'+ configs['KP_solver_name']+ '_' +configs['sampling_rounds']+'_'+ configs['BD_criteria']+'_'+configs['reduction_mode']+'_alpha'+configs['alpha']+'.'+configs['timestamp']
-    configs['sampling_rounds_nX']  = configs['sampling_rounds']
-    configs['sampling_rounds']     = int(''.join([d for d in configs['sampling_rounds'] if d.isdigit()]))
-    configs['sampling_rounds_max'] = int (configs['sampling_rounds_max'])      
     configs ['output_directory'] += "/"
-    configs['instance_file']    = (util.slash (configs['output_directory']) + "instances/" +configs['stamp'])
-    configs['stats_dir']           = configs['output_directory']+"00_network_stats/" 
-    configs['datapoints_dir']      = configs['output_directory']+"02_raw_instances_simulation/data_points/"
-    configs['params_save_dir']     = configs['output_directory']+"02_raw_instances_simulation/parameters/"
-    configs['progress_file']       = configs['output_directory']+"02_raw_instances_simulation/progress.dat"
-    configs['progress_dir']        = configs['output_directory']+"02_raw_instances_simulation/"
-    configs['DUMP_DIR']            = util.slash (configs['output_directory'])+"dump_raw_instances"
-    configs['alpha']               = float(configs['alpha']) 
-    #--------------------------------------------
-    ALL_PT_pairs = {}
+    configs['num_workers'] = num_workers
 
-    ALL_PT_pairs[1] = (configs['pressure'],configs['tolerance']) #TODO: check if obsolete, only 1 pair anyhow
+    #--------------------------------------------
+    #PT pairs aren't generally used for this version, but could be useful
+    ALL_PT_pairs = {}
+    ALL_PT_pairs[1] = (configs['pressure'],configs['tolerance'])
 
     completed_pairs                = []
     if os.path.isdir (configs['datapoints_dir']):
@@ -95,46 +69,8 @@ def load_network (configs):
         else:
             Ijk=util.flip()     
         M.add_edge(source, target, sign=Ijk)    
-    
-    # conservation scores:
-    if not configs['biased']:
-        return M
-    else:
-        return conservation_scores (M, configs)
-#--------------------------------------------------------------------------------------------------
-def conservation_scores (M, configs):
-    degrees           = [d for d in M.degree().values()]
-    set_degrees       = list(set(degrees))
-    frequencies       = {d:degrees.count(d) for d in set_degrees}
-    mind              = min(set_degrees)
-    N                 = M.number_of_nodes() 
-    meand             = float(sum(degrees))/float(N)
-    a, b              = 0, 0.5
-    alpha             = configs['alpha']
-    if configs['advice_upon'] == 'edges':
-        for e in M.edges():
-            source_degree                    = M.degree (e[0])            
-            #M[e[0]][e[1]]['conservation_score']  = 1.0/float(frequencies[source_degree])
-            M[e[0]][e[1]]['conservation_score']  = scale(source_degree,  N, meand,  a, b, alpha)
-    elif configs['advice_upon'] == 'nodes':
-        for n in M.nodes():
-            degree = M.degree(n)
-            if degree > 0:
-                #M.node[n]['conservation_score']  = 1.0/float(frequencies[degree]) 
-                M.node[n]['conservation_score']  = scale(degree, N, meand,  a, b, alpha)
-            else:
-                M.node[n]['conservation_score']  = 0 #island node
-    else:
-        print ("FATAL: unrecognized value for configs['advice_upon'] parameter\nExiting ..")
-        sys.exit(1)
+
     return M
-#--------------------------------------------------------------------------------------------------
-def scale (d, N,  meand, a, b, alpha):
-    if d <= meand:
-        return 0
-    numerator   = (b-a)*math.pow((d-meand),2)
-    denumenator = N*b
-    return  math.pow((float(numerator)/float(denumenator)) +a, alpha)
 #--------------------------------------------------------------------------------------------------
 def build_advice(net, configs):
     if (configs['advice_creation'] == 'once'):

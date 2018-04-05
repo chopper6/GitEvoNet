@@ -2,7 +2,6 @@ import math
 import reducer, solver, node_data, fitness, util, probabilistic_entropy
 from ctypes import cdll
 
-
 def pressurize(configs, net, instance_file_name, advice, BD_table):
     # configs:
     pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
@@ -12,9 +11,8 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
     else: max_sampling_rounds = int(configs['sampling_rounds_max'])
     knapsack_solver = cdll.LoadLibrary(configs['KP_solver_binary'])
     advice_upon = configs['advice_upon']
-    use_kp = util.boool(configs['use_knapsack']) #TODO: fully sep projects
+    use_kp = util.boool(configs['use_knapsack'])
     leaf_metric = str(configs['leaf_metric'])
-    leaf_operator = str(configs['leaf_operation'])
     leaf_pow = float(configs['leaf_power'])
     hub_metric = str(configs['hub_metric'])
     hub_operator = str(configs['hub_operation'])
@@ -46,8 +44,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
 
         for kp in kp_instances:
             a_result = solver.solve_knapsack(kp, knapsack_solver)
-            inst_leaf_fitness, inst_hub_fitness, inst_solo_fitness = fitness.kp_instance_properties(a_result, leaf_metric, leaf_operator, leaf_pow, hub_metric, hub_operator, fitness_operator, net, instance_file_name)
-
+            inst_solo_fitness, inst_leaf_fitness, inst_hub_fitness = fitness.kp_instance_properties(a_result, leaf_metric, leaf_pow, hub_metric, hub_operator, fitness_operator, net, instance_file_name)
             leaf_fitness += inst_leaf_fitness
             hub_fitness += inst_hub_fitness
             solo_fitness += inst_solo_fitness
@@ -56,8 +53,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
         hub_fitness /= num_samples_relative
         solo_fitness /= num_samples_relative
 
-
-        return [leaf_fitness, hub_fitness, solo_fitness]
+        net.fitness, net.leaf_fitness, net.hub_fitness = solo_fitness, leaf_fitness, hub_fitness
 
     elif (use_kp == 'False' or use_kp == False):
         #  assumes 100% pressure
@@ -76,7 +72,10 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
             fitness.node_normz(net, num_samples_relative)
             fitness_score = fitness.node_product(net, scale_node_fitness)
 
-        return [fitness_score, 0,0] #weird as all hell, but [2] is used as the actual fitness
+        else:
+            print("ERROR in pressurize: Unknown edge state " + str(edge_state))
+            return
 
+        net.fitness = fitness_score
 
     else: print("ERROR in pressurize(): unknown use_knapsack config: " + str(use_kp))

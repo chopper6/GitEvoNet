@@ -4,9 +4,6 @@ import hub_fitness, leaf_fitness
 
 def eval_fitness(population, fitness_direction):
     #determines fitness of each individual and orders the population by fitness
-    for p in range(len(population)):
-        population[p].fitness = population[p].fitness_parts[0]
-
     if (fitness_direction == 'max'): population = sorted(population,key=attrgetter('fitness'), reverse=True)
     elif (fitness_direction == 'min'):  population = sorted(population,key=attrgetter('fitness'))
     else: print("ERROR in fitness.eval_fitness(): unknown fitness_direction " + str(fitness_direction) + ", population not sorted.")

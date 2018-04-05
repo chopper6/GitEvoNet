@@ -1,14 +1,13 @@
 #!/usr/bin/python3
-import matplotlib, os, csv, sys, math
+import matplotlib, os, sys, math
 matplotlib.use('Agg') # This must be done before importing matplotlib.pyplot
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import numpy as np
+import matplotlib.pyplot as plt, matplotlib.patches as mpatches
+import numpy as np, networkx as nx
 from decimal import Decimal
-import plot_undir
+import math, re, pickle
 
 
-#ORGANIZER
+################## ORGANIZER FUNCTIONS ##################
 def single_run_plots (dirr):
     #plots features_over_time and degree_distrib
     #only uses most fit indiv in population
@@ -29,13 +28,131 @@ def single_run_plots (dirr):
     degree_distrib(dirr)
 
     print("Generating undirected degree distribution plots.")
-    plot_undir.plot_dir(dirr, False, None) #last two args for Biased and bias on, which haven't really been implemented
+    plot_undir(dirr, False, None) #last two args for Biased and bias on, which haven't really been implemented
 
     print("Generating degree change plot.")
     degree_distrib_change(dirr) #may require debugging
 
 
-#IMAGE GENERATION FNS()
+def plot_undir(output_dir, biased, bias_on):
+    dirs = ["/undirected_degree_distribution/", "/undirected_degree_distribution/loglog/", "/undirected_degree_distribution/loglog%/", "/undirected_degree_distribution/scatter/", "/undirected_degree_distribution/scatter%/"]
+    for dirr in dirs:
+        if not os.path.exists(output_dir + dirr):
+            os.makedirs(output_dir + dirr)
+
+    for root, dirs, files in os.walk(output_dir + "/nets/"):
+        for f in files:
+            print("plot_dir(): file " + str(f))
+            undir_deg_distrib(root + "/" + f, output_dir + "/undirected_degree_distribution/", f, biased, bias_on)
+
+
+
+################## IMAGE GENERATION FUNCTIONS ##################
+def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
+    print('undir_deg_distrib: biased=' + str(biased) + ', bias_on=' + str(bias_on))
+
+    if (re.match(re.compile("[a-zA-Z0-9]*pickle"), net_file)):
+        with open(net_file, 'rb') as file:
+            net = pickle.load(file)
+            file.close()
+    else:
+        net = nx.read_edgelist(net_file, nodetype=int, create_using=nx.DiGraph())
+
+    colors = ['#0099cc','#ff5050', '#6699ff']
+    color_choice = colors[0]
+
+    for type in ['loglog', 'loglog%', 'scatter', 'scatter%']:
+        H = []
+        #loglog
+        degrees = list(net.degree().values())
+        degs, freqs = np.unique(degrees, return_counts=True)
+        tot = float(sum(freqs))
+        if (type=='loglog%' or type=='scatter%'): freqs = [(f/tot)*100 for f in freqs]
+
+        #derive vals from conservation scores
+        consv_vals, ngh_consv_vals = [], []
+        if (biased == True or biased == 'True'):
+            for deg in degs: #deg consv is normalized by num nodes
+                avg_consv, ngh_consv, num_nodes = 0,0,0
+                for node in net.nodes():
+                    if (net.degree(node) == deg):
+                        if (bias_on == 'nodes'):
+                            avg_consv += abs(.5-net.node[node]['conservation_score'])
+
+                            avg_ngh_consv = 0
+                            for ngh in net.neighbors(node):
+                                avg_ngh_consv += net.node[ngh]['conservation_score']
+                            avg_ngh_consv /= len(net.neighbors(node))
+                            ngh_consv += abs(.5-avg_ngh_consv)
+
+                        elif (bias_on == 'edges'): #node consv is normalized by num edges
+                            node_consv, num_edges = 0, 0
+                            for edge in net.edges(node):
+                                node_consv += net[edge[0]][edge[1]]['conservation_score']
+                                num_edges += 1
+                            if (num_edges != 0): node_consv /= num_edges
+                        num_nodes += 1
+                avg_consv /= num_nodes
+                ngh_consv /= num_nodes
+                consv_vals.append(avg_consv)
+                ngh_consv_vals.append(ngh_consv)
+            assert(len(consv_vals) == len(degs))
+
+            with open(destin_path + "/degs_freqs_bias_nghBias",'wb') as file:
+                pickle.dump(file, [degs, freqs, consv_vals, ngh_consv_vals])
+
+
+            cmap = plt.get_cmap('plasma')
+            consv_colors = cmap(consv_vals)
+
+            if (type == 'loglog' or type=='loglog%'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, c = consv_colors, alpha=1, markersize=8, marker='D', markeredgecolor='None')
+            elif (type == 'scatter' or type=='scatter%'):
+                sizes = [10 for i in range(len(degs))]
+                plt.scatter(degs, freqs, c = consv_colors, alpha=1, s=sizes, marker='D')
+
+        else:
+            if (type == 'loglog' or type=='loglog%'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, color = color_choice, alpha=1, markersize=8, marker='D', markeredgecolor='None')
+            elif (type == 'scatter' or type=='scatter%'):
+                sizes = [10 for i in range(len(degs))]
+                plt.scatter(degs, freqs, color = color_choice, alpha=1, s=sizes, marker='D')
+        patch =  mpatches.Patch(color=color_choice, label=title + "_" + type)
+        H = H + [patch]
+
+        #FORMAT PLOT
+        ax = plt.gca() # gca = get current axes instance
+
+        if (type == 'loglog%' or type=='scatter%'):
+            ax.set_xlim([0,100])
+            ax.set_ylim([0,100])
+        elif (type == 'loglog' or type == 'scatter'):
+            max_x = max(1,math.floor(max(degs)/10))
+            max_x = max_x*10+10
+
+            max_y = max(1,math.floor(max(freqs)/10))
+            max_y = max_y*10+100
+
+            upper_lim = max(max_x, max_y)
+
+            ax.set_xlim([0, upper_lim])
+            ax.set_ylim([0, upper_lim])
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        plt.tick_params(axis='both', which='both', right='off', top='off') #http://matplotlib.org/api/axes_api.html#matplotlib.axes.Axes.tick_params
+        plt.legend(loc='upper right', handles=H, frameon=False,fontsize= 11)
+        plt.xlabel('Degree')
+        if (type=='loglog%'): plt.ylabel('Percent of Nodes with Given Degree')
+        else: plt.ylabel('Number of Nodes with Given Degree')
+        #plt.title('Degree Distribution of ' + str(title) + ' vs Simulation')
+
+        plt.tight_layout()
+        plt.savefig(destin_path + "/" + type + "/" + title + ".png", dpi=300,bbox='tight') # http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.savefig
+        plt.clf()
+        plt.cla()
+        plt.close()
+
+
+
 def degree_distrib(dirr):
         deg_file_name = dirr + "/degree_distrib.csv"
 
@@ -115,7 +232,7 @@ def features_over_size(dirr, net_info, titles, mins, maxs, use_lims):
     return
 
 
-def degree_distrib_change(dirr):
+def degree_distrib_change(dirr): #TODO: there is no longer a sep deg_distrib_change file
     deg_file_name = dirr + "/degree_distrib.csv"
 
     if not os.path.exists(dirr + "/degree_distribution_change/"):
@@ -290,7 +407,8 @@ def solver_time(dirr):
     plt.savefig(img_dirr + "pressurize_time")
     plt.clf()
 
-#HELPER FNS()
+
+################## HELPER FUNCTIONS ##################
 def parse_info(dirr):
     #returns 2d array of outputs by features
     #note that feature[0] is the net size
@@ -315,12 +433,37 @@ def parse_info(dirr):
 
 if __name__ == "__main__":
     #first bash arg should be parent directory, then each child directory
-    dirr_base = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
-    dirr_parent = sys.argv[1]
-    dirr_base += dirr_parent
+    base_dir = "/home/2014/choppe1/Documents/EvoNet/virt_workspace/data/output/"
 
-    for arg in sys.argv[2:]:
-        print("Plotting dirr " + str(arg))
-        dirr_addon = arg
-        dirr= dirr_base + dirr_addon
-        single_run_plots(dirr)
+    if sys.argv[1] == 'comparison': #poss needs to be updated
+        net1_path = sys.argv[2]
+        net2_path = sys.argv[3]
+        biased = False  # sys.argv[2]
+        bias_on = None  # sys.argv[3]
+
+        dirs = ["/undirected_degree_distribution/", "/undirected_degree_distribution/loglog/",
+                "/undirected_degree_distribution/loglog%/", "/undirected_degree_distribution/scatter/",
+                "/undirected_degree_distribution/scatter%/"]
+        for dirr in dirs:
+            if not os.path.exists(net1_path + dirr):
+                os.makedirs(net1_path + dirr)
+
+    elif sys.argv[1] == 'undir':
+        biased = None
+        bias_on = None
+
+        parent_dir = sys.argv[1]
+
+        for dirr in sys.argv[2:]:
+            print("plotting " + base_dir + parent_dir + dirr)
+            plot_undir(base_dir + parent_dir + dirr, biased, bias_on)
+
+    else: #default
+        dirr_parent = sys.argv[1]
+        base_dir += dirr_parent
+
+        for arg in sys.argv[2:]:
+            print("Plotting dirr " + str(arg))
+            dirr_addon = arg
+            dirr= base_dir + dirr_addon
+            single_run_plots(dirr)

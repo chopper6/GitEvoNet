@@ -1,12 +1,14 @@
 import sys, random
 #--------------------------------------------------------------------------------------------------
 def getCommandLineArgs():
+    assert(False)
     if len(sys.argv) < 2:
         print ("Usage: python3 test.py [/absolute/path/to/configs/file.txt]\nExiting..\n")
         sys.exit()
     return str(sys.argv[1])
 #----------------------------------------------------------------------------  
 def slash(path):
+    assert(False)
     return path+(path[-1] != '/')*'/'
 #--------------------------------------------------------------------------------------------------
 def flip():
@@ -61,7 +63,6 @@ def single_advice(M, element, configs):
     bias_on = configs['bias_on']
     biased = configs['biased']
 
-    advice = None
     if not biased:
         advice = flip()
 
@@ -126,6 +127,7 @@ def cluster_print(output_dir, text):
 
 
 def cleanPaths(path):
+    assert(False)
     # ignore empty lines
     # ignore lines beginning with '#'
     # ignore lines enclosed by @ .. @
@@ -163,5 +165,5 @@ def boool(val):
     else: print("ERROR util.boool(): unknown truth value for " + str(val))
 
 def is_it_none(val):
-    if (val == "None" or val=="none" or val==None): return None
+    if (val == "None" or val=="none" or val==None or val==0): return None
     else: return 1

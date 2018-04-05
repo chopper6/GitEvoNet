@@ -15,7 +15,8 @@ class Net:
     def copy(self):
         copy = Net(self.net, self.id)
         copy.fitness = self.fitness
-        self.fitness_parts = [0]*3   #leaf-fitness, hub-fitness
+        self.leaf_fitness = 0
+        self.hub_fitness = 0
         #assert (copy != self and copy.net != self.net)
         #assert (copy.fitness_parts != self.fitness_parts)
         return copy
@@ -201,7 +202,7 @@ def init_population(init_type, start_size, pop_size, configs):
     return population
 
 
-
+#HELPER FUNCTIONS
 def custom_to_directed(population):
     # changes all edges to directed edges
     # rand orientation of edges

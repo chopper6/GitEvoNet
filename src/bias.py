@@ -130,7 +130,6 @@ def pickle_bias(net, output_dir, bias_on): #for some reason bias_on isn't recogn
 
             avg_consv /= num_nodes
             ngh_consv /= num_nodes
-            #print(deg, avg_consv)
             consv_vals.append(avg_consv)
             ngh_consv_vals.append(ngh_consv)
         assert(len(consv_vals) == len(degs))

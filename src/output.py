@@ -1,7 +1,51 @@
 #!/usr/local/bin/python3
-import csv
-import numpy as np
+import csv, pickle
+import numpy as np, networkx as nx
+import util, pressurize, bias
 np.set_printoptions(formatter={'int_kind': lambda x:' {0:d}'.format(x)})
+
+
+def master_info(population, gen, size, pop_size, num_survive, advice, BD_table, configs):
+    output_dir = configs['output_directory']
+    num_output = int(configs['num_output'])
+    num_net_output = int(configs['num_net_output'])
+    max_gen = int(configs['max_generations'])
+    num_instance_output = int(configs['num_instance_output'])
+    instance_file = configs['instance_file']
+    if (num_instance_output==0): instance_file = None
+
+    if (gen % int(max_gen / num_output) == 0):
+        popn_data(population, output_dir, gen)
+        util.cluster_print(output_dir, "Master at gen " + str(gen) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
+        nx.write_edgelist(population[0].net, output_dir + "/fittest_net.edgelist")
+
+    if (num_instance_output != 0):
+        if (gen % int(max_gen / num_instance_output) == 0):
+            # if first gen, have already pressurized w/net[0]
+            if (gen != 0): pressurize.pressurize(configs, population[0].net, instance_file + "Xitern" + str(gen) + ".csv", advice, BD_table)
+
+    if (gen % int(max_gen / num_net_output) == 0):
+        nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(gen))
+        pickle_file = output_dir + "/pickle_nets/" + str(gen) + "_pickle"
+        with open(pickle_file, 'wb') as file:
+            pickle.dump(population[0].net, file)
+
+
+
+def final_master_info(population, gen, configs):
+    output_dir = configs['output_directory']
+
+    nx.write_edgelist(population[0].net, output_dir+"/nets/"+str(gen))
+    pickle_file = output_dir + "/pickle_nets/" + str(gen) + "_pickle"
+    with open(pickle_file, 'wb') as file: pickle.dump(population[0].net, file)
+    popn_data(population, output_dir, gen)
+    #draw_nets.basic(population, output_dir, total_gens)
+
+    if util.boool(configs['biased']):
+        util.cluster_print(output_dir,"Pickling biases.")
+        bias.pickle_bias(population[0].net, output_dir+"/bias", configs['bias_on'])
+
+
 
 def init_csv(out_dir, configs):
  
@@ -29,6 +73,8 @@ def init_csv(out_dir, configs):
     out_deg_summary = out_dir + "/degree_change.csv"
     with open(out_deg_summary, 'w') as out_summary:
         out_summary.write(deg_summary_title)
+
+
 
 def popn_data(population, output_dir, gen):
 
@@ -79,15 +125,3 @@ def popn_data(population, output_dir, gen):
 
             output.writerow(distrib_info)
 
-
-def minion_csv(output_dir, pressurize_time, num_growth, end_size):
-    #poss obsolete
-
-    if (num_growth == 0): num_growth = 1
-    with open(output_dir + "/timing.csv", 'a') as time_file:
-        output=csv.writer(time_file)
-        info = []
-        info.append(end_size)
-        pressurize_time = pressurize_time/num_growth
-        info.append(pressurize_time)
-        output.writerow(info)
