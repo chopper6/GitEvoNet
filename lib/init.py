@@ -20,8 +20,6 @@ def load_sim_configs (param_file, rank, num_workers):
     configs['timestamp']           = time.strftime("%B-%d-%Y-h%Hm%Ms%S")
     configs ['output_directory'] += "/"
 
-    if (configs['number_of_workers'] != num_workers): util.cluster_print(configs['output_directory'], "\nWARNING in init.load_sim_configs(): mpi #workers != config #workers! " + str(configs['num_workers']) + " vs " + str(num_workers) + "\n")  # not sure why this doesn't correctly get # config workers...
-
     #kp_only, stamp may need work
     configs['datapoints_dir'] = configs['output_directory'] + "02_raw_instances_simulation/data_points/"
     configs['instance_file'] = (util.slash(configs['output_directory'])) + "instances/" # + configs['stamp']) #TODO: 'stamp' needs to be redone is wanted
@@ -53,6 +51,8 @@ def load_sim_configs (param_file, rank, num_workers):
             except:
                 time.sleep(5)
                 continue
+
+        if (configs['number_of_workers'] != num_workers): util.cluster_print(configs['output_directory'],"\nWARNING in init.load_sim_configs(): mpi #workers != config #workers! " + str(configs['number_of_workers']) + " vs " + str(num_workers) + "\n")  # not sure why this doesn't correctly get # config workers...
 
     return configs
 #--------------------------------------------------------------------------------------------------  

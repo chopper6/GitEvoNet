@@ -25,11 +25,11 @@ def assign_numer (hub_metric, soln_bens, soln_dmgs):
     else: print("ERROR in fitness.assign_hub_numer(): unknown hub metric " + str(hub_metric))
 
 
-def assign_denom (hub_metric, soln_bens):
+def assign_denom (hub_metric, soln_bens, all_bens):
     if (sum(soln_bens) == 0): return 1
 
-    if (hub_metric=='ETB'): return 1 #sum(soln_bens)
-    elif(hub_metric=='control'): return sum(soln_bens)
+    if (hub_metric=='ETB'): return sum(all_bens)
+    elif(hub_metric=='control'): return len(soln_bens) #for ex.
 
     #other poss include (sum(all_ben)) and len(soln_bens)
 

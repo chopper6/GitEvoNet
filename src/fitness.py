@@ -63,7 +63,7 @@ def node_normz(net, denom):
 
 
 #use_kp only
-def kp_instance_properties(a_result, leaf_metric, leaf_pow, hub_metric, hub_operator, fitness_operator, net, instance_file_name):
+def kp_instance_properties(a_result, leaf_metric, leaf_pow, hub_metric, fitness_operator, net, instance_file_name):
 
     leaf_score = 0
     if (instance_file_name != None): lines = ['' for i in range(5)]
@@ -79,16 +79,19 @@ def kp_instance_properties(a_result, leaf_metric, leaf_pow, hub_metric, hub_oper
         # FITNESS BASED ON KP SOLUTION
         soln_bens = []
         soln_dmgs = []
+        all_bens = []
         for g in GENES_in:
             # g[0] gene name, g[1] benefits, g[2] damages, g[3] if in knapsack (binary)
             B,D=g[1],g[2]
             soln_bens.append(B)
             soln_dmgs.append(D)
+            all_bens.append(B)
 
         # -------------------------------------------------------------------------------------------------
         for g in ALL_GENES:
             # g[0] gene name, g[1] benefits, g[2] damages, g[3] if in knapsack (binary)
             B,D=g[1],g[2]
+            all_bens.append(B)
             leaf_score += leaf_fitness.node_score(leaf_metric, B, D)
 
             if (instance_file_name != None):
@@ -104,7 +107,7 @@ def kp_instance_properties(a_result, leaf_metric, leaf_pow, hub_metric, hub_oper
         leaf_score = math.pow(leaf_score/num_genes,leaf_pow)
 
         hub_numer = hub_fitness.assign_numer (hub_metric, soln_bens, soln_dmgs)
-        hub_denom = hub_fitness.assign_denom (hub_metric, soln_bens)
+        hub_denom = hub_fitness.assign_denom (hub_metric, soln_bens, all_bens)
         hub_score = hub_numer/float(hub_denom)
 
         fitness_score = operate_on_features (leaf_score, hub_score, fitness_operator)

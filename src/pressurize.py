@@ -14,7 +14,6 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
     leaf_metric = str(configs['leaf_metric'])
     leaf_pow = float(configs['leaf_power'])
     hub_metric = str(configs['hub_metric'])
-    hub_operator = str(configs['hub_operation'])
     fitness_operator = str(configs['fitness_operation'])
     edge_state = str(configs['edge_state'])
     biased = util.boool(configs['biased'])
@@ -44,7 +43,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
 
         for kp in kp_instances:
             a_result = solver.solve_knapsack(kp, knapsack_solver)
-            inst_solo_fitness, inst_leaf_fitness, inst_hub_fitness = fitness.kp_instance_properties(a_result, leaf_metric, leaf_pow, hub_metric, hub_operator, fitness_operator, net, instance_file_name)
+            inst_solo_fitness, inst_leaf_fitness, inst_hub_fitness = fitness.kp_instance_properties(a_result, leaf_metric, leaf_pow, hub_metric, fitness_operator, net, instance_file_name)
             leaf_fitness += inst_leaf_fitness
             hub_fitness += inst_hub_fitness
             solo_fitness += inst_solo_fitness
