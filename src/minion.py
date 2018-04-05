@@ -13,11 +13,13 @@ def work(configs, rank):
     gen = read_progress_file(progress_file, output_dir, rank)
 
     estim_time = 4
-    while gen < max_gen:
+    keep_running = True
+    while keep_running:
         worker_file = str(output_dir) + "/to_workers/" + str(gen) + "/" + str(rank)
         estim_time = wait_for_worker_file(worker_file, estim_time, gen, output_dir, rank)
-        evolve_minion(worker_file, gen, rank, output_dir)
+        size = evolve_minion(worker_file, gen, rank, output_dir)
         gen+=1
+        keep_running = util.test_stop_condition(size, gen, configs)
 
 
 
@@ -39,7 +41,7 @@ def read_progress_file(progress, output_dir, rank):
 
     t_end = time.time()
     #if ((rank == 1 or rank == 63 or rank == 128) and gen % 100 == 0): util.cluster_print(output_dir,"worker #" + str(rank) + " finished init in " + str(t_end-t_start) + " seconds.")
-
+    return gen
 
 def wait_for_worker_file(worker_file, estim_time, gen, output_dir, rank):
     t_start = time.time()
@@ -80,6 +82,8 @@ def evolve_minion(worker_file, gen, rank, output_dir):
     population = sort_popn(population, fitness_direction)
     write_out_worker(output_dir + "/to_master/" + str(gen) + "/" + str(rank), population, num_return)
     report_timing(t_start, rank, gen, output_dir)
+
+    return len(population[0].net.nodes())
 
 
 

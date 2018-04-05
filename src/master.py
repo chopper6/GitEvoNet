@@ -34,7 +34,7 @@ def evolve_master(configs):
         size = len(population[0].net.nodes())
         gen += 1
 
-        keep_running = test_stop_condition(size, gen, configs)
+        keep_running = util.test_stop_condition(size, gen, configs)
 
     with open(output_dir + "/progress.txt", 'w') as out: out.write("Done")
     output.final_master_info(population, gen, configs)
@@ -87,7 +87,7 @@ def init_run(configs):
             with open(a_worker_file, 'rb') as w_file:
                 a_worker_ID, a_seed, a_worker_gens, a_pop_size, a_num_return, a_randSeed, advice, BD_table, biases,  a_configs = pickle.load(w_file)
 
-            keep_running = test_stop_condition(size, gen, configs)
+            keep_running = util.test_stop_condition(size, gen, configs)
             cont = True
 
     if not cont: #FRESH START
@@ -244,26 +244,6 @@ def curr_gen_params(size, prev_num_survive, configs):
         if (num_survive > prev_num_survive): num_survive = prev_num_survive
 
     return pop_size, num_survive
-
-
-def test_stop_condition(size, gen, configs):
-    # get configs
-    stop_condition = configs['stop_condition']
-    max_gen = int(configs['max_generations'])
-    end_size = int(configs['ending_size'])
-    output_dir = configs['output_directory']
-
-    if (stop_condition == 'size'):
-        if (size < end_size): cont = True
-        else: cont = False
-    elif (stop_condition == 'gen'):
-        if (gen < max_gen): cont = True
-        else: cont = False
-    else:
-        util.cluster_print(output_dir, "ERROR in master.test_stop_condition(): unknown stop_condition: " + str(stop_condition))
-        return
-
-    return cont
 
 
 def report_timing(t_start, itern, output_dir, report_freq=.001):

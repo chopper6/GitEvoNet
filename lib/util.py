@@ -167,3 +167,23 @@ def boool(val):
 def is_it_none(val):
     if (val == "None" or val=="none" or val==None or val==0): return None
     else: return 1
+
+
+def test_stop_condition(size, gen, configs):
+    # get configs
+    stop_condition = configs['stop_condition']
+    max_gen = int(configs['max_generations'])
+    end_size = int(configs['ending_size'])
+    output_dir = configs['output_directory']
+
+    if (stop_condition == 'size'):
+        if (size < end_size): cont = True
+        else: cont = False
+    elif (stop_condition == 'gen'):
+        if (gen < max_gen): cont = True
+        else: cont = False
+    else:
+        cluster_print(output_dir, "ERROR in master.test_stop_condition(): unknown stop_condition: " + str(stop_condition))
+        return
+
+    return cont

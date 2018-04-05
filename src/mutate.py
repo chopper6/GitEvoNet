@@ -2,7 +2,7 @@ import random as rd
 import networkx as nx
 import bias, util
 
-def mutate(configs, net, gen_percent, biases = None):
+def mutate(configs, net, biases = None):
     # mutation operations: rm edge, add edge, rewire an edge, change edge sign, reverse edge direction
     rewire_freq = float(configs['rewire_mutation_frequency'])
     sign_freq = float(configs['sign_mutation_frequency'])

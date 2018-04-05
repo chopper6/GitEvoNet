@@ -6,7 +6,7 @@ def gen_biases(gen_percent, configs):
     bias_on = configs['bias_on']
     distrib = configs['bias_distribution']
 
-    num_mutns = mutate.num_mutations(float(configs['grow_mutation_frequency']), str(configs['mutation_type']), gen_percent)
+    num_mutns = mutate.num_mutations(float(configs['grow_mutation_frequency']))
 
 
     if bias_on == 'edges': num_biases = int(num_mutns * float(configs['edge_to_node_ratio']))
