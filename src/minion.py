@@ -5,7 +5,6 @@ import output, fitness, pressurize, mutate, init, util
 #################### PARALLELISM FUNCTIONS ####################
 def work(configs, rank):
     output_dir = configs['output_directory']
-    max_gen = int(configs['max_generations'])
     progress_file = output_dir + "/progress.txt"
 
     print ("\t\t\t\tworker #"+str(rank)+" is working,\t")

@@ -21,27 +21,8 @@ def load_sim_configs (param_file, rank, num_workers):
     configs ['output_directory'] += "/"
 
     #kp_only, stamp may need work
-    configs['datapoints_dir'] = configs['output_directory'] + "02_raw_instances_simulation/data_points/"
     configs['instance_file'] = (util.slash(configs['output_directory'])) + "instances/" # + configs['stamp']) #TODO: 'stamp' needs to be redone is wanted
 
-    #--------------------------------------------
-    #PT pairs aren't generally used for this version, but could be useful
-    ALL_PT_pairs = {}
-    ALL_PT_pairs[1] = (configs['pressure'],configs['tolerance'])
-
-    completed_pairs                = []
-    if os.path.isdir (configs['datapoints_dir']):
-        for r,ds,fs in os.walk(configs['datapoints_dir']):
-            RAW_FILES       = [f for f in fs if 'RAW' in f]            
-            for raw_file in RAW_FILES:
-                split = raw_file.split('_')
-                p     = float(''.join([d for d in split[-8] if d.isdigit() or d=='.']))
-                t     = float(''.join([d for d in split[-7] if d.isdigit() or d=='.']))
-                completed_pairs.append((p,t))
-    configs['PT_pairs_dict'] = {}
-    for index in sorted(ALL_PT_pairs.keys()):
-        if not ALL_PT_pairs[index] in completed_pairs:
-            configs['PT_pairs_dict'][index] = ALL_PT_pairs[index]        
     #--------------------------------------------
 
     if rank == 0: #only master should create dir, prevents workers from fighting over creating the same dir

@@ -4,7 +4,7 @@ from ctypes import cdll
 
 def pressurize(configs, net, instance_file_name, advice, BD_table):
     # configs:
-    pressure = math.ceil((float(configs['PT_pairs_dict'][1][0]) / 100.0))
+    pressure = math.ceil((float(configs['pressure']) / 100.0))
     sampling_rounds_multiplier = float(configs['sampling_rounds_multiplier']) #FRACTION of curr number of EDGES
     if (util.is_it_none(configs['sampling_rounds_max']) == None): max_sampling_rounds = None
     else: max_sampling_rounds = int(configs['sampling_rounds_max'])

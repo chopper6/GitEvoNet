@@ -20,7 +20,7 @@ def evolve(rank, num_workers, config_file):
         init_sim(configs, num_sims, i, orig_output_dir)
 
         if rank == 0:  # MASTER
-            log_text = 'Evolve_root(): in dir ' + str(os.getcwd()) + ', config file = ' + str(config_file) + ', num_workers = ' + str(num_workers)
+            log_text = 'Evolve_root(): in dir ' + str(os.getcwd()) + ', config file = ' + str(config_file) + ', num_workers = ' + str(num_workers) + "\n"
 
             import master
             util.cluster_print(configs['output_directory'], log_text)

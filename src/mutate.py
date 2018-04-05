@@ -49,28 +49,18 @@ def add_nodes(net, num_add, configs, biases=None):
                 post_size = len(net.nodes())
                 assert(pre_size < post_size)
 
-                #poss bias lost here
-
-        if biased and biases and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'], set_bias=biases[i])
-        elif biased and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'])
-
+        if biased and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'], set_bias=biases[i])
+        elif biased and bias_on == 'edges': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
-        if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, bias_given=biases[0])
-        else: add_this_edge(net, configs, node1=new_node, random_direction=True)
+        if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, bias_given=biases[i])
+        elif biased and bias_on == 'nodes': add_this_edge(net, configs, node1=new_node, random_direction=True)
 
     # MAINTAIN NODE_EDGE RATIO
-    # ASSUMES BTWN 1 & 2
-    num_edge_add = 0
-    curr_ratio = (len(net.edges()) + num_edge_add) / float(len(net.nodes()))
-    while (curr_ratio < edge_node_ratio):
-        num_edge_add += 1
-        curr_ratio = (len(net.edges()) + num_edge_add) / float(len(net.nodes()))
-
-    if biases and bias_on=='edges':
-        assert(len(biases) == num_edge_add+1) #check proper lng
-
-    if biases and bias_on=='edges': add_edges(net, num_edge_add, configs, biases_given=biases[1:])
+    num_edge_add = int(num_add * float(configs['edge_to_node_ratio'])) - num_add
+    if biases and bias_on == 'edges':
+        assert(len(biases) == num_edge_add + num_add)
+        add_edges(net, num_edge_add, configs, biases_given=biases[num_add:])
     else:  add_edges(net, num_edge_add, configs)
 
 

@@ -26,7 +26,7 @@ def init_population(init_type, start_size, pop_size, configs):
     sign_edges_needed = True
     edge_node_ratio = float(configs['edge_to_node_ratio'])
     num_edges = int(start_size*edge_node_ratio)
-    print("net_generator.init_population(): num edges = " + str(num_edges))
+    #print("net_generator.init_population(): num edges = " + str(num_edges))
 
     if (init_type == 'shell'):
         population = [Net(nx.DiGraph(), i) for i in range(pop_size)] #change to generate, based on start_size
