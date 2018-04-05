@@ -23,7 +23,6 @@ def evolve(rank, num_workers, config_file):
             log_text = 'Evolve_root(): in dir ' + str(os.getcwd()) + ', config file = ' + str(config_file) + ', num_workers = ' + str(num_workers)
 
             import master
-            if (configs['number_of_workers'] != num_workers): util.cluster_print(configs['output_directory'], "\nWARNING in evolve_root(): mpi #workers != config #workers! " + str(configs['num_workers']) + " vs " + str(num_workers) + "\n") #not sure why this doesn't correctly get # config workers...
             util.cluster_print(configs['output_directory'], log_text)
             master.evolve_master(configs)
 
@@ -108,6 +107,7 @@ def extract_and_combine(output_dir, num_sims):
             file.writerow(row)
 
 if __name__ == "__main__":
+    # note that yamaska and rupert should call this directly
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     num_workers = comm.Get_size()-1  # master not incld

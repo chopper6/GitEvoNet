@@ -3,14 +3,19 @@ import leaf_fitness
 import random as rd
 
 #--------------------------------------------------------------------------------------------------
-def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria, bias_on, advice): #only version that handle Direct Evolution
+def reverse_reduction(net, sample_size, advice_sampling_threshold, advice, configs): #only version that handle Direct Evolution
+
+    advice_upon = configs['advice_upon']
+    BD_criteria = configs['BD_criteria']
+    tolerance = int(configs['PT_pairs_dict'][1][1])
+
     if  advice_sampling_threshold <=0:
         print ("WARNING: reverse_reduction yields empty set.")
         yield [{},{},0]
     else:
         if (advice != None): #ie direct evo, keep same advice
             for i in range(advice_sampling_threshold):
-                yield [BDT_calculator(net, advice, T_percentage, BD_criteria, advice_upon)]
+                yield [BDT_calculator(net, advice, tolerance, BD_criteria, advice_upon)]
 
         else:
             if (advice_upon == 'nodes'): samples = net.nodes()
@@ -20,26 +25,8 @@ def reverse_reduction(net, sample_size, T_percentage, advice_sampling_threshold,
                 return
 
             for i in range(advice_sampling_threshold):
-                yield [ BDT_calculator   (net, util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon, bias_on), T_percentage, BD_criteria, advice_upon) ]
+                yield [ BDT_calculator   (net, util.advice (net, util.sample_p_elements(samples,sample_size), configs), tolerance, BD_criteria, advice_upon) ]
 
-
-#--------------------------------------------------------------------------------------------------  
-def exp_reduction(net, sample_size, T_percentage, advice_sampling_threshold, advice_upon, biased, BD_criteria, bias_on):
-    assert(False) #should not be used
-
-    #print ("in reducer, " + str(advice_sampling_threshold))
-    if  advice_sampling_threshold <=0:
-        print ("WARNING: reverse_reduction yields empty set.")
-        Bs,Ds, tol = [{},{},0]
-    else:
-        if (advice_upon == 'nodes'): samples = net.nodes()
-        elif (advice_upon == 'edges'): samples = net.edges()
-        else:
-            print ("ERROR reverse_reduction: unknown advice_upon: " + str(advice_upon))
-            return
-
-        Bs,Ds,tol = BDT_calculator   (net, util.advice (net, util.sample_p_elements(samples,sample_size), biased, advice_upon,bias_on), T_percentage, BD_criteria, advice_upon)
-    return Bs,Ds,tol
 
 
 def exp_BDs(net, configs):

@@ -19,7 +19,11 @@ def sample_p_elements (elements,p):
     return  random.sample(elements,p)
     #return  random.SystemRandom().sample(elements,p) 
 #--------------------------------------------------------------------------------------------------
-def advice (M, samples, biased, advice_upon, bias_on):
+def advice (M, samples, configs):
+
+    advice_upon = configs['advice_upon']
+    biased = boool(configs['biased'])
+
     advice = {}
     if not biased:
         for element in samples:
@@ -30,7 +34,7 @@ def advice (M, samples, biased, advice_upon, bias_on):
     else:
         for element in samples:
 
-            biased_center = indiv_conserv_score(element, M, advice_upon, biased, bias_on)
+            biased_center = indiv_conserv_score(element, M, configs)
 
             rand                = random.uniform(0,1)
             #rand                = random.SystemRandom().uniform(0,1)
@@ -179,7 +183,7 @@ def test_stop_condition(size, gen, configs):
     if (stop_condition == 'size'):
         if (size < end_size): cont = True
         else: cont = False
-    elif (stop_condition == 'gen'):
+    elif (stop_condition == 'generation'):
         if (gen < max_gen): cont = True
         else: cont = False
     else:

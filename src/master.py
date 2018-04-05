@@ -107,7 +107,7 @@ def init_run(configs):
         fitness.eval_fitness([population[0]], fitness_direction)
 
         gen, size = 0, start_size
-        keep_running = test_stop_condition(size, gen, configs)
+        keep_running = util.test_stop_condition(size, gen, configs)
 
     return population, gen, size, advice, BD_table, num_survive, keep_running
 

@@ -19,7 +19,8 @@ def load_sim_configs (param_file, rank, num_workers):
     configs['KP_solver_name']      = configs['KP_solver_binary'].split('/')[-1].split('.')[0]
     configs['timestamp']           = time.strftime("%B-%d-%Y-h%Hm%Ms%S")
     configs ['output_directory'] += "/"
-    configs['num_workers'] = num_workers
+
+    if (configs['number_of_workers'] != num_workers): util.cluster_print(configs['output_directory'], "\nWARNING in init.load_sim_configs(): mpi #workers != config #workers! " + str(configs['num_workers']) + " vs " + str(num_workers) + "\n")  # not sure why this doesn't correctly get # config workers...
 
     #kp_only, stamp may need work
     configs['datapoints_dir'] = configs['output_directory'] + "02_raw_instances_simulation/data_points/"
