@@ -49,7 +49,7 @@ def final_master_info(population, gen, configs):
 
 def init_csv(out_dir, configs):
  
-    csv_title = "Generation, Net Size, Fitness, Fitness, Leaf Measure,  Hub Measure, Average Degree, Edge:Node Ratio, Mean Fitness, Variance in Fitness, Fitness_Div_#Edges, Fitness_Div_#Nodes\n"
+    csv_title = "Generation, Net Size, Fitness, Leaf Measure,  Hub Measure, Average Degree, Edge:Node Ratio, Mean Fitness, Variance in Fitness, Fitness_Div_#Edges, Fitness_Div_#Nodes\n"
     deg_distrib_title = "Generation, Net Size, In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies, Degs, Deg Freqs\n"
 
     deg_summary_title = "In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
@@ -90,7 +90,7 @@ def popn_data(population, output_dir, gen):
 
             Net = population[0] #most fit net
             net = Net.net
-            nets_info = [gen, len(net.nodes()), Net.fitness, Net.fitness_parts[0], Net.fitness_parts[1], Net.fitness_parts[2], sum(net.degree().values())/len(net.nodes()),len(net.edges())/len(net.nodes()), mean_fitness, var_fitness, Net.fitness/float(len(net.edges())), Net.fitness/float(len(net.nodes()))]
+            nets_info = [gen, len(net.nodes()), Net.fitness, Net.leaf_fitness, Net.hub_fitness, sum(net.degree().values())/len(net.nodes()),len(net.edges())/len(net.nodes()), mean_fitness, var_fitness, Net.fitness/float(len(net.edges())), Net.fitness/float(len(net.nodes()))]
 
             output.writerow(nets_info)
 

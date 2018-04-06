@@ -23,7 +23,7 @@ def evolve_master(configs):
         output.master_info(population, gen, size, pop_size, num_survive, advice, BD_table, configs)
         write_mpi_info(output_dir, gen)
 
-        if biased: biases = bias.gen_biases(gen/max_gen, configs) #all nets must have same bias to have comparable fitness
+        if biased: biases = bias.gen_biases(configs) #all nets must have same bias to have comparable fitness
         else: biases = None
 
         distrib_workers(population, gen, worker_pop_size, num_survive, gen, advice, BD_table, biases, configs)

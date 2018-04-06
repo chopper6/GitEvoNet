@@ -39,6 +39,9 @@ def add_nodes(net, num_add, configs, biases=None):
     biased = util.boool(configs['biased'])
     bias_on = configs['bias_on']
 
+    if biases: assert(biased)
+    # note that the converse may not be true: net_generator will mutate first and add biases later
+
     # ADD NODE
     for i in range(num_add):
         pre_size = post_size = len(net.nodes())
@@ -49,18 +52,19 @@ def add_nodes(net, num_add, configs, biases=None):
                 post_size = len(net.nodes())
                 assert(pre_size < post_size)
 
-        if biased and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'], set_bias=biases[i])
-        elif biased and bias_on == 'edges': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'])
+
+        if biases and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'], set_bias=biases[i])
+        elif biases and bias_on == 'edges': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
-        if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, bias_given=biases[i])
-        elif biased and bias_on == 'nodes': add_this_edge(net, configs, node1=new_node, random_direction=True)
+        if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, biases=biases[i])
+        elif biases and bias_on == 'nodes': add_this_edge(net, configs, node1=new_node, random_direction=True)
 
     # MAINTAIN NODE_EDGE RATIO
     num_edge_add = int(num_add * float(configs['edge_to_node_ratio'])) - num_add
     if biases and bias_on == 'edges':
         assert(len(biases) == num_edge_add + num_add)
-        add_edges(net, num_edge_add, configs, biases_given=biases[num_add:])
+        add_edges(net, num_edge_add, configs, biases=biases[num_add:])
     else:  add_edges(net, num_edge_add, configs)
 
 
@@ -95,7 +99,6 @@ def rewire(net, num_rewire, bias, bias_on, dirr, configs):
         rm_edges(net,1,configs)
 
 
-
 def change_edge_sign(net, num_sign):
     for i in range(num_sign):
         pre_edges = len(net.edges())
@@ -110,15 +113,16 @@ def change_edge_sign(net, num_sign):
 
 
 ############################### EDGE FUNCTIONS ################################
-def add_edges(net, num_add, configs, biases_given=None):
-
+def add_edges(net, num_add, configs, biases=None):
 
     #if (num_add == 0): print("WARNING in mutate(): 0 nodes added in add_nodes\n")
 
-    if (biases_given): assert (len(biases_given)==num_add)
+    if (biases):
+        assert (len(biases)==num_add)
+        assert (util.boool(configs['biased'])) # note that the converse may not be true: net_generator will mutate first and add biases later
 
     for j in range(num_add):
-        if (biases_given): add_this_edge(net,configs, bias_given=biases_given[j])
+        if (biases): add_this_edge(net,configs, biases=biases[j])
         else: add_this_edge(net, configs)
 
     if util.boool(configs['single_cc']):
@@ -127,9 +131,8 @@ def add_edges(net, num_add, configs, biases_given=None):
         if (num_cc != 1): ensure_single_cc(net, configs)
 
 
-def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direction=False, bias_given=None):
+def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direction=False, biases=None):
 
-    biased = util.boool(configs['biased'])
     reverse_allowed = util.boool(configs['reverse_edges_allowed'])
     bias_on = configs['bias_on']
 
@@ -171,7 +174,7 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direct
         i+=1
         if (i == 10000000): util.cluster_print(configs['output_directory'], "\n\n\nWARNING mutate.add_this_edge() is looping a lot.\nNode1 = " + str(node1_set) + ", Node2 = " + str(node2_set) +  "\n\n\n")
 
-    if (biased == True and bias_on == 'edges'): bias.assign_an_edge_consv(net, [node1,node2], configs['bias_distribution'], bias_given=bias_given)
+    if (biases and bias_on == 'edges'): bias.assign_an_edge_consv(net, [node1,node2], configs['bias_distribution'], biases=biases)
 
 
 def rm_edges(net, num_rm, configs):

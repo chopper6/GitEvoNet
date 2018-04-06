@@ -2,7 +2,7 @@ import mutate, pickle, numpy as np
 from random import SystemRandom as sysRand
 
 
-def gen_biases(gen_percent, configs):
+def gen_biases(configs):
     bias_on = configs['bias_on']
     distrib = configs['bias_distribution']
 
@@ -17,7 +17,6 @@ def gen_biases(gen_percent, configs):
     for i in range(num_biases): biases.append(bias_score(distrib))
 
     return biases
-
 
 
 def assign_node_consv(population, distrib):

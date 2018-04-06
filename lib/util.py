@@ -1,11 +1,4 @@
 import sys, random
-#--------------------------------------------------------------------------------------------------
-def getCommandLineArgs():
-    assert(False)
-    if len(sys.argv) < 2:
-        print ("Usage: python3 test.py [/absolute/path/to/configs/file.txt]\nExiting..\n")
-        sys.exit()
-    return str(sys.argv[1])
 #----------------------------------------------------------------------------  
 def slash(path): #likely kp only
     return path+(path[-1] != '/')*'/'
@@ -60,7 +53,6 @@ def advice (M, samples, configs):
 
 # --------------------------------------------------------------------------------------------------
 def single_advice(M, element, configs):
-    #TODO: add global bias
 
     biased = boool(configs['biased'])
 

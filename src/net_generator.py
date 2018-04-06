@@ -7,7 +7,8 @@ import pickle
 class Net:
     def __init__(self, net, id):
         self.fitness = 0  #aim to max
-        self.fitness_parts = [0]*3   #leaf-fitness, hub-fitness
+        self.leaf_fitness = 0
+        self.hub_fitness = 0
         self.net = net.copy()
         #assert(self.net != net)
         self.id = id  #irrelv i think
@@ -154,34 +155,18 @@ def init_population(init_type, start_size, pop_size, configs):
         population = [Net(nx.configuration_model([3 for e in range(start_size)]),i) for i in range(pop_size)]
 
     elif (init_type == 'random'):
-        style = 'static' #vs stoch
 
-        if (style == 'stoch'): #older version
+        if (start_size <= 20):
+            init_net = nx.empty_graph(start_size, create_using=nx.DiGraph())
+            num_add = int(edge_node_ratio*start_size)
+            mutate.add_edges(init_net, num_add, configs)
 
-            estim_p = num_edges/float(start_size*start_size)
-            init_net = nx.erdos_renyi_graph(start_size, estim_p, directed=True, seed=None)
-            sign_edges_single(init_net)
-            if (len(init_net.edges()) < num_edges):
-                num_add = num_edges - len(init_net.edges())
-                mutate.add_edges(init_net, num_add, configs)
-
-            elif (len(init_net.edges()) > num_edges):
-                num_rm = len(init_net.edges()) - num_edges
-                mutate.rm_edges(init_net, num_rm)
-
-        elif (style == 'static'):
-
-            if (start_size <= 20):
-                init_net = nx.empty_graph(start_size, create_using=nx.DiGraph())
-                num_add = int(edge_node_ratio*start_size)
-                mutate.add_edges(init_net, num_add, configs)
-
-            else: #otherwise rewire till connected is intractable
-                init_net = nx.empty_graph(8, create_using=nx.DiGraph())
-                num_add = int(edge_node_ratio*8)
-                mutate.add_edges(init_net, num_add, configs)
-                mutate.add_nodes(init_net, start_size-8, configs)
-                if (len(init_net.edges()) == num_edges+1): mutate.rm_edges(init_net, 1, configs)
+        else: #otherwise rewire till connected is intractable, grow without selection instead
+            init_net = nx.empty_graph(8, create_using=nx.DiGraph())
+            num_add = int(edge_node_ratio*8)
+            mutate.add_edges(init_net, num_add, configs)
+            mutate.add_nodes(init_net, start_size-8, configs)
+            if (len(init_net.edges()) == num_edges+1): mutate.rm_edges(init_net, 1, configs)
 
         mutate.ensure_single_cc(init_net, configs)
         assert(len(init_net.edges()) == num_edges)

@@ -7,7 +7,7 @@ def reverse_reduction(net, sample_size, advice_sampling_threshold, advice, confi
 
     advice_upon = configs['advice_upon']
     BD_criteria = configs['BD_criteria']
-    tolerance = int(configs['PT_pairs_dict'][1][1])
+    tolerance = int(configs['tolerance'])
 
     if  advice_sampling_threshold <=0:
         print ("WARNING: reverse_reduction yields empty set.")
