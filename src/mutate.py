@@ -35,7 +35,6 @@ def mutate(configs, net, biases = None):
 ################################ MUTATIONS ################################
 def add_nodes(net, num_add, configs, biases=None):
 
-    edge_node_ratio = float(configs['edge_to_node_ratio'])
     biased = util.boool(configs['biased'])
     bias_on = configs['bias_on']
 
@@ -52,13 +51,12 @@ def add_nodes(net, num_add, configs, biases=None):
                 post_size = len(net.nodes())
                 assert(pre_size < post_size)
 
-
         if biases and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'], set_bias=biases[i])
         elif biases and bias_on == 'edges': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
         if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, biases=biases[i])
-        elif biases and bias_on == 'nodes': add_this_edge(net, configs, node1=new_node, random_direction=True)
+        else: add_this_edge(net, configs, node1=new_node, random_direction=True)
 
     # MAINTAIN NODE_EDGE RATIO
     num_edge_add = int(num_add * float(configs['edge_to_node_ratio'])) - num_add

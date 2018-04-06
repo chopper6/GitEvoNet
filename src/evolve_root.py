@@ -115,5 +115,6 @@ if __name__ == "__main__":
 
     evolve(rank, num_workers, config_file)
 
-    print("\nFinished Evolution.\n")
-    if (rank==0): comm.Abort()
+    if (rank==0):
+        comm.Abort()
+        print("\nExiting Evolution.\n")
