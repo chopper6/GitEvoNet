@@ -92,7 +92,7 @@ def calc_fitness(net, BD_table, configs):
     else: #TODO: fix dis later
         for n in net.nodes():
             deg = net.in_degree(n) + net.out_degree(n)
-            p = net.node[n]['conservation_score']
+            p = net.node[n]['bias']
             node_fitness = 0
             for B in range(deg+1):
                 D = deg - B

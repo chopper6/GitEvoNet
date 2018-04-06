@@ -30,9 +30,9 @@ def assign_node_consv(population, distrib):
 
 def assign_a_node_consv(net, node, distrib, set_bias=None):
     #redundant with assign_an_edge_consv()
-    if set_bias: consv_score = set_bias
-    else: consv_score = bias_score(distrib)
-    net.node[node]['conservation_score'] = consv_score
+    if set_bias: bias = set_bias
+    else: bias = bias_score(distrib)
+    net.node[node]['bias'] = bias
 
 
 def assign_edge_consv(population, distrib):
@@ -47,12 +47,12 @@ def assign_edge_consv(population, distrib):
 
 def assign_an_edge_consv(net, edge, distrib, bias_given=None):
     if bias_given:
-        consv_score = bias_given
+        bias = bias_given
 
     else:
-        consv_score = bias_score(distrib)
+        bias = bias_score(distrib)
 
-    net[edge[0]][edge[1]]['conservation_score'] = consv_score
+    net[edge[0]][edge[1]]['bias'] = bias
 
 
 def bias_score(distrib):
@@ -60,12 +60,12 @@ def bias_score(distrib):
         return sysRand().uniform(0, 1)
 
     elif (distrib == 'normal'):
-        consv_score = sysRand().normalvariate(.5, .2)
-        if consv_score > 1:
-            consv_score = 1
-        elif consv_score < 0:
-            consv_score = 0
-        return consv_score
+        bias = sysRand().normalvariate(.5, .2)
+        if bias > 1:
+            bias = 1
+        elif bias < 0:
+            bias = 0
+        return bias
 
     elif (distrib == 'bi'):
         return sysRand().choice([.1, .9])
@@ -103,11 +103,11 @@ def pickle_bias(net, output_dir, bias_on): #for some reason bias_on isn't recogn
             for node in net.nodes():
                 if (len(net.in_edges(node))+len(net.out_edges(node)) == deg):
                     if (bias_on == 'nodes'):
-                        avg_consv += abs(.5-net.node[node]['conservation_score'])
+                        avg_consv += abs(.5-net.node[node]['bias'])
 
                         avg_ngh_consv = 0
                         for ngh in net.neighbors(node):
-                            avg_ngh_consv += net.node[ngh]['conservation_score']
+                            avg_ngh_consv += net.node[ngh]['bias']
 
                         num_ngh = len(net.neighbors(node))
                         if num_ngh > 0: avg_ngh_consv /= num_ngh
@@ -118,7 +118,7 @@ def pickle_bias(net, output_dir, bias_on): #for some reason bias_on isn't recogn
                         for edge in net.in_edges(node)+net.out_edges(node):
                             #poss err if out_edges are backwards
 
-                            node_consv += (.5-net[edge[0]][edge[1]]['conservation_score'])
+                            node_consv += (.5-net[edge[0]][edge[1]]['bias'])
                             num_edges += 1
                         node_consv = abs(node_consv)
                         if (num_edges != 0): node_consv /= num_edges

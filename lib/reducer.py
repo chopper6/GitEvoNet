@@ -79,8 +79,8 @@ def prob_reduction(net, global_ben_bias, distribn, biased, biased_on, leaf_metri
 
     for edge in net.edges():
         source, target = edge[0], edge[1]
-        if (biased == True and biased_on == 'edges'): indiv_bias = net[source][target]['conservation_score']
-        elif (biased == True and biased_on == 'nodes'): indiv_bias = (net.node[source]['conservation_score'] + net.node[target]['convservation_score']) / 2
+        if (biased == True and biased_on == 'edges'): indiv_bias = net[source][target]['bias']
+        elif (biased == True and biased_on == 'nodes'): indiv_bias = (net.node[source]['bias'] + net.node[target]['bias']) / 2
         else: indiv_bias = .5
 
         indiv_bias -= .5 #so btwn -.5,.5

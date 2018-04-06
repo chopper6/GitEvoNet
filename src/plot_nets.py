@@ -77,18 +77,18 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
                 for node in net.nodes():
                     if (net.degree(node) == deg):
                         if (bias_on == 'nodes'):
-                            avg_consv += abs(.5-net.node[node]['conservation_score'])
+                            avg_consv += abs(.5-net.node[node]['bias'])
 
                             avg_ngh_consv = 0
                             for ngh in net.neighbors(node):
-                                avg_ngh_consv += net.node[ngh]['conservation_score']
+                                avg_ngh_consv += net.node[ngh]['bias']
                             avg_ngh_consv /= len(net.neighbors(node))
                             ngh_consv += abs(.5-avg_ngh_consv)
 
                         elif (bias_on == 'edges'): #node consv is normalized by num edges
                             node_consv, num_edges = 0, 0
                             for edge in net.edges(node):
-                                node_consv += net[edge[0]][edge[1]]['conservation_score']
+                                node_consv += net[edge[0]][edge[1]]['bias']
                                 num_edges += 1
                             if (num_edges != 0): node_consv /= num_edges
                         num_nodes += 1
