@@ -27,7 +27,7 @@ def advice (M, samples, configs):
     else:
         for element in samples:
 
-            biased_center = indiv_conserv_score(element, M, configs)
+            indiv_bias = retrieve_indiv_bias(element, M, configs)
 
             rand                = random.uniform(0,1)
             #rand                = random.SystemRandom().uniform(0,1)
@@ -73,6 +73,38 @@ def single_advice(M, element, configs):
 
     return advice
 #--------------------------------------------------------------------------------------------------
+
+def retrieve_indiv_bias(element, M, configs):
+
+    advice_upon = configs['advice_upon']
+    bias_on = configs['bias_on']
+    biased = boool(configs['biased'])
+
+    if not biased: return .5
+
+    if (advice_upon == 'nodes'):
+        assert (bias_on == 'nodes') #not sure what advice on nodes, bias on edges would be represented as
+        bias = M.node[element]['bias']
+
+    elif (advice_upon == 'edges'):
+        source = int(element[0])
+        target = int(element[1])
+        if (M.has_edge(source, target)):
+            if (bias_on == 'nodes'):
+                # this is one possible way to handle advice on edges, but bias on nodes
+                bias = (M.node[source]['bias'] + M.node[target]['bias']) / 2
+            elif (bias_on == 'edges'):
+                bias = M[source][target]['bias']
+            else:
+                print("ERROR  util.advice(): unknown bias_on: " + str(bias_on))
+                bias = False
+        else:
+            print("ERROR  util.advice(): could not find desired edge.\n")
+            bias = False
+
+    return bias
+
+
 
 def indiv_conserv_score(element, M, configs):
 
