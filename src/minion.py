@@ -76,7 +76,7 @@ def evolve_minion(worker_file, gen, rank, output_dir):
 
     for p in range(pop_size):
         mutate.mutate(configs, population[p].net, biases=biases)
-        pressurize.pressurize(configs, population[p].net, None, advice, BD_table)  # false: don't track node fitness, None: don't write instances to file
+        pressurize.pressurize(configs, population[p].net, None, advice, BD_table)  # None: don't write instances to file
 
     population = sort_popn(population, fitness_direction)
     write_out_worker(output_dir + "/to_master/" + str(gen) + "/" + str(rank), population, num_return)

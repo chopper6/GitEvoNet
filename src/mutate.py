@@ -51,8 +51,8 @@ def add_nodes(net, num_add, configs, biases=None):
                 post_size = len(net.nodes())
                 assert(pre_size < post_size)
 
-        if biases and bias_on == 'nodes': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'], set_bias=biases[i])
-        elif biases and bias_on == 'edges': bias.assign_a_node_consv(net, new_node, configs['bias_distribution'])
+        if biases and bias_on == 'nodes': bias.assign_a_node_bias(net, new_node, configs['bias_distribution'], given_bias=biases[i])
+        elif biases and bias_on == 'edges': bias.assign_a_node_bias(net, new_node, configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
         if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, biases=biases[i])
@@ -172,7 +172,7 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direct
         i+=1
         if (i == 10000000): util.cluster_print(configs['output_directory'], "\n\n\nWARNING mutate.add_this_edge() is looping a lot.\nNode1 = " + str(node1_set) + ", Node2 = " + str(node2_set) +  "\n\n\n")
 
-    if (biases and bias_on == 'edges'): bias.assign_an_edge_consv(net, [node1,node2], configs['bias_distribution'], biases=biases)
+    if (biases and bias_on == 'edges'): bias.assign_an_edge_bias(net, [node1,node2], configs['bias_distribution'], bias_given=biases)
 
 
 def rm_edges(net, num_rm, configs):

@@ -146,16 +146,17 @@ def distrib_workers(population, itern, worker_pop_size, num_survive, gen, advice
     output_dir = configs['output_directory']
     debug = util.boool(configs['debug'])
 
-    if (debug == True):  # sequential debug, may be outdated
-        dump_file = output_dir + "to_workers/" + str(itern) + "/1"
-        seed = population[0].copy()
-        randSeeds = os.urandom(sysRand().randint(0, 1000000))
-        worker_args = [0, seed, worker_pop_size, min(worker_pop_size, num_survive), randSeeds, advice, BD_table, biases, configs]
-        with open(dump_file, 'wb') as file:
-            pickle.dump(worker_args, file)
-        # pool.map_async(minion.evolve_minion, (dump_file,))
-        minion.evolve_minion(dump_file, itern, 0, output_dir)
-        sleep(.0001)
+    if (debug == True):  # sequential debug
+        for w in range(1, num_workers + 1):
+            dump_file = output_dir + "to_workers/" + str(itern) + "/" + str(w)
+            seed = population[0].copy()
+            randSeeds = os.urandom(sysRand().randint(0, 1000000))
+            worker_args = [0, seed, worker_pop_size, min(worker_pop_size, num_survive), randSeeds, advice, BD_table, biases, configs]
+            with open(dump_file, 'wb') as file:
+                pickle.dump(worker_args, file)
+            # pool.map_async(minion.evolve_minion, (dump_file,))
+            minion.evolve_minion(dump_file, itern, 0, output_dir)
+            sleep(.0001)
 
     else:
         for w in range(1, num_workers + 1):

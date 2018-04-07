@@ -7,14 +7,14 @@ np.set_printoptions(formatter={'int_kind': lambda x:' {0:d}'.format(x)})
 
 def master_info(population, gen, size, pop_size, num_survive, advice, BD_table, configs):
     output_dir = configs['output_directory']
-    num_output = int(configs['num_output'])
+    num_data_output = int(configs['num_data_output'])
     num_net_output = int(configs['num_net_output'])
     max_gen = int(configs['max_generations'])
     num_instance_output = int(configs['num_instance_output'])
     instance_file = configs['instance_file']
     if (num_instance_output==0): instance_file = None
 
-    if (gen % int(max_gen / num_output) == 0):
+    if (gen % int(max_gen / num_data_output) == 0):
         popn_data(population, output_dir, gen)
         util.cluster_print(output_dir, "Master at gen " + str(gen) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
         nx.write_edgelist(population[0].net, output_dir + "/fittest_net.edgelist")
@@ -29,6 +29,7 @@ def master_info(population, gen, size, pop_size, num_survive, advice, BD_table, 
         pickle_file = output_dir + "/pickle_nets/" + str(gen) + "_pickle"
         with open(pickle_file, 'wb') as file:
             pickle.dump(population[0].net, file)
+        deg_distrib_csv(output_dir, population, gen)
 
 
 
@@ -94,34 +95,35 @@ def popn_data(population, output_dir, gen):
 
             output.writerow(nets_info)
 
-        with open(output_dir + "/degree_distrib.csv", 'a') as deg_file:
-            #only distribution of most fit net
-            output = csv.writer(deg_file)
+def deg_distrib_csv(output_dir, population, gen):
+    with open(output_dir + "/degree_distrib.csv", 'a') as deg_file:
+        #only distribution of most fit net
+        output = csv.writer(deg_file)
 
-            distrib_info = []
-            distrib_info.append(gen)
-            distrib_info.append(len(population[0].net.nodes()))
+        distrib_info = []
+        distrib_info.append(gen)
+        distrib_info.append(len(population[0].net.nodes()))
 
-            in_degrees, out_degrees = list(population[0].net.in_degree().values()), list(population[0].net.out_degree().values())
+        in_degrees, out_degrees = list(population[0].net.in_degree().values()), list(population[0].net.out_degree().values())
 
-            indegs, indegs_freqs = np.unique(in_degrees, return_counts=True)
-            indegs = np.array2string(indegs).replace('\n', '')
-            indegs_freqs = np.array2string(indegs_freqs).replace('\n', '')
-            distrib_info.append(indegs)
-            distrib_info.append(indegs_freqs)
+        indegs, indegs_freqs = np.unique(in_degrees, return_counts=True)
+        indegs = np.array2string(indegs).replace('\n', '')
+        indegs_freqs = np.array2string(indegs_freqs).replace('\n', '')
+        distrib_info.append(indegs)
+        distrib_info.append(indegs_freqs)
 
-            outdegs, outdegs_freqs = np.unique(out_degrees, return_counts=True)
-            outdegs = np.array2string(outdegs).replace('\n', '')
-            outdegs_freqs = np.array2string(outdegs_freqs).replace('\n', '')
-            distrib_info.append(outdegs)
-            distrib_info.append(outdegs_freqs)
+        outdegs, outdegs_freqs = np.unique(out_degrees, return_counts=True)
+        outdegs = np.array2string(outdegs).replace('\n', '')
+        outdegs_freqs = np.array2string(outdegs_freqs).replace('\n', '')
+        distrib_info.append(outdegs)
+        distrib_info.append(outdegs_freqs)
 
-            degrees = list(net.degree().values())
-            degs, freqs = np.unique(degrees, return_counts=True)
-            degs = np.array2string(degs).replace('\n', '')
-            freqs = np.array2string(freqs).replace('\n', '')
-            distrib_info.append(degs)
-            distrib_info.append(freqs)
+        degrees = list(population[0].net.degree().values())
+        degs, freqs = np.unique(degrees, return_counts=True)
+        degs = np.array2string(degs).replace('\n', '')
+        freqs = np.array2string(freqs).replace('\n', '')
+        distrib_info.append(degs)
+        distrib_info.append(freqs)
 
-            output.writerow(distrib_info)
+        output.writerow(distrib_info)
 

@@ -16,8 +16,8 @@ class Net:
     def copy(self):
         copy = Net(self.net, self.id)
         copy.fitness = self.fitness
-        self.leaf_fitness = 0
-        self.hub_fitness = 0
+        copy.leaf_fitness = self.leaf_fitness
+        copy.hub_fitness = self.hub_fitness
         #assert (copy != self and copy.net != self.net)
         #assert (copy.fitness_parts != self.fitness_parts)
         return copy
@@ -181,8 +181,8 @@ def init_population(init_type, start_size, pop_size, configs):
 
     if (sign_edges_needed == True): sign_edges(population)
     if util.boool(configs['biased']):
-        if (configs['bias_on'] == 'nodes'): bias.assign_node_consv(population, configs['bias_distribution'])
-        elif (configs['bias_on'] == 'edges'): bias.assign_edge_consv(population, configs['bias_distribution'])
+        if (configs['bias_on'] == 'nodes'): bias.assign_node_bias(population, configs['bias_distribution'])
+        elif (configs['bias_on'] == 'edges'): bias.assign_edge_bias(population, configs['bias_distribution'])
         else: print("ERROR in net_generator(): unknown bias_on: " + str (configs['bias_on']))
     return population
 

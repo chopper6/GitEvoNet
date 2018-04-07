@@ -8,7 +8,6 @@ def gen_biases(configs):
 
     num_mutns = mutate.num_mutations(float(configs['grow_mutation_frequency']))
 
-
     if bias_on == 'edges': num_biases = int(num_mutns * float(configs['edge_to_node_ratio']))
     elif bias_on=='nodes': num_biases = int(num_mutns)
     else: assert(False)
@@ -19,35 +18,47 @@ def gen_biases(configs):
     return biases
 
 
-def assign_node_consv(population, distrib):
-    # since assigns to whole population, will be biased since selection will occur on most fit distribution of conservation scores
+def assign_node_bias(population, distrib):
+    # assumes all nets in popn are the same size
+
+    biases = []
+    for n in range(len(population[0].net.nodes())):
+        biases.append(bias_score(distrib))
+
     for p in range(len(population)):
         net = population[p].net
+        b=0
         for n in net.nodes():
-            assign_a_node_consv(net, n, distrib)
+            assign_a_node_bias(net, n, distrib, given_bias=biases[b])
+            b+=1
 
     return population
 
-def assign_a_node_consv(net, node, distrib, set_bias=None):
-    #redundant with assign_an_edge_consv()
-    if set_bias: bias = set_bias
+def assign_a_node_bias(net, node, distrib, given_bias=None):
+    #redundant with assign_an_edge_bias()
+    if given_bias: bias = given_bias
     else: bias = bias_score(distrib)
     net.node[node]['bias'] = bias
 
 
-def assign_edge_consv(population, distrib):
-    # since assigns to whole population, will be biased since selection will occur on most fit distribution of conservation scores
+def assign_edge_bias(population, distrib):
+    biases = []
+    for e in range(len(population[0].net.edges())):
+        biases.append(bias_score(distrib))
+
     for p in range(len(population)):
         net = population[p].net
-        for edge in net.edges():
-            assign_an_edge_consv(net, edge, distrib)
+        b = 0
+        for e in net.edges():
+            assign_an_edge_bias(net, e, distrib, given_bias=biases[b])
+            b += 1
 
     return population
 
 
-def assign_an_edge_consv(net, edge, distrib, bias_given=None):
-    if bias_given:
-        bias = bias_given
+def assign_an_edge_bias(net, edge, distrib, given_bias=None):
+    if given_bias:
+        bias = given_bias
 
     else:
         bias = bias_score(distrib)
@@ -97,43 +108,43 @@ def pickle_bias(net, output_dir, bias_on): #for some reason bias_on isn't recogn
         if (percent): freq = [(f/tot)*100 for f in freqs]
 
         #derive vals from conservation scores
-        consv_vals, ngh_consv_vals = [], []
-        for deg in degs: #deg consv is normalized by num nodes; node consv is normz by num edges
-            avg_consv, ngh_consv, num_nodes = 0,0,0
+        bias_vals, ngh_bias_vals = [], []
+        for deg in degs: #deg bias is normalized by num nodes; node bias is normz by num edges
+            avg_bias, ngh_bias, num_nodes = 0,0,0
             for node in net.nodes():
                 if (len(net.in_edges(node))+len(net.out_edges(node)) == deg):
                     if (bias_on == 'nodes'):
-                        avg_consv += abs(.5-net.node[node]['bias'])
+                        avg_bias += abs(.5-net.node[node]['bias'])
 
-                        avg_ngh_consv = 0
+                        avg_ngh_bias = 0
                         for ngh in net.neighbors(node):
-                            avg_ngh_consv += net.node[ngh]['bias']
+                            avg_ngh_bias += net.node[ngh]['bias']
 
                         num_ngh = len(net.neighbors(node))
-                        if num_ngh > 0: avg_ngh_consv /= num_ngh
-                        ngh_consv += abs(.5-avg_ngh_consv)
+                        if num_ngh > 0: avg_ngh_bias /= num_ngh
+                        ngh_bias += abs(.5-avg_ngh_bias)
 
-                    elif (bias_on == 'edges'): #node consv is normalized by num edges
-                        node_consv, num_edges = 0, 0
+                    elif (bias_on == 'edges'): #node bias is normalized by num edges
+                        node_bias, num_edges = 0, 0
                         for edge in net.in_edges(node)+net.out_edges(node):
                             #poss err if out_edges are backwards
 
-                            node_consv += (.5-net[edge[0]][edge[1]]['bias'])
+                            node_bias += (.5-net[edge[0]][edge[1]]['bias'])
                             num_edges += 1
-                        node_consv = abs(node_consv)
-                        if (num_edges != 0): node_consv /= num_edges
+                        node_bias = abs(node_bias)
+                        if (num_edges != 0): node_bias /= num_edges
                         assert(num_edges == deg)
-                        avg_consv += node_consv
+                        avg_bias += node_bias
 
                     num_nodes += 1
 
-            avg_consv /= num_nodes
-            ngh_consv /= num_nodes
-            consv_vals.append(avg_consv)
-            ngh_consv_vals.append(ngh_consv)
-        assert(len(consv_vals) == len(degs))
+            avg_bias /= num_nodes
+            ngh_bias /= num_nodes
+            bias_vals.append(avg_bias)
+            ngh_bias_vals.append(ngh_bias)
+        assert(len(bias_vals) == len(degs))
 
 
         with open(output_dir + "/degs_freqs_bias",'wb') as file:
-            pickle.dump( [degs, freqs, consv_vals] , file)
+            pickle.dump( [degs, freqs, bias_vals] , file)
 

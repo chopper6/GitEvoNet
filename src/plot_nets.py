@@ -70,45 +70,45 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
         if (type=='loglog%' or type=='scatter%'): freqs = [(f/tot)*100 for f in freqs]
 
         #derive vals from conservation scores
-        consv_vals, ngh_consv_vals = [], []
+        bias_vals, ngh_bias_vals = [], []
         if (biased == True or biased == 'True'):
-            for deg in degs: #deg consv is normalized by num nodes
-                avg_consv, ngh_consv, num_nodes = 0,0,0
+            for deg in degs: #deg bias is normalized by num nodes
+                avg_bias, ngh_bias, num_nodes = 0,0,0
                 for node in net.nodes():
                     if (net.degree(node) == deg):
                         if (bias_on == 'nodes'):
-                            avg_consv += abs(.5-net.node[node]['bias'])
+                            avg_bias += abs(.5-net.node[node]['bias'])
 
-                            avg_ngh_consv = 0
+                            avg_ngh_bias = 0
                             for ngh in net.neighbors(node):
-                                avg_ngh_consv += net.node[ngh]['bias']
-                            avg_ngh_consv /= len(net.neighbors(node))
-                            ngh_consv += abs(.5-avg_ngh_consv)
+                                avg_ngh_bias += net.node[ngh]['bias']
+                            avg_ngh_bias /= len(net.neighbors(node))
+                            ngh_bias += abs(.5-avg_ngh_bias)
 
-                        elif (bias_on == 'edges'): #node consv is normalized by num edges
-                            node_consv, num_edges = 0, 0
+                        elif (bias_on == 'edges'): #node bias is normalized by num edges
+                            node_bias, num_edges = 0, 0
                             for edge in net.edges(node):
-                                node_consv += net[edge[0]][edge[1]]['bias']
+                                node_bias += net[edge[0]][edge[1]]['bias']
                                 num_edges += 1
-                            if (num_edges != 0): node_consv /= num_edges
+                            if (num_edges != 0): node_bias /= num_edges
                         num_nodes += 1
-                avg_consv /= num_nodes
-                ngh_consv /= num_nodes
-                consv_vals.append(avg_consv)
-                ngh_consv_vals.append(ngh_consv)
-            assert(len(consv_vals) == len(degs))
+                avg_bias /= num_nodes
+                ngh_bias /= num_nodes
+                bias_vals.append(avg_bias)
+                ngh_bias_vals.append(ngh_bias)
+            assert(len(bias_vals) == len(degs))
 
             with open(destin_path + "/degs_freqs_bias_nghBias",'wb') as file:
-                pickle.dump(file, [degs, freqs, consv_vals, ngh_consv_vals])
+                pickle.dump(file, [degs, freqs, bias_vals, ngh_bias_vals])
 
 
             cmap = plt.get_cmap('plasma')
-            consv_colors = cmap(consv_vals)
+            bias_colors = cmap(bias_vals)
 
-            if (type == 'loglog' or type=='loglog%'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, c = consv_colors, alpha=1, markersize=8, marker='D', markeredgecolor='None')
+            if (type == 'loglog' or type=='loglog%'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, c = bias_colors, alpha=1, markersize=8, marker='D', markeredgecolor='None')
             elif (type == 'scatter' or type=='scatter%'):
                 sizes = [10 for i in range(len(degs))]
-                plt.scatter(degs, freqs, c = consv_colors, alpha=1, s=sizes, marker='D')
+                plt.scatter(degs, freqs, c = bias_colors, alpha=1, s=sizes, marker='D')
 
         else:
             if (type == 'loglog' or type=='loglog%'): plt.loglog(degs, freqs, basex=10, basey=10, linestyle='',  linewidth=2, color = color_choice, alpha=1, markersize=8, marker='D', markeredgecolor='None')

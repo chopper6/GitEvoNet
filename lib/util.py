@@ -61,7 +61,7 @@ def single_advice(M, element, configs):
 
     else:
 
-        biased_center = indiv_conserv_score(element, M, configs)
+        biased_center = retrieve_indiv_bias(element, M, configs)
 
         rand = random.uniform(0, 1)
         # rand                = random.SystemRandom().uniform(0,1)
