@@ -52,7 +52,6 @@ def add_nodes(net, num_add, configs, biases=None):
                 assert(pre_size < post_size)
 
         if biases and bias_on == 'nodes': bias.assign_a_node_bias(net, new_node, configs['bias_distribution'], given_bias=biases[i])
-        elif biases and bias_on == 'edges': bias.assign_an_edge_bias(net, new_node, configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
         if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, given_bias=biases[i])
@@ -202,10 +201,9 @@ def rm_edges(net, num_rm, configs):
                 edge = edge[0]
 
             sign_orig = net[edge[0]][edge[1]]['sign']
-            if biased and bias_on == 'edges':
-                bias_orig = net[edge[0]][edge[1]]['bias']
-                orig_biases.append(bias_orig)
+            if biased and bias_on == 'edges': bias_orig = net[edge[0]][edge[1]]['bias']
             else: bias_orig = None
+            orig_biases.append(bias_orig)
 
             net.remove_edge(edge[0], edge[1])
 

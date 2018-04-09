@@ -22,7 +22,7 @@ def master_info(population, gen, size, pop_size, num_survive, advice, BD_table, 
     if (num_instance_output != 0):
         if (gen % int(max_gen / num_instance_output) == 0):
             # if first gen, have already pressurized w/net[0]
-            if (gen != 0): pressurize.pressurize(configs, population[0].net, instance_file + "Xitern" + str(gen) + ".csv", advice, BD_table)
+            if (gen != 0): pressurize.pressurize(configs, population[0], instance_file + "Xitern" + str(gen) + ".csv", advice, BD_table)
 
     if (gen % int(max_gen / num_net_output) == 0):
         nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(gen))
