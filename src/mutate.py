@@ -55,7 +55,7 @@ def add_nodes(net, num_add, configs, biases=None):
         elif biases and bias_on == 'edges': bias.assign_an_edge_bias(net, new_node, configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
-        if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, bias=biases[i])
+        if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, given_bias=biases[i])
         else: add_this_edge(net, configs, node1=new_node, random_direction=True)
 
     # MAINTAIN NODE_EDGE RATIO
@@ -101,7 +101,7 @@ def rewire(net, num_rewire, bias, bias_on, dirr, configs):
         # which triggers multiple connected components if edge_node_ratio = 1
 
         orig_biases = rm_edges(net,1,configs)
-        add_this_edge(net, configs, bias=orig_biases[0])
+        add_this_edge(net, configs, given_bias=orig_biases[0])
 
 
 def change_edge_sign(net, num_sign):
@@ -127,7 +127,7 @@ def add_edges(net, num_add, configs, biases=None):
         assert (util.boool(configs['biased'])) # note that the converse may not be true: net_generator will mutate first and add biases later
 
     for j in range(num_add):
-        if (biases): add_this_edge(net,configs, bias=biases[j])
+        if (biases): add_this_edge(net,configs, given_bias=biases[j])
         else: add_this_edge(net, configs)
 
     if util.boool(configs['single_cc']):
@@ -136,7 +136,7 @@ def add_edges(net, num_add, configs, biases=None):
         if (num_cc != 1): ensure_single_cc(net, configs)
 
 
-def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direction=False, bias=None):
+def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direction=False, given_bias=None):
 
     reverse_allowed = util.boool(configs['reverse_edges_allowed'])
     bias_on = configs['bias_on']
@@ -179,7 +179,7 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direct
         i+=1
         if (i == 10000000): util.cluster_print(configs['output_directory'], "\n\n\nWARNING mutate.add_this_edge() is looping a lot.\nNode1 = " + str(node1_set) + ", Node2 = " + str(node2_set) +  "\n\n\n")
 
-    if (bias and bias_on == 'edges'): bias.assign_an_edge_bias(net, [node1,node2], configs['bias_distribution'], given_bias=bias)
+    if (bias and bias_on == 'edges'): bias.assign_an_edge_bias(net, [node1,node2], configs['bias_distribution'], given_bias=given_bias)
 
 
 def rm_edges(net, num_rm, configs):
@@ -266,7 +266,7 @@ def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None, bias_
                 if (sign_orig == 0): sign_orig = -1
 
 
-            add_this_edge(net, configs, node1=node1, node2=node2, sign=sign_orig, bias=bias_orig)
+            add_this_edge(net, configs, node1=node1, node2=node2, sign=sign_orig, given_bias=bias_orig)
             rm_edges(net, 1, configs) #calls ensure_single_cc() at end
 
 
