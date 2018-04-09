@@ -52,7 +52,7 @@ def add_nodes(net, num_add, configs, biases=None):
                 assert(pre_size < post_size)
 
         if biases and bias_on == 'nodes': bias.assign_a_node_bias(net, new_node, configs['bias_distribution'], given_bias=biases[i])
-        elif biases and bias_on == 'edges': bias.assign_a_node_bias(net, new_node, configs['bias_distribution'])
+        elif biases and bias_on == 'edges': bias.assign_an_edge_bias(net, new_node, configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
         if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, biases=biases[i])

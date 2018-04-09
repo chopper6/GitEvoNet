@@ -9,7 +9,6 @@ def evolve_master(configs):
     # get configs
     num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory']
-    max_gen = int(configs['max_generations'])
     worker_pop_size = int(configs['num_worker_nets'])
     fitness_direction = str(configs['fitness_direction'])
     biased = util.boool(configs['biased'])
