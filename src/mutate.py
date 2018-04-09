@@ -202,12 +202,12 @@ def rm_edges(net, num_rm, configs):
                 edge = edge[0]
 
             sign_orig = net[edge[0]][edge[1]]['sign']
-            net.remove_edge(edge[0], edge[1])
-
             if biased and bias_on == 'edges':
                 bias_orig = net[edge[0]][edge[1]]['bias']
                 orig_biases.append(bias_orig)
             else: bias_orig = None
+
+            net.remove_edge(edge[0], edge[1])
 
             post_size = len(net.edges())
             i+=1
