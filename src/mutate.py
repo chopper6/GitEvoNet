@@ -55,7 +55,7 @@ def add_nodes(net, num_add, configs, biases=None):
         elif biases and bias_on == 'edges': bias.assign_an_edge_bias(net, new_node, configs['bias_distribution'])
 
         # ADD EDGE TO NEW NODE TO KEEP CONNECTED
-        if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, biases=biases[i])
+        if biases and bias_on=='edges': add_this_edge(net, configs, node1=new_node, random_direction=True, bias=biases[i])
         else: add_this_edge(net, configs, node1=new_node, random_direction=True)
 
     # MAINTAIN NODE_EDGE RATIO
@@ -91,10 +91,17 @@ def shrink(net, num_shrink, configs):
 
 def rewire(net, num_rewire, bias, bias_on, dirr, configs):
 
+    single_cc = util.boool(configs['single_cc'])
+    edge_node_ratio = float(configs['edge_to_node_ratio'])
+
     for i in range(num_rewire):
 
-        add_this_edge(net, configs)
-        rm_edges(net,1,configs)
+        assert(edge_node_ratio!=1 or not single_cc)
+        # this is an unlikely scenario, but bias tracking requires rm, then add
+        # which triggers multiple connected components if edge_node_ratio = 1
+
+        orig_biases = rm_edges(net,1,configs)
+        add_this_edge(net, configs, bias=orig_biases[0])
 
 
 def change_edge_sign(net, num_sign):
@@ -120,7 +127,7 @@ def add_edges(net, num_add, configs, biases=None):
         assert (util.boool(configs['biased'])) # note that the converse may not be true: net_generator will mutate first and add biases later
 
     for j in range(num_add):
-        if (biases): add_this_edge(net,configs, biases=biases[j])
+        if (biases): add_this_edge(net,configs, bias=biases[j])
         else: add_this_edge(net, configs)
 
     if util.boool(configs['single_cc']):
@@ -129,7 +136,7 @@ def add_edges(net, num_add, configs, biases=None):
         if (num_cc != 1): ensure_single_cc(net, configs)
 
 
-def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direction=False, biases=None):
+def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direction=False, bias=None):
 
     reverse_allowed = util.boool(configs['reverse_edges_allowed'])
     bias_on = configs['bias_on']
@@ -172,11 +179,15 @@ def add_this_edge(net, configs, node1=None, node2=None, sign=None, random_direct
         i+=1
         if (i == 10000000): util.cluster_print(configs['output_directory'], "\n\n\nWARNING mutate.add_this_edge() is looping a lot.\nNode1 = " + str(node1_set) + ", Node2 = " + str(node2_set) +  "\n\n\n")
 
-    if (biases and bias_on == 'edges'): bias.assign_an_edge_bias(net, [node1,node2], configs['bias_distribution'], bias_given=biases)
+    if (bias and bias_on == 'edges'): bias.assign_an_edge_bias(net, [node1,node2], configs['bias_distribution'], given_bias=bias)
 
 
 def rm_edges(net, num_rm, configs):
     # constraints: doesn't leave 0 deg edges or mult connected components
+
+    biased = util.boool(configs['biased'])
+    bias_on = configs['bias_on']
+    orig_biases = []
 
     for j in range(num_rm):
         pre_size = post_size = len(net.edges())
@@ -193,12 +204,19 @@ def rm_edges(net, num_rm, configs):
             sign_orig = net[edge[0]][edge[1]]['sign']
             net.remove_edge(edge[0], edge[1])
 
+            if biased and bias_on == 'edges':
+                bias_orig = net[edge[0]][edge[1]]['bias']
+                orig_biases.append(bias_orig)
+            else: bias_orig = None
+
             post_size = len(net.edges())
             i+=1
 
             if (i==10000000): util.cluster_print(configs['output_directory'], "WARNING mutate.rm_edges() is looping a lot.\n")
 
-        ensure_single_cc(net, configs, node1=edge[0], node2=edge[1], sign_orig=sign_orig)
+        ensure_single_cc(net, configs, node1=edge[0], node2=edge[1], sign_orig=sign_orig, bias_orig=bias_orig)
+
+    return orig_biases
 
 
 
@@ -218,7 +236,7 @@ def num_mutations(base_mutn_freq):
         assert(False)
 
 
-def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
+def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None, bias_orig=None):
     #rewires [node1, node2] at the expense of a random, non deg1 edge
 
     single_cc = util.boool(configs['single_cc'])
@@ -231,7 +249,6 @@ def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
         net_undir = net.to_undirected()
         num_cc = nx.number_connected_components(net_undir)
 
-        i=0
         if (num_cc != 1): #rm_edge() will recursively check #COULD CAUSE AN ERR
             if not node1 and node1 != 0:
                 components = list(nx.connected_components(net_undir))
@@ -249,16 +266,10 @@ def ensure_single_cc(net, configs, node1=None, node2=None, sign_orig=None):
                 if (sign_orig == 0): sign_orig = -1
 
 
-            add_this_edge(net, configs, node1=node1, node2=node2, sign=sign_orig)
+            add_this_edge(net, configs, node1=node1, node2=node2, sign=sign_orig, bias=bias_orig)
             rm_edges(net, 1, configs) #calls ensure_single_cc() at end
 
-            net_undir = net.to_undirected()
-            num_cc = nx.number_connected_components(net_undir)
 
-            i+=1
-            if (i == 10000000): util.cluster_print(configs['output_directory'], "WARNING mutate.ensure_single_cc() is looping a lot.\n")
-
-
-        #net_undir = net.to_undirected()
-        #num_cc = nx.number_connected_components(net_undir)
-        #assert (num_cc == 1)
+        net_undir = net.to_undirected()
+        num_cc = nx.number_connected_components(net_undir)
+        assert (num_cc == 1)
