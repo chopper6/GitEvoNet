@@ -6,12 +6,12 @@ import pickle
 # maybe rename to reduce confusion
 class Net:
     def __init__(self, net, id):
-        self.fitness = 0  #aim to max
+        self.fitness = 0
         self.leaf_fitness = 0
         self.hub_fitness = 0
         self.net = net.copy()
         #assert(self.net != net)
-        self.id = id  #irrelv i think
+        self.id = id  #not curr used
 
     def copy(self):
         copy = Net(self.net, self.id)

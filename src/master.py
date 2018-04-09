@@ -102,8 +102,7 @@ def init_run(configs):
             BD_table = None
 
         #init fitness eval
-        pressurize.pressurize(configs, population[0].net,instance_file + "Xitern0.csv", advice, BD_table)
-        fitness.eval_fitness([population[0]], fitness_direction)
+        pressurize.pressurize(configs, population[0],instance_file + "Xitern0.csv", advice, BD_table)
 
         gen, size = 0, start_size
         keep_running = util.test_stop_condition(size, gen, configs)

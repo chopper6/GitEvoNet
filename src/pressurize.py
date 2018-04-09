@@ -2,7 +2,7 @@ import math
 import reducer, solver, node_data, fitness, util, probabilistic_entropy
 from ctypes import cdll
 
-def pressurize(configs, net, instance_file_name, advice, BD_table):
+def pressurize(configs, Net, instance_file_name, advice, BD_table):
     # configs:
     pressure = math.ceil((float(configs['pressure']) / 100.0))
     sampling_rounds_multiplier = float(configs['sampling_rounds_multiplier']) #FRACTION of curr number of EDGES
@@ -19,6 +19,9 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
     biased = util.boool(configs['biased'])
 
     scale_node_fitness = util.boool(configs['scale_node_fitness'])
+
+    net = Net.net #not great syntax, but Net is an individual in a population, whereas net is it's graph representation
+
 
     #num_samples_relative = min(max_sampling_rounds, len(net.nodes()) * sampling_rounds)
     num_samples_relative = max(1, int(len(net.edges())*sampling_rounds_multiplier) )
@@ -52,7 +55,7 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
         hub_fitness /= num_samples_relative
         solo_fitness /= num_samples_relative
 
-        net.fitness, net.leaf_fitness, net.hub_fitness = solo_fitness, leaf_fitness, hub_fitness
+        Net.fitness, Net.leaf_fitness, Net.hub_fitness = solo_fitness, leaf_fitness, hub_fitness
 
     elif (use_kp == 'False' or use_kp == False):
         #  assumes 100% pressure
@@ -75,6 +78,6 @@ def pressurize(configs, net, instance_file_name, advice, BD_table):
             print("ERROR in pressurize: Unknown edge state " + str(edge_state))
             return
 
-        net.fitness = fitness_score
+        Net.fitness = fitness_score
 
     else: print("ERROR in pressurize(): unknown use_knapsack config: " + str(use_kp))

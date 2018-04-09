@@ -24,13 +24,13 @@ def single_run_plots (dirr):
     features_over_size(dirr, net_info, titles, mins, maxs, False)
     features_over_time(dirr, net_info, titles, mins, maxs, False)
 
-    print("Generating degree distribution plots.")
+    print("Generating directed degree distribution plots.")
     degree_distrib(dirr)
 
     print("Generating undirected degree distribution plots.")
     plot_undir(dirr, False, None) #last two args for Biased and bias on, which haven't really been implemented
 
-    print("Generating degree change plot.")
+    print("Generating degree change plot.\n")
     degree_distrib_change(dirr) #may require debugging
 
 
@@ -42,14 +42,13 @@ def plot_undir(output_dir, biased, bias_on):
 
     for root, dirs, files in os.walk(output_dir + "/nets/"):
         for f in files:
-            print("plot_dir(): file " + str(f))
+            #print("plot_dir(): file " + str(f))
             undir_deg_distrib(root + "/" + f, output_dir + "/undirected_degree_distribution/", f, biased, bias_on)
 
 
 
 ################## IMAGE GENERATION FUNCTIONS ##################
 def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
-    print('undir_deg_distrib: biased=' + str(biased) + ', bias_on=' + str(bias_on))
 
     if (re.match(re.compile("[a-zA-Z0-9]*pickle"), net_file)):
         with open(net_file, 'rb') as file:

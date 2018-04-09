@@ -38,7 +38,7 @@ def node_product(net, scale_node_fitness): #for info version
                 Inode = net.node[n]['fitness']
                 fitness_score += -1*math.log(net.node[n]['fitness'])
             else:
-                fitness_score += math.log(net.node[n]['fitness'],2)
+                fitness_score += -1*math.log(net.node[n]['fitness'],2)
 
     if (num_over != 0 or num_under != 0):
         print("# I < 0 = " + str(num_under) + "\t # I > 1 = " + str(num_over) + "\n")
