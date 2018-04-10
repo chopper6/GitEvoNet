@@ -114,7 +114,6 @@ def cluster_print(output_dir, text):
 
 
 def cleanPaths(path):
-    assert(False)
     # ignore empty lines
     # ignore lines beginning with '#'
     # ignore lines enclosed by @ .. @

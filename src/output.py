@@ -9,27 +9,35 @@ def master_info(population, gen, size, pop_size, num_survive, advice, BD_table, 
     output_dir = configs['output_directory']
     num_data_output = int(configs['num_data_output'])
     num_net_output = int(configs['num_net_output'])
-    max_gen = int(configs['max_generations'])
     num_instance_output = int(configs['num_instance_output'])
     instance_file = configs['instance_file']
     if (num_instance_output==0): instance_file = None
+    stop_condition = configs['stop_condition']
 
-    if (gen % int(max_gen / num_data_output) == 0):
-        popn_data(population, output_dir, gen)
-        util.cluster_print(output_dir, "Master at gen " + str(gen) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
-        nx.write_edgelist(population[0].net, output_dir + "/fittest_net.edgelist")
+    if (stop_condition == 'size'):
+        end = int(configs['ending_size'])
+        #this sort of assumes simulation starts near size 0
+    elif (stop_condition == 'generation'):end = int(configs['max_generations'])
+    else: assert(False)
+
+    if (num_data_output > 0):
+        if (gen % int(end / num_data_output) == 0):
+            popn_data(population, output_dir, gen)
+            util.cluster_print(output_dir, "Master at gen " + str(gen) + ", with net size = " + str(size) + " nodes and " + str(len(population[0].net.edges())) + " edges, " + str(num_survive) + "<=" + str(len(population)) + " survive out of " + str(pop_size))
+            nx.write_edgelist(population[0].net, output_dir + "/fittest_net.edgelist")
 
     if (num_instance_output != 0):
-        if (gen % int(max_gen / num_instance_output) == 0):
+        if (gen % int(end / num_instance_output) == 0):
             # if first gen, have already pressurized w/net[0]
             if (gen != 0): pressurize.pressurize(configs, population[0], instance_file + "Xitern" + str(gen) + ".csv", advice, BD_table)
 
-    if (gen % int(max_gen / num_net_output) == 0):
-        nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(gen))
-        pickle_file = output_dir + "/pickle_nets/" + str(gen) + "_pickle"
-        with open(pickle_file, 'wb') as file:
-            pickle.dump(population[0].net, file)
-        deg_distrib_csv(output_dir, population, gen)
+    if (num_net_output > 0):
+        if (gen % int(end / num_net_output) == 0):
+            nx.write_edgelist(population[0].net, output_dir + "/nets/" + str(gen))
+            pickle_file = output_dir + "/pickle_nets/" + str(gen) + "_pickle"
+            with open(pickle_file, 'wb') as file:
+                pickle.dump(population[0].net, file)
+            deg_distrib_csv(output_dir, population, gen)
 
 
 
