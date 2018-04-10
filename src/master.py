@@ -25,7 +25,7 @@ def evolve_master(configs):
         if biased: biases = bias.gen_biases(configs) #all nets must have same bias to have comparable fitness
         else: biases = None
 
-        distrib_workers(population, gen, worker_pop_size, num_survive, gen, advice, BD_table, biases, configs)
+        distrib_workers(population, gen, worker_pop_size, num_survive, advice, BD_table, biases, configs)
 
         report_timing(t_start, gen, output_dir)
         population = watch(configs, gen, num_workers, output_dir, num_survive, fitness_direction)
@@ -77,12 +77,12 @@ def init_run(configs):
             return
 
         elif (gen and gen!=0 and gen!=1 and gen!=2): #IS CONTINUATION RUN
-            itern = int(gen)-2 #latest may not have finished
-            population = parse_worker_popn(num_workers, itern, output_dir, num_survive, fitness_direction)
+            gen = int(gen)-2 #latest may not have finished
+            population = parse_worker_popn(num_workers, gen, output_dir, num_survive, fitness_direction)
             size = len(population[0].net.nodes())
             gen += 1
 
-            a_worker_file = output_dir + "/to_workers/" + str(itern) + "/1"
+            a_worker_file = output_dir + "/to_workers/" + str(gen) + "/1"
             with open(a_worker_file, 'rb') as w_file:
                 a_worker_ID, a_seed, a_worker_gens, a_pop_size, a_num_return, a_randSeed, advice, BD_table, biases,  a_configs = pickle.load(w_file)
 
@@ -139,26 +139,26 @@ def write_mpi_info(output_dir, gen):
         shutil.rmtree(output_dir + "/to_workers/" + str(prev_gen))
 
 
-def distrib_workers(population, itern, worker_pop_size, num_survive, gen, advice, BD_table, biases, configs):
+def distrib_workers(population, gen, worker_pop_size, num_survive, advice, BD_table, biases, configs):
     num_workers = int(configs['number_of_workers'])
     output_dir = configs['output_directory']
     debug = util.boool(configs['debug'])
 
     if (debug == True):  # sequential debug
         for w in range(1, num_workers + 1):
-            dump_file = output_dir + "to_workers/" + str(itern) + "/" + str(w)
+            dump_file = output_dir + "to_workers/" + str(gen) + "/" + str(w)
             seed = population[0].copy()
             randSeeds = os.urandom(sysRand().randint(0, 1000000))
             worker_args = [0, seed, worker_pop_size, min(worker_pop_size, num_survive), randSeeds, advice, BD_table, biases, configs]
             with open(dump_file, 'wb') as file:
                 pickle.dump(worker_args, file)
             # pool.map_async(minion.evolve_minion, (dump_file,))
-            minion.evolve_minion(dump_file, itern, 0, output_dir)
+            minion.evolve_minion(dump_file, gen, 0, output_dir)
             sleep(.0001)
 
     else:
         for w in range(1, num_workers + 1):
-            dump_file = output_dir + "/to_workers/" + str(itern) + "/" + str(w)
+            dump_file = output_dir + "/to_workers/" + str(gen) + "/" + str(w)
             seed = population[w % num_survive].copy()
             randSeeds = os.urandom(sysRand().randint(0, 1000000))
             assert (seed != population[w % num_survive])
@@ -170,12 +170,12 @@ def distrib_workers(population, itern, worker_pop_size, num_survive, gen, advice
     if (debug == True): util.cluster_print(output_dir, "debug is ON")
 
 
-def parse_worker_popn (num_workers, itern, output_dir, num_survive, fitness_direction):
+def parse_worker_popn (num_workers, gen, output_dir, num_survive, fitness_direction):
     popn = []
-    print('master.parse_worker_popn(): num workers = ' + str(num_workers) + " and itern " + str(itern))
+    print('master.parse_worker_popn(): num workers = ' + str(num_workers) + " and gen " + str(gen))
     print("parse worker pop params: dir = " + str(output_dir) + ".")
     for w in range(1,num_workers+1): 
-        dump_file = output_dir + "/to_master/" + str(itern) + "/" + str(w)
+        dump_file = output_dir + "/to_master/" + str(gen) + "/" + str(w)
         with open(dump_file, 'rb') as file:
             worker_pop = pickle.load(file)
         i=0
@@ -187,9 +187,9 @@ def parse_worker_popn (num_workers, itern, output_dir, num_survive, fitness_dire
     return sorted_popn[:num_survive]
 
 
-def watch(configs, itern, num_workers, output_dir, num_survive, fitness_direction):
+def watch(configs, gen, num_workers, output_dir, num_survive, fitness_direction):
 
-    dump_dir = output_dir + "/to_master/" + str(itern)
+    dump_dir = output_dir + "/to_master/" + str(gen)
     t_start = time.time()
     popn, num_finished, dir_checks = [], 0,0
 
@@ -201,7 +201,7 @@ def watch(configs, itern, num_workers, output_dir, num_survive, fitness_directio
             for f in files:
                 if f in ids:
                         if (os.path.getmtime(root + "/" + f) + 1 < time.time()):
-                            dump_file = output_dir + "/to_master/" + str(itern) + "/" + str(f)
+                            dump_file = output_dir + "/to_master/" + str(gen) + "/" + str(f)
                             with open(dump_file, 'rb') as file:
                                 try:
                                     worker_pop = pickle.load(file)
@@ -218,7 +218,7 @@ def watch(configs, itern, num_workers, output_dir, num_survive, fitness_directio
 
     t_end = time.time()
     time_elapsed = t_end - t_start
-    if (itern % 100 == 0): util.cluster_print(output_dir,"master finished extracting workers after " + str(time_elapsed) + " seconds, and making " + str(dir_checks) + " dir checks.")
+    if (gen % 100 == 0): util.cluster_print(output_dir,"master finished extracting workers after " + str(time_elapsed) + " seconds, and making " + str(dir_checks) + " dir checks.")
 
     return popn
 
@@ -245,9 +245,9 @@ def curr_gen_params(size, prev_num_survive, configs):
     return pop_size, num_survive
 
 
-def report_timing(t_start, itern, output_dir, report_freq=.001):
+def report_timing(t_start, gen, output_dir, report_freq=.001):
     if report_freq == 0: return
     t_end = time.time()
     t_elapsed = t_end - t_start
-    if (itern % int(1 / report_freq) == 0): util.cluster_print(output_dir, "Master finishing after " + str(t_elapsed) + " seconds.\n")
+    if (gen % int(1 / report_freq) == 0): util.cluster_print(output_dir, "Master finishing after " + str(t_elapsed) + " seconds.\n")
 

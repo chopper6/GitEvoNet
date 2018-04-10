@@ -17,7 +17,7 @@ def master_info(population, gen, size, pop_size, num_survive, advice, BD_table, 
     if (stop_condition == 'size'):
         end = int(configs['ending_size'])
         #this sort of assumes simulation starts near size 0
-    elif (stop_condition == 'generation'):end = int(configs['max_generations'])
+    elif (stop_condition == 'generation'): end = int(configs['max_generations'])
     else: assert(False)
 
     if (num_data_output > 0):
