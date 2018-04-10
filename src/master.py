@@ -82,10 +82,6 @@ def init_run(configs):
             size = len(population[0].net.nodes())
             gen += 1
 
-            a_worker_file = output_dir + "/to_workers/" + str(gen) + "/1"
-            with open(a_worker_file, 'rb') as w_file:
-                a_worker_ID, a_seed, a_worker_gens, a_pop_size, a_num_return, a_randSeed, advice, BD_table, biases,  a_configs = pickle.load(w_file)
-
             keep_running = util.test_stop_condition(size, gen, configs)
             cont = True
 
