@@ -58,13 +58,11 @@ def final_master_info(population, gen, configs):
 
 def init_csv(out_dir, configs):
  
-    csv_title = "Generation, Net Size, Fitness, Leaf Measure,  Hub Measure, Average Degree, Edge:Node Ratio, Mean Fitness, Variance in Fitness, Fitness_Div_#Edges, Fitness_Div_#Nodes\n"
+    net_data_title = "Generation, Net Size, Fitness, Leaf Measure,  Hub Measure, Average Degree, Edge:Node Ratio, Mean Fitness, Variance in Fitness, Fitness_Div_#Edges, Fitness_Div_#Nodes\n"
     deg_distrib_title = "Generation, Net Size, In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies, Degs, Deg Freqs\n"
 
-    deg_summary_title = "In Degrees, In Degree Frequencies, Out Degrees, Out Degree Frequencies\n"
-
-    with open(out_dir+"/info.csv",'w') as csv_out:
-        csv_out.write(csv_title)
+    with open(out_dir+"/net_data.csv",'w') as csv_out:
+        csv_out.write(net_data_title)
     with open(out_dir+"/degree_distrib.csv",'w') as csv_out:
         csv_out.write(deg_distrib_title) #just blanking the file
 
@@ -79,16 +77,10 @@ def init_csv(out_dir, configs):
         out_timing.write("Net Size, Presssurize Time\n")
 
 
-    out_deg_summary = out_dir + "/degree_change.csv"
-    with open(out_deg_summary, 'w') as out_summary:
-        out_summary.write(deg_summary_title)
-
-
-
 def popn_data(population, output_dir, gen):
 
     if (population[0].net.edges()):
-        output_csv = output_dir + "/info.csv"
+        output_csv = output_dir + "/net_data.csv"
 
         with open(output_csv, 'a') as output_file:
             output = csv.writer(output_file)

@@ -60,7 +60,7 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
     colors = ['#0099cc','#ff5050', '#6699ff']
     color_choice = colors[0]
 
-    for type in ['loglog', 'loglog%', 'scatter', 'scatter%']:
+    for type in ['loglog', 'loglog%']: #can also use ['scatter', 'scatter%']
         H = []
         #loglog
         degrees = list(net.degree().values())
@@ -155,8 +155,8 @@ def undir_deg_distrib(net_file, destin_path, title, biased, bias_on):
 def degree_distrib(dirr):
         deg_file_name = dirr + "/degree_distrib.csv"
 
-        if not os.path.exists(dirr + "/degree_distribution/"):
-            os.makedirs(dirr + "/degree_distribution/")
+        if not os.path.exists(dirr + "/directed_degree_distribution/"):
+            os.makedirs(dirr + "/directed_degree_distribution/")
 
         all_lines = [Line.strip() for Line in (open(deg_file_name,'r')).readlines()]
         titles = all_lines[0]
@@ -200,7 +200,7 @@ def degree_distrib(dirr):
             plt.title('Degree Distribution of Fittest Net at Generation ' + str(gen))
             plt.xlim(1,1000)
             plt.ylim(1,1000)
-            plt.savefig(dirr + "/degree_distribution/" + str(gen) + ".png", dpi=300)
+            plt.savefig(dirr + "/directed_degree_distribution/" + str(gen) + ".png", dpi=300)
             plt.clf()
             img_index += 1
 
@@ -231,7 +231,7 @@ def features_over_size(dirr, net_info, titles, mins, maxs, use_lims):
     return
 
 
-def degree_distrib_change(dirr): #TODO: there is no longer a sep deg_distrib_change file
+def degree_distrib_change(dirr):
     deg_file_name = dirr + "/degree_distrib.csv"
 
     if not os.path.exists(dirr + "/degree_distribution_change/"):
@@ -244,8 +244,8 @@ def degree_distrib_change(dirr): #TODO: there is no longer a sep deg_distrib_cha
     line = all_lines[1]
     line = line.replace('[', '').replace(']', '').replace("\n", '')
     line = line.split(',')
-    deg = line[0].split(" ")
-    deg_freq = line[1].split(" ")
+    deg = line[6].split(" ")
+    deg_freq = line[7].split(" ")
     start_deg = list(filter(None, deg))
     start_freq = list(filter(None, deg_freq))
 
@@ -253,8 +253,8 @@ def degree_distrib_change(dirr): #TODO: there is no longer a sep deg_distrib_cha
     line = all_lines[-1]
     line = line.replace('[', '').replace(']', '').replace("\n", '')
     line = line.split(',')
-    deg = line[0].split(" ")
-    deg_freq = line[1].split(" ")
+    deg = line[6].split(" ")
+    deg_freq = line[7].split(" ")
     end_deg = list(filter(None, deg))
     end_freq = list(filter(None, deg_freq))
 
