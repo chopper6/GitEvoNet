@@ -412,7 +412,7 @@ def parse_info(dirr):
     #returns 2d array of outputs by features
     #note that feature[0] is the net size
 
-    with open(dirr + "/info.csv", 'r') as info_csv:
+    with open(dirr + "/net_data.csv", 'r') as info_csv:
         lines = info_csv.readlines()
         titles = lines[0].split(",")
         piece = titles[-1].split("\n")

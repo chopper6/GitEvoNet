@@ -1,6 +1,4 @@
 import random, os
-import bias
-
 #----------------------------------------------------------------------------  
 def slash(path): #likely kp only
     return path+(path[-1] != '/')*'/'
